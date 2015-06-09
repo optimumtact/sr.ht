@@ -27,6 +27,7 @@ def register():
     email = request.form.get('email')
     username = request.form.get('username')
     password = request.form.get('password')
+    comments = request.form.get('comments')
     errors = list()
     if not email:
         errors.append('Email is required.')
@@ -53,6 +54,7 @@ def register():
         return render_template("index.html", username=username, email=email, errors=errors)
     # All good, create an account for them
     user = User(username, email, password)
+    user.comments = comments
     db.add(user)
     db.commit()
     return render_template("index.html", registered=True)

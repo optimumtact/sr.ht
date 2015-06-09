@@ -19,6 +19,7 @@ class User(Base):
     passwordReset = Column(String(128))
     passwordResetExpiry = Column(DateTime)
     apiKey = Column(String(128))
+    comments = Column(Unicode(512))
     approved = Column(Boolean())
 
     def set_password(self, password):
