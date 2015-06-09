@@ -1,0 +1,53 @@
+{% extends "layout.html" %}
+{% block body %} 
+<div class="text-center">
+    <h1>sr.ht</h1>
+    <p>
+        sr.ht is a private file hosting website. It was built to replace the
+        now defunct pomf.se, but made private to avoid the scenario where it
+        gets too large for its own good. Accounts are given only by approval
+        from Drew DeVault
+        &lt;<a href="mailto:sir@cmpwn.com">sir@cmpwn.com</a>&gt;.
+    </p>
+    <a href="/login" class="btn btn-primary">Log In</a>
+</div>
+<hr />
+<h4 class="text-center">Request Account</h4>
+{% if registered %}
+<p>Your request has been submitted. You will be notified via email when the
+decision is made.</p>
+{% else %}
+{% if errors %}
+<div class="alert alert-danger">
+    {% for error in errors %}
+    <p>{{ error }}</p>
+    {% endfor %}
+</div>
+{% endif %}
+<form action="/register" method="POST">
+    <div class="form-group">
+        <label for="username">Username</label>
+        <input id="username" name="username" class="form-control"
+            value="{% if username %}{{ username }}{% endif %}" />
+    </div>
+    <div class="form-group">
+        <label for="email">Email Address</label>
+        <input id="email" name="email" class="form-control"
+            value="{% if email %}{{ email }}{% endif %}" />
+    </div>
+    <div class="form-group">
+        <label for="password">Password</label>
+        <input id="password" name="password" type="password" class="form-control" />
+    </div>
+    <div class="row">
+        <div class="col-md-3">
+            <input type="submit" class="btn btn-primary" value="Request Account" />
+        </div>
+        <div class="col-md-9">
+            If you don't think SirCmpwn will recognize your username, you should
+            contact him to make sure your request is not rejected.
+        </div>
+    </div>
+</form>
+{% endif %}
+{% endblock %}

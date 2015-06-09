@@ -1,0 +1,13 @@
+*.pyc
+bin/
+config.ini
+alembic.ini
+include/
+local/
+lib/
+static/
+*.swp
+*.rdb
+storage/
+pip-selfcheck.json
+.sass-cache/
