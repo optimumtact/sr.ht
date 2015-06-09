@@ -27,6 +27,7 @@ api = Blueprint('api', __name__, template_folder='../../templates')
 def approve(id):
     u = User.query.filter(User.id == id).first()
     u.approved = True
+    u.approvalDate = datetime.now()
     db.commit()
     send_invite(u)
     return { "success": True }
@@ -37,7 +38,6 @@ def approve(id):
 def reject(id):
     u = User.query.filter(User.id == id).first()
     u.rejected = True
-    u.approvalDate = datetime.now()
     db.commit()
     # TODO: Send rejection emails?
     return { "success": True }
