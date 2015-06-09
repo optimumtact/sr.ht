@@ -49,6 +49,9 @@ window.api_key = "{{ user.apiKey }}";
 </p>
 <p class="text-center">Logged in as {{ user.username }}
     &mdash; <a href="/logout">Log Out</a>
+    {% if user.admin %}
+    &mdash; <a href="/approvals">Approvals</a>
+    {% endif %}
 </p>
 <div class="modal fade" id="api-modal">
     <div class="modal-dialog">
