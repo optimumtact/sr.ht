@@ -36,12 +36,26 @@ def approve(id):
 @api.route("/api/reject/<id>", methods=["POST"])
 @adminrequired
 @with_session
+@json_output
 def reject(id):
     u = User.query.filter(User.id == id).first()
     u.rejected = True
     db.commit()
     # TODO: Send rejection emails?
     return { "success": True }
+
+@api.route("/api/resetkey", methods=["POST"])
+@json_output
+def reset_key():
+    key = request.form.get('key')
+    if not key:
+        return { "error": "Maybe you should include the actual key, dumbass" }, 400
+    user = User.query.filter(User.apiKey == key).first()
+    if not user:
+        return { "error": "API key not recognized" }, 403
+    user.generate_api_key()
+    db.commit()
+    return { "key": user.apiKey }
 
 @api.route("/api/upload", methods=["POST"])
 @json_output
@@ -91,4 +105,4 @@ def get_hash(f):
     f.seek(0)
     return hashlib.md5(f.read()).hexdigest()
 
-extension = lambda f: f.rsplit('.', 1)[1].lower()
+extension = lambda f: f.rsplit('.', 1)[-1].lower()

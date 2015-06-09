@@ -2,6 +2,7 @@
 {% block body %} 
 <script>
 window.api_key = "{{ user.apiKey }}";
+window.root = "{{ root }}";
 </script>
 <div class="text-center">
     <h1>Hello!</h1>
@@ -63,15 +64,16 @@ window.api_key = "{{ user.apiKey }}";
             </div>
             <div class="modal-body">
                 <p>Your API key is:</p>
-                <pre>{{ user.apiKey }}</pre>
+                <pre class="apikey">{{ user.apiKey }}</pre>
                 <p>This key allows anyone to upload to sr.ht as you. Do not lose it. Upload like so:</p>
-                <pre>curl \
+                <pre id="syntaxKey">curl \
     -F key={{user.apiKey}} \
     -F file=@example.png \
     {{root}}/api/upload</pre>
+                <p>If your key is compromised, press "Reset Key" below.</p>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-warning">Reset Key</button>
+                <button type="button" class="btn btn-danger" id="reset-key">Reset Key</button>
                 <button type="button" class="btn btn-default" data-dismiss="modal">Dismiss</button>
             </div>
         </div>

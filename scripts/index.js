@@ -18,6 +18,26 @@ browse.addEventListener("change", function(e) {
     }
 });
 
+document.getElementById("reset-key").addEventListener("click", function(e) {
+    e.target.setAttribute("disabled", "disabled");
+    var xhr = new XMLHttpRequest();
+    xhr.open("POST", "/api/resetkey");
+    xhr.onload = function() {
+        e.target.removeAttribute("disabled");
+        var key = JSON.parse(xhr.responseText).key;
+        var keys = document.querySelectorAll(".apikey");
+        for (var i = 0; i < keys.length; i++) {
+            keys[i].textContent = key;
+        }
+        document.getElementById("syntaxKey").innerHTML =
+            "curl \\\n    -F key=" + key + " \\\n    -F file=@example.png \\\n    " + window.root + "/api/upload";
+        window.api_key = key;
+    };
+    var form = new FormData();
+    form.append("key", window.api_key);
+    xhr.send(form);
+});
+
 function addRow(file) {
     var row = document.createElement("tr");
     var name = document.createElement("td");
