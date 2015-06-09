@@ -5,6 +5,7 @@ from srht.objects import *
 from srht.common import *
 from srht.config import _cfg
 
+from datetime import datetime
 import binascii
 import os
 import zipfile
@@ -21,7 +22,8 @@ html = Blueprint('html', __name__, template_folder='../../templates')
 @html.route("/")
 def index():
     if current_user and current_user.approved:
-        return render_template("index-member.html")
+        new = (datetime.now() - current_user.approvalDate).days <= 1
+        return render_template("index-member.html", new=new)
     return render_template("index.html")
 
 @html.route("/register", methods=['POST'])
@@ -97,6 +99,14 @@ def logout():
 @html.route("/pending")
 def pending():
     return render_template("pending.html")
+
+@html.route("/donate")
+def donate():
+    return render_template("donate.html")
+
+@html.route("/script")
+def script():
+    return render_template("script.html")
 
 @html.route("/approvals")
 @loginrequired

@@ -6,6 +6,7 @@ from srht.common import *
 from srht.config import _cfg
 from srht.email import send_invite
 
+from datetime import datetime
 import binascii
 import os
 import zipfile
@@ -36,6 +37,7 @@ def approve(id):
 def reject(id):
     u = User.query.filter(User.id == id).first()
     u.rejected = True
+    u.approvalDate = datetime.now()
     db.commit()
     # TODO: Send rejection emails?
     return { "success": True }

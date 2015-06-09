@@ -1,5 +1,8 @@
 {% extends "layout.html" %}
 {% block body %} 
+<script>
+window.api_key = "{{ user.apiKey }}";
+</script>
 <div class="text-center">
     <h1>sr.ht</h1>
     <h4>Hi {{ user.username }}
@@ -7,5 +10,24 @@
     </h4>
 </div>
 <hr />
-TODO: Upload files
+{% if new %}
+<p>Welcome to sr.ht, {{ user.username }}. Here's everything you need to know.</p>
+<ol>
+    <li>For support, email <a href="mailto:sir@cmpwn.com">sir@cmpwn.com</a>.</li>
+    <li>For support or social, hang out in #stew on irc.rizon.net.</li>
+    <li>All uploads are visible to the public. Only members may upload.</li>
+    <li>Do not upload child porn or malware. You'll be banned immediately.</li>
+    <li>All sr.ht users are expected to <a href="/donate">donate</a> if they have the means.</li>
+    <li>A bash script for uploading is available <a href="/script">here</a>.</li>
+</ol>
+<p>This message goes away tomorrow. Enjoy your stay and don't fuck this up.</p>
+<hr />
+{% endif %}
+<div class="upload">
+    TODO: Upload UI
+</div>
+<hr />
+<p class="text-center">
+    <a href="/transparency">Transparency</a>
+</p>
 {% endblock %}

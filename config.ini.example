@@ -5,7 +5,7 @@ environment=dev
 [dev]
 # Change this to the actual location of your site
 protocol=http
-domain=truecraft.io
+domain=localhost:5000
 # Change this value to something random and secret
 secret-key=hello world
 
@@ -22,5 +22,8 @@ smtp-password=
 error-to=
 error-from=
 
+# Absolute path to storage directory
+storage=/home/sircmpwn/sources/sr.ht/storage/
+
 # SQL connection string
-connection-string=postgresql://postgres@localhost/truecraft.io
+connection-string=postgresql://postgres@localhost/sr.ht

@@ -16,6 +16,7 @@ class User(Base):
     admin = Column(Boolean())
     password = Column(String)
     created = Column(DateTime)
+    approvalDate = Column(DateTime)
     passwordReset = Column(String(128))
     passwordResetExpiry = Column(DateTime)
     apiKey = Column(String(128))
