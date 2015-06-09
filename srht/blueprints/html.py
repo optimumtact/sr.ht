@@ -20,6 +20,8 @@ html = Blueprint('html', __name__, template_folder='../../templates')
 
 @html.route("/")
 def index():
+    if current_user and current_user.approved:
+        return render_template("index-member.html")
     return render_template("index.html")
 
 @html.route("/register", methods=['POST'])
@@ -77,10 +79,10 @@ def login():
         user = User.query.filter(User.username.ilike(username)).first()
         if not user:
             return render_template("login.html", **{ "username": username, "errors": 'Your username or password is incorrect.' })
-        if user.confirmation != '' and user.confirmation != None:
-            return redirect("/pending")
         if not bcrypt.checkpw(password, user.password):
             return render_template("login.html", **{ "username": username, "errors": 'Your username or password is incorrect.' })
+        if not user.approved:
+            return redirect("/pending")
         login_user(user, remember=remember)
         if 'return_to' in request.form and request.form['return_to']:
             return redirect(urllib.parse.unquote(request.form.get('return_to')))
