@@ -97,3 +97,10 @@ def logout():
 @html.route("/pending")
 def pending():
     return render_template("pending.html")
+
+@html.route("/approvals")
+@loginrequired
+@adminrequired
+def approvals():
+    users = User.query.filter(User.approved == False and User.rejected == False).order_by(User.created)
+    return render_template("approvals.html", users=users)

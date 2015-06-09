@@ -21,6 +21,7 @@ class User(Base):
     apiKey = Column(String(128))
     comments = Column(Unicode(512))
     approved = Column(Boolean())
+    rejected = Column(Boolean())
 
     def set_password(self, password):
         self.password = bcrypt.hashpw(password, bcrypt.gensalt())
@@ -34,6 +35,7 @@ class User(Base):
         self.username = username
         self.admin = False
         self.approved = False
+        self.rejected = False
         self.created = datetime.now()
         self.generate_api_key()
         self.set_password(password)

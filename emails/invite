@@ -1,0 +1,5 @@
+Your sr.ht account has been approved, {{user.username}}. You can now login here:
+
+{{protocol}}://{{domain}}/login
+
+Thanks, and welcome! If you have any questions, simply reply to this email.

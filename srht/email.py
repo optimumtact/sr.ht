@@ -17,7 +17,11 @@ def send_invite(user):
     smtp.login(_cfg("smtp-user"), _cfg("smtp-password"))
     with open("emails/invite") as f:
         message = MIMEText(html.parser.HTMLParser().unescape(\
-            pystache.render(f.read(), { 'user': user, "domain": _cfg("domain"), 'confirmation': user.confirmation })))
+            pystache.render(f.read(), {
+                'user': user,
+                "domain": _cfg("domain"),
+                "protocol": _cfg("protocol")
+            })))
     message['X-MC-Important'] = "true"
     message['X-MC-PreserveRecipients'] = "false"
     message['Subject'] = "Your sr.ht account is approved"
