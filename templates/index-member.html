@@ -4,10 +4,8 @@
 window.api_key = "{{ user.apiKey }}";
 </script>
 <div class="text-center">
-    <h1>sr.ht</h1>
-    <h4>Hi {{ user.username }}
-        &mdash; <a href="/logout">Log Out</a>
-    </h4>
+    <h1>Hello!</h1>
+    <h4>Upload limit is 50 MB.</h4>
 </div>
 <hr />
 {% if new %}
@@ -16,18 +14,62 @@ window.api_key = "{{ user.apiKey }}";
     <li>For support, email <a href="mailto:sir@cmpwn.com">sir@cmpwn.com</a>.</li>
     <li>For support or social, hang out in #stew on irc.rizon.net.</li>
     <li>All uploads are visible to the public. Only members may upload.</li>
-    <li>Do not upload child porn or malware. You'll be banned immediately.</li>
+    <li>Do not upload child porn or malware. You'll be banned without mercy.</li>
     <li>All sr.ht users are expected to <a href="/donate">donate</a> if they have the means.</li>
     <li>A bash script for uploading is available <a href="/script">here</a>.</li>
+    <li>The source code is <a href="https://github.com/SirCmpwn/sr.ht">here</a>, feel free to send pull requests
+        or host your own version.</li>
 </ol>
 <p>This message goes away tomorrow. Enjoy your stay and don't fuck this up.</p>
 <hr />
 {% endif %}
 <div class="upload">
-    TODO: Upload UI
+    <a class="target" href="#">
+        Drag and drop or click to upload files
+    </a>
 </div>
+<table class="table">
+    <tbody class="files">
+    </tbody>
+</div>
+<button type="button" class="btn btn-block btn-primary" data-toggle="modal" data-target="#api-modal">
+    API Info
+</button>
 <hr />
 <p class="text-center">
     <a href="/transparency">Transparency</a>
+    &mdash;
+    <a href="https://github.com/SirCmpwn/sr.ht">Github</a>
+    &mdash;
+    <a href="/donate">Donate</a>
+    &mdash;
+    <a href="/script">Bash script</a>
 </p>
+<p class="text-center">Logged in as {{ user.username }}
+    &mdash; <a href="/logout">Log Out</a>
+</p>
+<div class="modal fade" id="api-modal">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal"
+                    aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title">API</h4>
+            </div>
+            <div class="modal-body">
+                <p>Your API key is:</p>
+                <pre>{{ user.apiKey }}</pre>
+                <p>This key allows anyone to upload to sr.ht as you. Do not lose it. Upload like so:</p>
+                <pre>curl \
+    -F key={{user.apiKey}} \
+    -F files[]=@example.png \
+    {{root}}/api/upload</pre>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-warning">Reset Key</button>
+                <button type="button" class="btn btn-default" data-dismiss="modal">Dismiss</button>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}

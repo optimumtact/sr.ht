@@ -7,6 +7,7 @@ from datetime import datetime, timedelta
 from shutil import rmtree, copyfile
 from sqlalchemy import desc
 
+import random
 import sys
 import os
 import subprocess
@@ -85,5 +86,6 @@ def inject():
         'request': request,
         'locale': locale,
         'url_for': url_for,
-        'user': current_user
+        'user': current_user,
+        'random': random
     }
