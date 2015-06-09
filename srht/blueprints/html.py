@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, abort, request, redirect, session, url_for, send_file
+from flask import Blueprint, render_template, abort, request, redirect, session, url_for, send_file, Response
 from flask.ext.login import current_user, login_user, logout_user
 from sqlalchemy import desc, or_, and_
 from srht.objects import *
@@ -101,12 +101,20 @@ def pending():
     return render_template("pending.html")
 
 @html.route("/donate")
+@loginrequired
 def donate():
     return render_template("donate.html")
 
 @html.route("/script")
+@loginrequired
 def script():
     return render_template("script.html")
+
+@html.route("/script.plain")
+def script_plain():
+    with open("templates/srht", "r") as f:
+        resp = f.read()
+    return Response(resp, mimetype="text/plain")
 
 @html.route("/approvals")
 @loginrequired

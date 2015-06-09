@@ -4,5 +4,24 @@
     <h1><a href="/">sr.ht</a></h1>
 </div>
 <hr />
-<p>TODO: Write bash script</p>
+<p>Write this into <code>~/.config/srht</code>:</p>
+<pre>
+#!/bin/bash
+
+# DO NOT SHARE YOUR KEY 
+key={{ user.apiKey }}
+# Log URLs
+log=false
+# Log file location (if relevant)
+logfile="$HOME/.srht"
+# Copy links to clipboard after upload (requires xclip)
+clipboard=true
+# Send a notification when done
+notify=true
+# Open URL in browser
+browser=true
+</pre>
+<p>Write this to <code>/usr/bin/local/srht</code> (<a href="">plaintext version</a>).
+It depends on slop and maim.</p>
+<pre>{% include "srht" %}</pre>
 {% endblock %}
