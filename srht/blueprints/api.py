@@ -59,6 +59,14 @@ def upload():
     upload = Upload()
     upload.user = user
     upload.hash = get_hash(f)
+    existing = Upload.query.filter(Upload.hash == upload.hash).first()
+    if existing:
+        return {
+            "success": True,
+            "hash": existing.hash,
+            "shorthash": existing.shorthash,
+            "url": _cfg("protocol") + "://" + _cfg("domain") + "/" + existing.path
+        }
     len = 3
     shorthash = upload.hash[:len]
     while any(Upload.query.filter(Upload.shorthash == shorthash)):
