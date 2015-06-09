@@ -7,6 +7,7 @@ from srht.config import _cfg
 from srht.email import send_invite
 
 from datetime import datetime
+import hashlib
 import binascii
 import os
 import zipfile
@@ -42,7 +43,44 @@ def reject(id):
     # TODO: Send rejection emails?
     return { "success": True }
 
-@api.route("/api/upload")
+@api.route("/api/upload", methods=["POST"])
+@json_output
 def upload():
-    # TODO
-    pass
+    key = request.form.get('key')
+    f = request.files.get('file')
+    if not key:
+        return { "error": "API key is required" }, 401
+    if not f:
+        return { "error": "File is required" }, 400
+    user = User.query.filter(User.apiKey == key).first()
+    if not user:
+        return { "error": "API key not recognized" }, 403
+    filename = ''.join(c for c in f.filename if c.isalnum() or c == '.')
+    upload = Upload()
+    upload.user = user
+    upload.hash = get_hash(f)
+    len = 3
+    shorthash = upload.hash[:len]
+    while any(Upload.query.filter(Upload.shorthash == shorthash)):
+        len += 1
+        shorthash = upload.hash[:len]
+    upload.shorthash = shorthash
+    upload.path = os.path.join(upload.shorthash + "." + extension(filename))
+
+    f.seek(0)
+    f.save(os.path.join(_cfg("storage"), upload.path))
+
+    db.add(upload)
+    db.commit()
+    return {
+        "success": True,
+        "hash": upload.hash,
+        "shorthash": upload.shorthash,
+        "url": _cfg("protocol") + "://" + _cfg("domain") + "/" + upload.path
+    }
+
+def get_hash(f):
+    f.seek(0)
+    return hashlib.md5(f.read()).hexdigest()
+
+extension = lambda f: f.rsplit('.', 1)[1].lower()

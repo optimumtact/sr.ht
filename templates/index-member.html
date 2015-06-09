@@ -62,7 +62,7 @@ window.api_key = "{{ user.apiKey }}";
                 <p>This key allows anyone to upload to sr.ht as you. Do not lose it. Upload like so:</p>
                 <pre>curl \
     -F key={{user.apiKey}} \
-    -F files[]=@example.png \
+    -F file=@example.png \
     {{root}}/api/upload</pre>
             </div>
             <div class="modal-footer">
