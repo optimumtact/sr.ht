@@ -3,8 +3,6 @@
 # srht - Upload files/scrots/urls to sr.ht (rip pomf & uguu)
 # By onodera, modified by SirCmpwn
 
-# TODO: -s and * don't work togheter (as expected), give an error or something
-
 ## CONFIGURATION
 source ~/.config/srht
 
@@ -87,8 +85,8 @@ feedback() {
 
 ## EXECUTE
 
-for flag in "$@"; do
-	case "$flag" in
+if [[ "$#" -ge 1 ]]; then
+	case "$@" in
 		-h|--help)
 			echo "usage: srht [options] [file/url]"
 			echo "options:"
@@ -105,15 +103,18 @@ for flag in "$@"; do
 			exit 0
 			;;
 		http*)
-			location="$flag"
+			location="$@"
 			url
 			;;
 		*)
-			location="$flag"
+			location="$@"
 			file
 			;;
 	esac
-done
+else
+	desktop
+fi
+
 
 if [[ "$#" -eq 0 ]]; then
 	desktop
