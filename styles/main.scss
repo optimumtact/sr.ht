@@ -12,6 +12,16 @@ body {
     width: 600px;
 }
 
+.table {
+    table-layout: fixed;
+
+    td {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+}
+
 .upload {
     margin-bottom: 20px;
     margin-top: 20px;

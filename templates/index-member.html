@@ -14,7 +14,7 @@ window.api_key = "{{ user.apiKey }}";
     <li>For support, email <a href="mailto:sir@cmpwn.com">sir@cmpwn.com</a>.</li>
     <li>For support or social, hang out in #stew on irc.rizon.net.</li>
     <li>All uploads are visible to the public. Only members may upload.</li>
-    <li>Do not upload child porn or malware. You'll be banned without mercy.</li>
+    <li>Do not upload child porn or malware, you'll be banned without mercy.</li>
     <li>All sr.ht users are expected to <a href="/donate">donate</a> if they have the means.</li>
     <li>A bash script for uploading is available <a href="/script">here</a>.</li>
     <li>The source code is <a href="https://github.com/SirCmpwn/sr.ht">here</a>, feel free to send pull requests
@@ -24,14 +24,16 @@ window.api_key = "{{ user.apiKey }}";
 <hr />
 {% endif %}
 <div class="upload">
-    <a class="target" href="#">
-        Drag and drop or click to upload files
-    </a>
+    <a class="target" href="#">Drag and drop or click to upload files</a>
+    <input type="file" class="hidden" id="browse" multiple />
 </div>
 <table class="table">
-    <tbody class="files">
-    </tbody>
-</div>
+    <thead>
+        <td style="width: 30%"></td>
+        <td style="width: 70%"></td>
+    </thead>
+    <tbody id="files"></tbody>
+</table>
 <button type="button" class="btn btn-block btn-primary" data-toggle="modal" data-target="#api-modal">
     API Info
 </button>
@@ -72,4 +74,5 @@ window.api_key = "{{ user.apiKey }}";
         </div>
     </div>
 </div>
+<script src="/static/index.js"></script>
 {% endblock %}
