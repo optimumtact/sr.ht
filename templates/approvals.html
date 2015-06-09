@@ -20,7 +20,7 @@
         <tr>
             <td>{{ user.username }}</td>
             <td><a href="mailto:{{ user.email }}">{{ user.email }}</a></td>
-            <td>{{ user.comments }}</td>
+            <td title="{{ user.comments }}">{{ user.comments }}</td>
             <td><a href="#" class="btn btn-sm btn-primary approve" data-user="{{ user.id }}">Approve</a></td>
             <td><a href="#" class="btn btn-sm btn-danger reject" data-user="{{ user.id }}">Reject</a></td>
         </tr>
