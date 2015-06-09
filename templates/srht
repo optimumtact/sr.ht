@@ -103,11 +103,11 @@ if [[ "$#" -ge 1 ]]; then
 			exit 0
 			;;
 		http*)
-			location="$flag"
+			location="$@"
 			url
 			;;
 		*)
-			location="$flag"
+			location="$@"
 			file
 			;;
 	esac
