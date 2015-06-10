@@ -35,6 +35,11 @@ init_db()
 login_manager = LoginManager()
 login_manager.init_app(app)
 
+app.jinja_loader = ChoiceLoader([
+    FileSystemLoader("overrides"),
+    FileSystemLoader("templates"),
+])
+
 @login_manager.user_loader
 def load_user(username):
     return User.query.filter(User.username == username).first()
@@ -81,11 +86,14 @@ def inject():
     return {
         'root': _cfg("protocol") + "://" + _cfg("domain"),
         'domain': _cfg("domain"),
+        'protocol': _cfg("protocol"),
         'len': len,
         'any': any,
         'request': request,
         'locale': locale,
         'url_for': url_for,
         'user': current_user,
-        'random': random
+        'random': random,
+        'owner': _cfg("owner"),
+        'owner_email': _cfg("owner_email"),
     }

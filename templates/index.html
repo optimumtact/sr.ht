@@ -1,16 +1,6 @@
 {% extends "layout.html" %}
 {% block body %} 
-<div class="text-center">
-    <h1>sr.ht</h1>
-    <p>
-        sr.ht is a private file hosting website. It was built to replace the
-        now defunct pomf.se and mediacru.sh, but made private to avoid the
-        scenario where it gets too large for its own good. Accounts are given
-        only by approval from Drew DeVault
-        &lt;<a href="mailto:sir@cmpwn.com">sir@cmpwn.com</a>&gt;.
-    </p>
-    <a href="/login" class="btn btn-primary">Log In</a>
-</div>
+{% include "index-about.html" %}
 <hr />
 <h4 class="text-center">Request Account</h4>
 {% if registered %}
@@ -48,8 +38,8 @@ decision is made.</p>
             <input type="submit" class="btn btn-primary" value="Request Account" />
         </div>
         <div class="col-md-9">
-            If you don't think SirCmpwn will recognize your username, you should
-            contact him to make sure your request is not rejected.
+            If you don't think your username will be recognized, you should
+            contact {{ owner }} to make sure your request is not rejected.
         </div>
     </div>
 </form>
