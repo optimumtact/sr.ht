@@ -8,6 +8,11 @@
     {{ errors }}
 </div>
 {% endif %}
+{% if reset %}
+<div class="alert alert-warning">
+    Your password has been reset. You may now login.
+</div>
+{% endif %}
 <form action="/login" method="POST">
     <div class="form-group">
         <label for="username">Username</label>

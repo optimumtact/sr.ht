@@ -4,8 +4,9 @@ from sqlalchemy import desc, or_, and_
 from srht.objects import *
 from srht.common import *
 from srht.config import _cfg
+from srht.email import send_reset
 
-from datetime import datetime
+from datetime import datetime, timedelta
 import binascii
 import os
 import zipfile
@@ -122,3 +123,51 @@ def script_plain():
 def approvals():
     users = User.query.filter(User.approved == False and User.rejected == False).order_by(User.created)
     return render_template("approvals.html", users=users)
+
+@html.route("/forgot-password", methods=['GET', 'POST'])
+@with_session
+def forgot_password():
+    if request.method == 'GET':
+        return render_template("forgot.html")
+    else:
+        email = request.form.get('email')
+        if not email:
+            return render_template("forgot.html", bad_email=True)
+        user = User.query.filter(User.email == email).first()
+        if not user:
+            return render_template("forgot.html", bad_email=True, email=email)
+        user.passwordReset = binascii.b2a_hex(os.urandom(20)).decode("utf-8")
+        user.passwordResetExpiry = datetime.now() + timedelta(days=1)
+        db.commit()
+        send_reset(user)
+        return render_template("forgot.html", success=True)
+
+@html.route("/reset", methods=['GET', 'POST'])
+@html.route("/reset/<username>/<confirmation>", methods=['GET', 'POST'])
+@with_session
+def reset_password(username, confirmation):
+    user = User.query.filter(User.username == username).first()
+    if not user:
+        redirect("/")
+    if request.method == 'GET':
+        if user.passwordResetExpiry == None or user.passwordResetExpiry < datetime.now():
+            return render_template("reset.html", expired=True)
+        if user.passwordReset != confirmation:
+            redirect("/")
+        return render_template("reset.html", username=username, confirmation=confirmation)
+    else:
+        if user.passwordResetExpiry == None or user.passwordResetExpiry < datetime.now():
+            abort(401)
+        if user.passwordReset != confirmation:
+            abort(401)
+        password = request.form.get('password')
+        password2 = request.form.get('password2')
+        if not password or not password2:
+            return render_template("reset.html", username=username, confirmation=confirmation, errors="Please fill out both fields.")
+        if password != password2:
+            return render_template("reset.html", username=username, confirmation=confirmation, errors="You seem to have mistyped one of these, please try again.")
+        user.set_password(password)
+        user.passwordReset = None
+        user.passwordResetExpiry = None
+        db.commit()
+        return redirect("/login?reset=1")

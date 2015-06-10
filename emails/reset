@@ -1,0 +1,7 @@
+Someone, probably you, has asked us to reset the password on your sr.ht account. If that was indeed you, click this link to proceed:
+
+{{ protocol }}://{{domain}}/reset/{{user.username}}/{{confirmation}}
+
+You have 24 hours before this link expires.
+
+If you didn't ask for a reset, disregard this email.
