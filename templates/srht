@@ -21,6 +21,15 @@ selection() {
 	word=selection
 }
 
+# This function sets $file to your clipboard contents
+clipboard() {
+	uploadme="/tmp/scrot.txt"
+
+	xclip -o > "$uploadme"
+
+	word=clipboard
+}
+
 # This function sets $file an url
 url() {
 	type="$(echo "$location" | rev | cut -d "." -f 1 | rev)"
@@ -90,9 +99,10 @@ if [[ "$#" -ge 1 ]]; then
 		-h|--help)
 			echo "usage: srht [options] [file/url]"
 			echo "options:"
+			echo "  -h,   --help            print help and exit"
+			echo "  -p,   --paste       	upload your clipboard as text"
 			echo "  -s,   --selection       upload selection scrot"
 			echo "  -v,   --version         print version and exit"
-			echo "  -h,   --help            print help and exit"
 			exit 0
 			;;
 		-s|--selection)
@@ -101,6 +111,9 @@ if [[ "$#" -ge 1 ]]; then
 		-v|--version)
 			echo "srht 0.9.1"
 			exit 0
+			;;
+		-p|--paste)
+			clipboard
 			;;
 		http*)
 			location="$@"
