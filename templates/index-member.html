@@ -10,18 +10,20 @@ window.root = "{{ root }}";
 </div>
 <hr />
 {% if new %}
-<p>Welcome to sr.ht, {{ user.username }}. Here's everything you need to know.</p>
-<ol>
-    <li>For support, email <a href="mailto:sir@cmpwn.com">sir@cmpwn.com</a>.</li>
-    <li>For support or social, hang out in #stew on irc.rizon.net.</li>
-    <li>All uploads are visible to the public. Only members may upload.</li>
-    <li>Do not upload child porn or malware, you'll be banned without mercy.</li>
-    <li>All sr.ht users are expected to <a href="/donate">donate</a> if they have the means.</li>
-    <li>A bash script for uploading is available <a href="/script">here</a>.</li>
-    <li>The source code is <a href="https://github.com/SirCmpwn/sr.ht">here</a>, feel free to send pull requests
-        or host your own version.</li>
-</ol>
-<p>This message goes away tomorrow. Enjoy your stay and don't fuck this up.</p>
+<div class="well">
+    <p>Welcome to sr.ht, {{ user.username }}. Here's everything you need to know.</p>
+    <ol>
+        <li>For support, email <a href="mailto:sir@cmpwn.com">sir@cmpwn.com</a>.</li>
+        <li>For support or social, hang out in #stew on irc.rizon.net.</li>
+        <li>All uploads are visible to the public. Only members may upload.</li>
+        <li>Do not upload child porn or malware, you'll be banned without mercy.</li>
+        <li>All sr.ht users are expected to <a href="/donate">donate</a> if they have the means.</li>
+        <li>A bash script for uploading is available <a href="/script">here</a>.</li>
+        <li>The source code is <a href="https://github.com/SirCmpwn/sr.ht">here</a>, feel free to send pull requests
+            or host your own version.</li>
+    </ol>
+    <p>This message goes away tomorrow. Enjoy your stay and don't fuck this up.</p>
+</div>
 <hr />
 {% endif %}
 <div class="upload">
