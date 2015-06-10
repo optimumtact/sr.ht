@@ -22,8 +22,12 @@ smtp-password=
 error-to=
 error-from=
 
-# Absolute path to storage directory
+# Where to store uploads (absolute path)
 storage=/home/sircmpwn/sources/sr.ht/storage/
+
+# Site ownership information for support and such
+owner=Your name
+owner_email=your@email.com
 
 # SQL connection string
 connection-string=postgresql://postgres@localhost/sr.ht

@@ -135,3 +135,10 @@ it. Run the application at least once, then:
 Congrats, you've got a schema in place. Run `alembic upgrade head` after pulling
 the code to update your schema to the latest version. Do this before you restart
 the site.
+
+## Customization
+
+You can customize the appearance of the site with template overrides. Create a
+directory called `overrides` and copy templates from the `templates` directory
+into `overrides`. Modify them as you see fit, they will be used instead of the
+version from `templates`.
