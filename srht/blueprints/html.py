@@ -121,8 +121,15 @@ def script_plain():
 @loginrequired
 @adminrequired
 def approvals():
-    users = User.query.filter(User.approved == False and User.rejected == False).order_by(User.created)
+    users = User.query.filter(User.approved == False).filter(User.rejected == False).order_by(User.created)
     return render_template("approvals.html", users=users)
+
+@html.route("/users")
+@loginrequired
+@adminrequired
+def users():
+    users = User.query.all().order_by(User.created)
+    return render_template("users.html", users=users)
 
 @html.route("/forgot-password", methods=['GET', 'POST'])
 @with_session
