@@ -1,3 +1,8 @@
+function remove(target) {
+    var p = target.parentElement.parentElement;
+    p.parentElement.removeChild(p);
+}
+
 var approves = document.querySelectorAll(".approve");
 for (var i = 0; i < approves.length; i++) {
     approves[i].addEventListener("click", function(e) {
@@ -6,6 +11,7 @@ for (var i = 0; i < approves.length; i++) {
         var xhr = new XMLHttpRequest();
         xhr.open("POST", "/api/approve/" + id);
         xhr.send();
+        remove(e.target);
     });
 }
 
@@ -17,5 +23,6 @@ for (var i = 0; i < rejects.length; i++) {
         var xhr = new XMLHttpRequest();
         xhr.open("POST", "/api/reject/" + id);
         xhr.send();
+        remove(e.target);
     });
 }
