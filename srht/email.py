@@ -30,6 +30,21 @@ def send_invite(user):
     smtp.sendmail("mailer@sr.ht", [ user.email ], message.as_string())
     smtp.quit()
 
+def send_rejection(user):
+    if _cfg("smtp-host") == "":
+        return
+    smtp = smtplib.SMTP(_cfg("smtp-host"), _cfgi("smtp-port"))
+    smtp.login(_cfg("smtp-user"), _cfg("smtp-password"))
+    with open("emails/reject") as f:
+        message = MIMEText(f.read())
+    message['X-MC-Important'] = "true"
+    message['X-MC-PreserveRecipients'] = "false"
+    message['Subject'] = "Your sr.ht account has been rejected"
+    message['From'] = "mailer@sr.ht"
+    message['To'] = user.email
+    smtp.sendmail("mailer@sr.ht", [ user.email ], message.as_string())
+    smtp.quit()
+
 def send_reset(user):
     if _cfg("smtp-host") == "":
         return

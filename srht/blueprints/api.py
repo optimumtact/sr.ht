@@ -4,7 +4,7 @@ from sqlalchemy import desc, or_, and_
 from srht.objects import *
 from srht.common import *
 from srht.config import _cfg
-from srht.email import send_invite
+from srht.email import send_invite, send_rejection
 
 from datetime import datetime
 import hashlib
@@ -41,7 +41,7 @@ def reject(id):
     u = User.query.filter(User.id == id).first()
     u.rejected = True
     db.commit()
-    # TODO: Send rejection emails?
+    send_rejection(u)
     return { "success": True }
 
 @api.route("/api/resetkey", methods=["POST"])
