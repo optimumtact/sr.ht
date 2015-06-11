@@ -23,7 +23,7 @@ html = Blueprint('html', __name__, template_folder='../../templates')
 @html.route("/")
 def index():
     if current_user and current_user.approved:
-        new = (datetime.now() - current_user.approvalDate).days <= 1
+        new = datetime.now() - timedelta(hours=24) < current_user.approvalDate
         return render_template("index-member.html", new=new)
     return render_template("index.html")
 
