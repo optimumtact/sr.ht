@@ -12,7 +12,7 @@ class Upload(Base):
     __tablename__ = 'upload'
     id = Column(Integer, primary_key = True)
     user_id = Column(Integer, ForeignKey('user.id'))
-    user = relationship('User', backref=backref('uploads', order_by=id)) 
+    user = relationship('User', backref=backref('upload', order_by=id)) 
     hash = Column(String)
     shorthash = Column(String)
     path = Column(String)
@@ -37,7 +37,6 @@ class User(Base):
     comments = Column(Unicode(512))
     approved = Column(Boolean())
     rejected = Column(Boolean())
-    uploads = relationship('Upload', order_by='Upload.id')
 
     def set_password(self, password):
         self.password = bcrypt.hashpw(password, bcrypt.gensalt())
