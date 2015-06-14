@@ -16,6 +16,11 @@ class Upload(Base):
     hash = Column(String)
     shorthash = Column(String)
     path = Column(String)
+    created = Column(DateTime)
+    original_name = Column(Unicode(512))
+
+    def __init__(self):
+        self.created = datetime.now()
 
 class User(Base):
     __tablename__ = 'user'

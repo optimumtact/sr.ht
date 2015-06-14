@@ -88,6 +88,7 @@ def upload():
         shorthash = upload.hash[:len]
     upload.shorthash = shorthash
     upload.path = os.path.join(upload.shorthash + "." + extension(filename))
+    upload.original_name = f.filename
 
     f.seek(0)
     f.save(os.path.join(_cfg("storage"), upload.path))
