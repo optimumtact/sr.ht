@@ -1,0 +1,22 @@
+{% extends "layout.html" %}
+{% block body %} 
+<div class="text-center">
+    <h1><a href="/">sr.ht</a></h1>
+    <h4>My Uploads</h4>
+</div>
+<hr />
+<table class="table">
+    <thead>
+        <tr>
+            <th>File</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for upload in uploads %}
+        <tr>
+            <td><a href="{{ file_link(upload.path) }}">{{ upload.path }}</a></td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

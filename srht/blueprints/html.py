@@ -178,3 +178,8 @@ def reset_password(username, confirmation):
         user.passwordResetExpiry = None
         db.commit()
         return redirect("/login?reset=1")
+
+@html.route("/uploads")
+@loginrequired
+def uploads():
+    return render_template("uploads.html", uploads=current_user.upload)

@@ -4,6 +4,7 @@ from werkzeug.utils import secure_filename
 from functools import wraps
 from srht.objects import User
 from srht.database import db, Base
+from srht.config import _cfg
 
 import json
 import urllib
@@ -94,3 +95,6 @@ def cors(f):
         return res
 
     return wrapper
+
+def file_link(path):
+    return _cfg("protocol") + "://" + _cfg("domain") + "/" + path

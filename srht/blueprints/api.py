@@ -79,7 +79,7 @@ def upload():
             "success": True,
             "hash": existing.hash,
             "shorthash": existing.shorthash,
-            "url": _cfg("protocol") + "://" + _cfg("domain") + "/" + existing.path
+            "url": file_link(existing.path)
         }
     len = 3
     shorthash = upload.hash[:len]
