@@ -12,7 +12,7 @@ class Upload(Base):
     __tablename__ = 'upload'
     id = Column(Integer, primary_key = True)
     user_id = Column(Integer, ForeignKey('user.id'))
-    user = relationship('User', backref=backref('upload', order_by=id)) 
+    user = relationship('User', backref=backref('uploads', order_by=id)) 
     hash = Column(String)
     shorthash = Column(String)
     path = Column(String)
