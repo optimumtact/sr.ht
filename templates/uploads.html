@@ -8,13 +8,21 @@
 <table class="table">
     <thead>
         <tr>
-            <th>File</th>
+            <th>URL</th>
+            <th>Name</th>
+            <th>Created</th>
         </tr>
     </thead>
     <tbody>
         {% for upload in uploads %}
         <tr>
             <td><a href="{{ file_link(upload.path) }}">{{ upload.path }}</a></td>
+            <td>{{ upload.original_name }}</td>
+            <td>
+                {% if upload.created %}
+                {{ upload.created.strftime("%Y-%m-%d") }}
+                {% endif %}
+            </td>
         </tr>
         {% endfor %}
     </tbody>
