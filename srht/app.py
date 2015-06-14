@@ -92,6 +92,7 @@ def inject():
         'request': request,
         'locale': locale,
         'url_for': url_for,
+        'file_link': file_link,
         'user': current_user,
         'random': random,
         'owner': _cfg("owner"),
