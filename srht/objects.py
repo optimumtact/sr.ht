@@ -13,9 +13,9 @@ class Upload(Base):
     id = Column(Integer, primary_key = True)
     user_id = Column(Integer, ForeignKey('user.id'))
     user = relationship('User', backref=backref('upload', order_by=id)) 
-    hash = Column(String)
-    shorthash = Column(String)
-    path = Column(String)
+    hash = Column(String, nullable=False)
+    shorthash = Column(String, nullable=False)
+    path = Column(String, nullable=False)
     created = Column(DateTime)
     original_name = Column(Unicode(512))
 
