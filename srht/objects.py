@@ -32,7 +32,7 @@ class User(Base):
     comments = Column(Unicode(512))
     approved = Column(Boolean())
     rejected = Column(Boolean())
-    uploads = relationship('Upload', order_by='Mod.id')
+    uploads = relationship('Upload', order_by='Upload.id')
 
     def set_password(self, password):
         self.password = bcrypt.hashpw(password, bcrypt.gensalt())
