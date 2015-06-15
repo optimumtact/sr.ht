@@ -81,7 +81,7 @@ def upload():
             "shorthash": existing.shorthash,
             "url": file_link(existing.path)
         }
-    len = 3
+    len = 4
     shorthash = upload.hash[:len]
     while any(Upload.query.filter(Upload.shorthash == shorthash)):
         len += 1
