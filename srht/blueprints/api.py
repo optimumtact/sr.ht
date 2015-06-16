@@ -102,6 +102,18 @@ def upload():
         "url": _cfg("protocol") + "://" + _cfg("domain") + "/" + upload.path
     }
 
+@api.route("/api/delete", methods=["GET"])
+@json_output
+def delete():
+    filename = request.form.get('filename')
+    key = request.form.get('key')
+    if not path:
+        return { "error": "File not found" }, 400
+    if not key:
+        return { "error": "Invalid delete key"}, 403
+
+    os.remove(os.path.join(_cfg("storage"), filename))
+
 def get_hash(f):
     f.seek(0)
     return hashlib.md5(f.read()).hexdigest()

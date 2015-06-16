@@ -16,6 +16,7 @@ import json
 import locale
 import shlex
 import math
+import hashlib
 
 encoding = locale.getdefaultlocale()[1]
 html = Blueprint('html', __name__, template_folder='../../templates')
@@ -183,3 +184,11 @@ def reset_password(username, confirmation):
 @loginrequired
 def uploads():
     return render_template("uploads.html", uploads=current_user.upload)
+@html.route("/delete", methods=['GET'])
+@loginrequired
+def delete():
+    if request.method == 'GET':
+        if request.args.get('key') == hashlib.sha256(bytes(request.args.get('filename') + current_user.apiKey, "utf-8")).hexdigest():
+           print("Deleting " + request.args.get('filename')) 
+           return redirect("/uploads")
+    return render_template("not_found.html")
