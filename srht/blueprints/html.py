@@ -188,7 +188,11 @@ def uploads():
 @loginrequired
 def delete():
     if request.method == 'GET':
-        if request.args.get('key') == hashlib.sha256(bytes(request.args.get('filename') + current_user.apiKey, "utf-8")).hexdigest():
-           print("Deleting " + request.args.get('filename')) 
-           return redirect("/uploads")
+        filename = request.args.get('filename')
+        key = request.args.get('key')
+        if key == hashlib.sha256(bytes(filename + current_user.apiKey, "utf-8")).hexdigest():
+            db.delete(Upload.query.filter_by(path=filename).first())
+            db.commit()
+            os.remove(os.path.join(_cfg("storage"), filename))
+            return redirect("/uploads")
     return render_template("not_found.html")

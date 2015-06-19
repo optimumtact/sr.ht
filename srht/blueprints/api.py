@@ -107,12 +107,17 @@ def upload():
 def delete():
     filename = request.form.get('filename')
     key = request.form.get('key')
-    if not path:
+    if not filename:
         return { "error": "File not found" }, 400
     if not key:
         return { "error": "Invalid delete key"}, 403
-
+    db.delete(Upload.query.filter_by(path=filename).first())
+    db.commit()
     os.remove(os.path.join(_cfg("storage"), filename))
+    return {
+            "success": True,
+            "filename": filename
+    }
 
 def get_hash(f):
     f.seek(0)
