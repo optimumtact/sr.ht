@@ -102,18 +102,20 @@ def upload():
         "url": _cfg("protocol") + "://" + _cfg("domain") + "/" + upload.path
     }
 
-@api.route("/api/delete", methods=["GET"])
+@api.route("/api/disown", methods=["POST"])
 @json_output
-def delete():
-    filename = request.form.get('filename')
+def disown():
     key = request.form.get('key')
-    if not filename:
-        return { "error": "File not found" }, 400
+    filename = request.form.get('filename')
     if not key:
-        return { "error": "Invalid delete key"}, 403
-    db.delete(Upload.query.filter_by(path=filename).first())
+        return { "error": "API key is required" }, 401
+    if not filename:
+        return { "error": "File is required" }, 400
+    user = User.query.filter(User.apiKey == key).first()
+    if not user:
+        return { "error": "API key not recognized" }, 403
+    Upload.query.filter_by(path=filename).first().hidden = True
     db.commit()
-    os.remove(os.path.join(_cfg("storage"), filename))
     return {
             "success": True,
             "filename": filename

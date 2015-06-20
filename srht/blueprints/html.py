@@ -183,16 +183,13 @@ def reset_password(username, confirmation):
 @html.route("/uploads")
 @loginrequired
 def uploads():
-    return render_template("uploads.html", uploads=current_user.upload)
-@html.route("/delete", methods=['GET'])
+    return render_template("uploads.html", uploads=current_user.upload.filter_by(hidden=False))
+@html.route("/disown", methods=['GET'])
 @loginrequired
-def delete():
+def disown():
     if request.method == 'GET':
         filename = request.args.get('filename')
-        key = request.args.get('key')
-        if key == hashlib.sha256(bytes(filename + current_user.apiKey, "utf-8")).hexdigest():
-            db.delete(Upload.query.filter_by(path=filename).first())
-            db.commit()
-            os.remove(os.path.join(_cfg("storage"), filename))
-            return redirect("/uploads")
+        Upload.query.filter_by(path=filename).first().hidden = True
+        db.commit()
+        return redirect("/uploads")
     return render_template("not_found.html")
