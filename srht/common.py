@@ -100,5 +100,5 @@ def cors(f):
 def file_link(path):
     return _cfg("protocol") + "://" + _cfg("domain") + "/" + path
 
-def delete_link(path):
-    return _cfg("protocol") + "://"  + _cfg("domain") + "/delete?filename=" + path + "&key=" + hashlib.sha256(bytes(path + current_user.apiKey, "utf-8")).hexdigest()
+def disown_link(path):
+    return _cfg("protocol") + "://"  + _cfg("domain") + "/disown?filename=" + path
