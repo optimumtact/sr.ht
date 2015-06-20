@@ -81,7 +81,7 @@ def upload():
             "shorthash": existing.shorthash,
             "url": file_link(existing.path)
         }
-    len = 4
+    len = 3
     shorthash = upload.hash[:len]
     while any(Upload.query.filter(Upload.shorthash == shorthash)):
         len += 1
@@ -100,6 +100,23 @@ def upload():
         "hash": upload.hash,
         "shorthash": upload.shorthash,
         "url": _cfg("protocol") + "://" + _cfg("domain") + "/" + upload.path
+    }
+
+@api.route("/api/delete", methods=["GET"])
+@json_output
+def delete():
+    filename = request.form.get('filename')
+    key = request.form.get('key')
+    if not filename:
+        return { "error": "File not found" }, 400
+    if not key:
+        return { "error": "Invalid delete key"}, 403
+    db.delete(Upload.query.filter_by(path=filename).first())
+    db.commit()
+    os.remove(os.path.join(_cfg("storage"), filename))
+    return {
+            "success": True,
+            "filename": filename
     }
 
 def get_hash(f):
