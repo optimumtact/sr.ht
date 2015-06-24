@@ -22,6 +22,7 @@ class Upload(Base):
 
     def __init__(self):
         self.created = datetime.now()
+        self.hidden = False
 
 class User(Base):
     __tablename__ = 'user'
