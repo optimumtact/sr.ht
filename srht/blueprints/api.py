@@ -102,6 +102,25 @@ def upload():
         "url": _cfg("protocol") + "://" + _cfg("domain") + "/" + upload.path
     }
 
+@api.route("/api/disown", methods=["POST"])
+@json_output
+def disown():
+    key = request.form.get('key')
+    filename = request.form.get('filename')
+    if not key:
+        return { "error": "API key is required" }, 401
+    if not filename:
+        return { "error": "File is required" }, 400
+    user = User.query.filter(User.apiKey == key).first()
+    if not user:
+        return { "error": "API key not recognized" }, 403
+    Upload.query.filter_by(path=filename).first().hidden = True
+    db.commit()
+    return {
+            "success": True,
+            "filename": filename
+    }
+
 def get_hash(f):
     f.seek(0)
     return hashlib.md5(f.read()).hexdigest()

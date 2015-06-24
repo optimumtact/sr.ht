@@ -10,6 +10,7 @@ import json
 import urllib
 import requests
 import xml.etree.ElementTree as ET
+import hashlib
 
 def firstparagraph(text):
     try:
@@ -98,3 +99,6 @@ def cors(f):
 
 def file_link(path):
     return _cfg("protocol") + "://" + _cfg("domain") + "/" + path
+
+def disown_link(path):
+    return _cfg("protocol") + "://"  + _cfg("domain") + "/disown?filename=" + path
