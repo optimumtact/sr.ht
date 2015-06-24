@@ -93,6 +93,12 @@ def upload():
     f.seek(0)
     f.save(os.path.join(_cfg("storage"), upload.path))
 
+    if not upload.shorthash:
+        return {
+            "success": False,
+            "error": "Upload interrupted"
+        }
+
     db.add(upload)
     db.commit()
     return {
