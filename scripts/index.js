@@ -1,3 +1,5 @@
+var paste = document.getElementById("paste");
+var pasteBtn = document.getElementById("paste-btn");
 var browse = document.getElementById('browse');
 
 window.addEventListener('dragenter', dragNOP, false);
@@ -70,6 +72,17 @@ function handleDragDrop(e) {
         uploadFile(file, progress);
     }
 }
+
+paste.addEventListener("keydown", function() {
+    pasteBtn.style.display = 'block';
+});
+pasteBtn.addEventListener("click", function(e) {
+    e.preventDefault();
+    var blob = new Blob([paste.value], {type: "text/plain"});
+    var file = new File([blob], "paste.txt");
+    var progress = addRow(file);
+    uploadFile(file, progress);
+});
 
 function uploadFile(file, progress) {
     var bar = progress.querySelector(".progress-bar");
