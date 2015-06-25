@@ -98,4 +98,5 @@ def inject():
         'random': random,
         'owner': _cfg("owner"),
         'owner_email': _cfg("owner_email"),
+        '_cfg': _cfg
     }

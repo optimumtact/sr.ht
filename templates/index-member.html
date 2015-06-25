@@ -6,7 +6,7 @@ window.root = "{{ root }}";
 </script>
 <div class="text-center">
     <h1>Hello!</h1>
-    <h4>Upload limit is 50 MB.</h4>
+    <h4>Upload limit is {{ _cfg("max-upload") }}.</h4>
 </div>
 <hr />
 {% if new %}

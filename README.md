@@ -1,12 +1,12 @@
 # sr.ht
 
-Private file hosting.
+Private file hosting for you and your friends.
 
-![](https://sr.ht/fda.png)
+![](https://sr.ht/9087.png)
 
-I run a private instance of sr.ht *at* [sr.ht](https://sr.ht). If you aren't
-already friends with me and you want to use it, you have to deploy your own
-sr.ht instance. Instructions follow:
+I run a private instance of sr.ht *at* [sr.ht](https://sr.ht). You can request
+an invite if you know me personally. Otherwise, here are the setup instructions
+to run it on your own infrastructure:
 
 ## Running the site
 
@@ -117,13 +117,29 @@ then read the SQL stuff below before you let it go for good.
 nginx configuration is available in `nginx/`, modify it to suit your environment.
 **nginx is required to run sr.ht properly**.
 
+## Becoming an admin
+
+You can become an admin like so:
+
+    $ cd /path/to/sr.ht/
+    $ source bin/activate
+    $ python
+    >>> from srht.database import db
+    >>> from srht.objects import User
+    >>> from datetime import datetime
+    >>> u = User.query.filter(User.username == "your username").first()
+    >>> u.approved = True # approve yourself
+    >>> u.approvalDate = datetime.now()
+    >>> u.admin = True # make yourself an admin
+    >>> db.commit()
+
 ## SQL Stuff
 
 We use alembic for schema migrations between versions. The first time you run the
 application, the schema will be created. However, you need to tell alembic about
 it. Run the application at least once, then:
 
-    $ cd /path/to/truecraft.io/
+    $ cd /path/to/sr.ht/
     $ source bin/activate
     $ python
     >>> from alembic.config import Config

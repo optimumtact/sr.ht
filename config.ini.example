@@ -31,3 +31,7 @@ owner_email=your@email.com
 
 # SQL connection string
 connection-string=postgresql://postgres@localhost/sr.ht
+
+# This is NOT enforced - it's just for the UI
+# You need to set client_max_body_size 50M; or similar in your nginx.conf
+max-upload=50 MB
