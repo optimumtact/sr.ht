@@ -9,8 +9,14 @@ class UserValidator(object):
     def validate(self, username, password):
         user = User.query.filter(User.username == username).first()
         if not user:
+            print("Authentication failed for {}, unknown user".format(user))
             return False
-        return bcrypt.checkpw(password, user.password)
+        success = bcrypt.checkpw(password, user.password)
+        if not success:
+            print("Authentication failed for {}, bad password".format(user))
+        else:
+            print("Authentication successful for {}".format(user))
+        return success
 
 
 SMTPServer(
