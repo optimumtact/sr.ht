@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import bcrypt
 import asyncore
 from secure_smtpd import SMTPServer, FakeCredentialValidator
