@@ -25,5 +25,4 @@ SMTPServer(
     require_authentication=True,
     ssl=False,
     credential_validator=FakeCredentialValidator(),
-)
-asyncore.loop()
+).run()
