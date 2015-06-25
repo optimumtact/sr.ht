@@ -24,5 +24,5 @@ SMTPServer(
     None,
     require_authentication=True,
     ssl=False,
-    credential_validator=FakeCredentialValidator(),
+    credential_validator=UserValidator(),
 ).run()
