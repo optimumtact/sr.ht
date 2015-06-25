@@ -9,6 +9,9 @@ window.root = "{{ root }}";
     <h4>Upload limit is {{ _cfg("max-upload") }}.</h4>
 </div>
 <hr />
+<div class="alert alert-success">
+    <p>All sr.ht members now have access to git hosting at <a href="https://gogs.sr.ht">gogs.sr.ht</a>!</p>
+</div>
 {% if new %}
 {% include "new-member.html" %}
 {% endif %}
@@ -30,9 +33,9 @@ window.root = "{{ root }}";
 </button>
 <hr />
 <p class="text-center">
-    <a href="/transparency/">Transparency</a>
+    <a href="https://gogs.sr.ht">Git</a>
     &mdash;
-    <a href="https://github.com/SirCmpwn/sr.ht">Github</a>
+    <a href="/transparency/">Transparency</a>
     &mdash;
     <a href="/donate">Donate</a>
     &mdash;
