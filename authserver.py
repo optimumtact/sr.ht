@@ -11,7 +11,7 @@ class UserValidator(object):
         if not user:
             print("Authentication failed for {}, unknown user".format(user))
             return False
-        success = bcrypt.checkpw(password, user.password)
+        success = bcrypt.hashpw(password, user.password) == user.password
         if not success:
             print("Authentication failed for {}, bad password".format(user))
         else:
