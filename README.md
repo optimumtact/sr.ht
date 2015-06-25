@@ -12,41 +12,30 @@ to run it on your own infrastructure:
 
 Quick overview:
 
-1. Install Python 3, virtualenv, PostgreSQL
-2. Set up aforementioned things
+1. Install dependencies
+2. Set up dependencies
 3. Clone the repository
-4. Activate the virtualenv
-5. Install pip requirements
 7. Configure the site
 8. Compile static assets
-9. SQL
-10. Site configuration
+9. Set up SQL
+10. Deployment
 
 **Install the dependencies**
 
-You'll need these things:
+You'll need these things (Arch packages in parenthesis, some from AUR):
 
-* Python 3
-* virtualenv
-* PostgreSQL
-* scss
+* Python 3 (python)
+* PostgreSQL (postgresql)
+* scss (ruby-sass)
+* Flask (python-flask)
+* SQLAlchemy (python-sqlalchemy)
+* Flask-Login (python-flask-login)
+* psycopg2 (python-psycopg2)
+* bcrypt (python-bcrypt)
 
 Use the packages your OS provides, or build them from source.
 
 **Set up services**
-
-Do a quick sanity check on all of those things.
-
-    $ python3 --version
-      Python 3.4.1
-    $ pip --version
-      pip 1.5.6 from /usr/lib/python3.4/site-packages (python 3.4)
-    $ virtualenv --version
-      1.11.6
-    $ psql --version
-      psql (PostgreSQL) 9.3.4
-
-YMMV if you use versions that differ from these.
 
 I'll leave you to set up PostgreSQL however you please. Prepare a connection
 string that looks like this when you're done:
@@ -67,18 +56,6 @@ Find a place you want the code to live.
     $ git clone git://github.com/SirCmpwn/sr.ht.git
     $ cd sr.ht
 
-**Activate virtualenv**
-
-    $ virtualenv --no-site-packages .
-    $ source bin/activate
-
-If you're like me and are on a system where `python3` is not the name of your
-Python executable, use `--python=somethingelse` to fix that.
-
-**pip requirements**
-
-    $ pip install -r requirements.txt
-
 **Configure the site**
 
     $ cp alembic.ini.example alembic.ini
@@ -92,7 +69,7 @@ Edit config.ini and alembic.ini to your liking.
 
 Run this again whenever you pull the code.
 
-**Site Configuration**
+**Deployment**
 
 What you do from here depends on your site-specific configuration. If you just
 want to run the site for development, you can source the virtualenv and run
