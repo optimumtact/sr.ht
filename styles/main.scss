@@ -49,3 +49,12 @@ body {
         text-decoration: none;
     }
 }
+
+#qrcode {
+    text-align: center;
+    margin: 5px 0;
+
+    img {
+        display: inline !important;
+    }
+}

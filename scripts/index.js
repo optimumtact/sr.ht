@@ -34,6 +34,9 @@ document.getElementById("reset-key").addEventListener("click", function(e) {
         document.getElementById("syntaxKey").innerHTML =
             "curl \\\n    -F key=" + key + " \\\n    -F file=@example.png \\\n    " + window.root + "/api/upload";
         window.api_key = key;
+        var q = document.getElementById("qrcode");
+        q.innerHTML = "";
+        new QRCode(q, "srht:" + window.api_key);
     };
     var form = new FormData();
     form.append("key", window.api_key);
@@ -104,3 +107,5 @@ function uploadFile(file, progress) {
     form.append("file", file);
     xhr.send(form);
 }
+
+new QRCode(document.getElementById("qrcode"), "srht:" + window.api_key);

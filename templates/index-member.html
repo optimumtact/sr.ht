@@ -64,6 +64,7 @@ window.root = "{{ root }}";
     -F key={{user.apiKey}} \
     -F file=@example.png \
     {{root}}/api/upload</pre>
+                <div id="qrcode"></div>
                 <p>If your key is compromised, press "Reset Key" below.</p>
             </div>
             <div class="modal-footer">
@@ -73,5 +74,7 @@ window.root = "{{ root }}";
         </div>
     </div>
 </div>
+{% endblock %}
+{% block scripts %}
 <script src="/static/index.js"></script>
 {% endblock %}
