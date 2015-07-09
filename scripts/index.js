@@ -36,7 +36,7 @@ document.getElementById("reset-key").addEventListener("click", function(e) {
         window.api_key = key;
         var q = document.getElementById("qrcode");
         q.innerHTML = "";
-        new QRCode(q, "srht:" + window.api_key);
+        new QRCode(q, "srht:" + window.location.hostname + ":" + window.api_key);
     };
     var form = new FormData();
     form.append("key", window.api_key);
