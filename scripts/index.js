@@ -108,4 +108,4 @@ function uploadFile(file, progress) {
     xhr.send(form);
 }
 
-new QRCode(document.getElementById("qrcode"), "srht:" + window.api_key);
+new QRCode(document.getElementById("qrcode"), "srht:" + window.location.hostname + ":" + window.api_key);
