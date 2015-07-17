@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 from pytoxns import make_server
 from srht.objects import User
 import os
