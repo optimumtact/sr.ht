@@ -9,6 +9,7 @@ window.root = "{{ root }}";
     <h4>Upload limit is {{ _cfg("max-upload") }}.</h4>
 </div>
 <hr />
+{% include "notice.html" %}
 {% if new %}
 {% include "new-member.html" %}
 {% endif %}
