@@ -131,4 +131,22 @@ def get_hash(f):
     f.seek(0)
     return hashlib.md5(f.read()).hexdigest()
 
+@api.route("/api/tox", methods=['POST'])
+@json_output
+def tox():
+    key = request.form.get('key')
+    tox_id = request.form.get('id')
+    if not key:
+        return { "error": "API key is required" }, 401
+    if not tox_id:
+        return { "error": "Tox ID is required" }, 400
+    user = User.query.filter(User.apiKey == key).first()
+    if not user:
+        return { "error": "API key not recognized" }, 403
+    user.tox_id = tox_id
+    db.commit()
+    return {
+        "success": True
+    }
+
 extension = lambda f: f.rsplit('.', 1)[-1].lower()

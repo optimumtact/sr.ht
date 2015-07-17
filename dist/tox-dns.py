@@ -6,7 +6,8 @@ import pwd
 import grp
 
 def lookup(name):
-    u = User.query.filter(User.name == name).first()
+    parts = name.split("@")
+    u = User.query.filter(User.username.ilike(parts[0])).first()
     if not u:
         return None
     return u.tox_id
