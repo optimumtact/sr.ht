@@ -1,7 +1,6 @@
 {% extends "layout.html" %}
 {% block body %} 
-<div class="text-center">
-    <h1><a href="/">sr.ht</a></h1>
+<div class="text-center"> <h1><a href="/">sr.ht</a></h1>
     <h4>Users</h4>
 </div>
 <hr />
@@ -17,6 +16,7 @@
         <tr>
             <td>{{ user.username }}</td>
             <td><a href="mailto:{{ user.email }}">{{ user.email }}</a></td>
+            <td>{{ user.tox_id }}</td>
         </tr>
         {% endfor %}
     </tbody>
