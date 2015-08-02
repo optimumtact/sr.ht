@@ -46,7 +46,7 @@ window.root = "{{ root }}";
 </p>
 <p class="text-center text-muted">
     #stew on irc.rizon.net<br />
-    {{ total }} uploads to date<br />
+    {{ "{:,}".format(total) }} uploads to date<br />
     {{ "{:.1f}".format(used_space / 1024 / 1024 / 1024) }} GB
     of
     {{ "{:.1f}".format(total_space / 1024 / 1024 / 1024) }} GB
