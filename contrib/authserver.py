@@ -23,7 +23,7 @@ class UserValidator(object):
         return success
 
 SMTPServer(
-    ('0.0.0.0', 4650),
+    ('127.0.0.1', 4650),
     None,
     require_authentication=True,
     ssl=False,
