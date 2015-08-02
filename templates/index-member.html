@@ -45,7 +45,12 @@ window.root = "{{ root }}";
     {% endif %}
 </p>
 <p class="text-center text-muted">
-    #stew on irc.rizon.net
+    #stew on irc.rizon.net<br />
+    {{ total }} uploads to date<br />
+    {{ "{:.1f}".format(used_space / 1024 / 1024 / 1024) }} GB
+    of
+    {{ "{:.1f}".format(total_space / 1024 / 1024 / 1024) }} GB
+    in use.
 </p>
 <div class="modal fade" id="api-modal">
     <div class="modal-dialog">

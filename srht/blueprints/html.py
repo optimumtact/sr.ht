@@ -25,7 +25,13 @@ html = Blueprint('html', __name__, template_folder='../../templates')
 def index():
     if current_user and current_user.approved:
         new = datetime.now() - timedelta(hours=24) < current_user.approvalDate
-        return render_template("index-member.html", new=new)
+        total = Upload.query.count()
+        st = os.statvfs("/")
+        free_space = st.f_bavail * st.f_frsize
+        total_space = st.f_blocks * st.f_frsize
+        used_space = (st.f_blocks - st.f_bfree) * st.f_frsize
+        return render_template("index-member.html", new=new, total=total, \
+                used_space=used_space, free_space=free_space, total_space=total_space)
     return render_template("index.html")
 
 @html.route("/register", methods=['POST'])
