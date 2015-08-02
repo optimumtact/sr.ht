@@ -17,6 +17,7 @@ import json
 import locale
 import shlex
 import math
+import base64
 
 encoding = locale.getdefaultlocale()[1]
 api = Blueprint('api', __name__, template_folder='../../templates')
@@ -129,7 +130,7 @@ def disown():
 
 def get_hash(f):
     f.seek(0)
-    return hashlib.md5(f.read()).hexdigest()
+    return base64.urlsafe_b64encode(hashlib.md5(f.read()).digest()).decode("utf-8")
 
 @api.route("/api/tox", methods=['POST'])
 @json_output
