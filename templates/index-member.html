@@ -30,20 +30,6 @@ window.root = "{{ root }}";
     API Info
 </button>
 <hr />
-<p class="text-center">
-    <a href="https://gogs.sr.ht">Git</a>
-    &mdash;
-    <a href="/donate">Donate</a>
-    &mdash;
-    <a href="/script">Bash script</a>
-</p>
-<p class="text-center">Logged in as {{ user.username }}
-    &mdash; <a href="/logout">Log Out</a>
-    &mdash; <a href="/uploads">My Uploads</a>
-    {% if user.admin %}
-    &mdash; <a href="/approvals">Approvals</a>
-    {% endif %}
-</p>
 <p class="text-center text-muted">
     #stew on irc.rizon.net<br />
     {{ "{:,}".format(total) }} uploads to date<br />
@@ -52,6 +38,20 @@ window.root = "{{ root }}";
     {{ "{:.1f}".format(total_space / 1024 / 1024 / 1024) }} GB
     in use
 </p>
+<nav>
+    Logged in as {{ user.username }}
+    &mdash;
+    <a href="/logout">Log Out</a>
+    &mdash;
+    <a href="https://gogs.sr.ht">Git</a>
+    &mdash;
+    <a href="/donate">Donate</a>
+    &mdash;
+    <a href="/script">Bash script</a>
+    &mdash; <a href="/uploads">My Uploads</a>
+</nav>
+{% endblock %}
+{% block modal %}
 <div class="modal fade" id="api-modal">
     <div class="modal-dialog">
         <div class="modal-content">

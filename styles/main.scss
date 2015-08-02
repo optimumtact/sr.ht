@@ -2,6 +2,12 @@ body {
     background: #F7F7F7;
 }
 
+nav {
+    position: fixed;
+    left: 5px;
+    bottom: 5px;
+}
+
 .moe {
     position: fixed;
     bottom: 0;
@@ -10,6 +16,17 @@ body {
 
 .container {
     width: 600px;
+    position: relative;
+    z-index: 1;
+    background: rgba(247, 247, 247, 0.7);
+}
+
+.modal-backdrop {
+    z-index: 10;
+}
+
+.modal {
+    z-index: 11;
 }
 
 .table {
