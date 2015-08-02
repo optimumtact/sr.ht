@@ -30,6 +30,11 @@ window.root = "{{ root }}";
     API Info
 </button>
 <hr />
+{% if user.admin and approvals != 0 %}
+<p class="text-center text-muted">
+{{ approvals }} account{%if approvals != 1%}s{%endif%} <a href="/approvals">pending approval</a>.
+</p>
+{% endif %}
 <p class="text-center text-muted">
     #stew on irc.rizon.net<br />
     {{ "{:,}".format(total) }} uploads to date<br />

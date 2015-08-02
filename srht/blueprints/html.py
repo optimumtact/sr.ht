@@ -30,8 +30,9 @@ def index():
         free_space = st.f_bavail * st.f_frsize
         total_space = st.f_blocks * st.f_frsize
         used_space = (st.f_blocks - st.f_bfree) * st.f_frsize
+        approvals = User.query.filter(User.approved == False).filter(User.rejected == False).count()
         return render_template("index-member.html", new=new, total=total, \
-                used_space=used_space, free_space=free_space, total_space=total_space)
+                used_space=used_space, free_space=free_space, total_space=total_space, approvals=approvals)
     return render_template("index.html")
 
 @html.route("/register", methods=['POST'])
