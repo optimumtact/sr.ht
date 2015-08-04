@@ -136,7 +136,7 @@ def approvals():
 @loginrequired
 @adminrequired
 def users():
-    users = User.query.order_by(User.created).all()
+    users = User.query.filter(User.approved).order_by(User.created).all()
     return render_template("users.html", users=users)
 
 @html.route("/forgot-password", methods=['GET', 'POST'])
