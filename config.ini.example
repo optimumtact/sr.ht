@@ -35,3 +35,11 @@ connection-string=postgresql://postgres@localhost/sr.ht
 # This is NOT enforced - it's just for the UI
 # You need to set client_max_body_size 50M; or similar in your nginx.conf
 max-upload=50 MB
+
+# Set to 'yes' to add a link to /donate on the home page (for members)
+# You should probably add an override template for it
+donation-page=no
+
+# Set to 'yes' to add a link to /resources on the home page (for members)
+# Usually only relevant for members of sr.ht upstream
+resources-page=no

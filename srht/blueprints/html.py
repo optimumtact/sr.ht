@@ -114,6 +114,11 @@ def pending():
 def donate():
     return render_template("donate.html")
 
+@html.route("/resources")
+@loginrequired
+def resources():
+    return render_template("resources.html")
+
 @html.route("/script")
 @loginrequired
 def script():

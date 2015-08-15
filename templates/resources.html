@@ -1,0 +1,25 @@
+{% extends "layout.html" %}
+{% block body %} 
+<script>
+window.api_key = "{{ user.apiKey }}";
+window.root = "{{ root }}";
+</script>
+<div class="text-center">
+    <h1>sr.ht services</h1>
+    <h4 class="text-muted">Extra services and resources for you</h4>
+</div>
+<hr />
+<div class="text-center">
+    <h3>Bash script</h3>
+    <p>You can upload to sr.ht with our <a href="/script">bash script</a>.</p>
+    <h3>Android app</h3>
+    <p>Ditto, we have an <a href="https://play.google.com/store/apps/details?id=io.github.wiiam.srhtandroid">Android app</a>.</p>
+    <h3>Free git hosting</h3>
+    <p>Visit <a href="https://gogs.sr.ht">gogs.sr.ht</a>.</p>
+    <h3>Tox ID service</h3>
+    <p>You can set {{ user.username }}@sr.ht as your Tox ID (like <a href="https://toxme.se/">toxme.se</a>):</p>
+    <input type="text" class="form-control" placeholder="Tox ID" value="{{user.tox_id if user.tox_id else ""}}" />
+    <h3>More stuff?</h3>
+    <p><a href="mailto:{{owner_email}}">Get in touch</a> if you have any more ideas worth hosting here.</p>
+</div>
+{% endblock %}
