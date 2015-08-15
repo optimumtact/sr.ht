@@ -18,8 +18,23 @@ window.root = "{{ root }}";
     <p>Visit <a href="https://gogs.sr.ht">gogs.sr.ht</a>.</p>
     <h3>Tox ID service</h3>
     <p>You can set {{ user.username }}@sr.ht as your Tox ID (like <a href="https://toxme.se/">toxme.se</a>):</p>
-    <input type="text" class="form-control" placeholder="Tox ID" value="{{user.tox_id if user.tox_id else ""}}" />
+    <input id="tox-id" type="text" class="form-control" placeholder="Tox ID" value="{{user.tox_id if user.tox_id else ""}}" />
     <h3>More stuff?</h3>
     <p><a href="mailto:{{owner_email}}">Get in touch</a> if you have any more ideas worth hosting here.</p>
 </div>
+{% endblock %}
+{% block scripts %}
+<script>
+(function() {
+    var tox_id = document.getElementById("tox-id");
+    tox_id.addEventListener("change", function() {
+        var xhr = new XMLHttpRequest();
+        xhr.open("POST", "/api/tox");
+        var form = new FormData();
+        form.append("key", window.api_key);
+        form.append("id", tox_id.value);
+        xhr.send(form);
+    });
+})();
+</script>
 {% endblock %}

@@ -139,7 +139,7 @@ def tox():
     tox_id = request.form.get('id')
     if not key:
         return { "error": "API key is required" }, 401
-    if not tox_id:
+    if tox_id is None:
         return { "error": "Tox ID is required" }, 400
     user = User.query.filter(User.apiKey == key).first()
     if not user:
