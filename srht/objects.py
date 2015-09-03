@@ -42,7 +42,7 @@ class User(Base):
     tox_id = Column(String(76))
 
     def set_password(self, password):
-        self.password = bcrypt.hashpw(password.encode('UTF-8'), bcrypt.gensalt())
+        self.password = bcrypt.hashpw(password.encode('UTF-8'), bcrypt.gensalt()).decode('UTF-8')
 
     def generate_api_key(self):
         salt = os.urandom(40)
