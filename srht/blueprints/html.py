@@ -168,7 +168,7 @@ def forgot_password():
 def reset_password(username, confirmation):
     user = User.query.filter(User.username == username).first()
     if not user:
-        redirect"%s://%s/" % (_cfg('protocol'), cfg('domain')))
+        redirect("%s://%s/" % (_cfg('protocol'), cfg('domain')))
     if request.method == 'GET':
         if user.passwordResetExpiry == None or user.passwordResetExpiry < datetime.now():
             return render_template("reset.html", expired=True)
