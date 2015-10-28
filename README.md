@@ -102,7 +102,7 @@ When running in a production enviornment, run `python app.py` at least once and
 then read the SQL stuff below before you let it go for good.
 
 nginx configuration is available in `nginx/`, modify it to suit your environment.
-**nginx is required to run sr.ht properly**.
+**nginx is required to run u.pste.pw properly**.
 
 ## Becoming an admin
 
