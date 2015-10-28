@@ -44,7 +44,7 @@ window.root = "{{ root }}";
         {{ "{:.1f}".format(total_space / 1024 / 1024 / 1024) }} GB
         in use
     </p>
-    <nav>
+    <div class="inline-menu">
         Logged in as {{ user.username }}
         &mdash;
         <a href="/logout">Log Out</a>
@@ -58,7 +58,7 @@ window.root = "{{ root }}";
         &mdash;
         <a href="/resources">Resources</a>
         {% endif %}
-    </nav>
+    </div>
 </div>
 {% endblock %}
 {% block modal %}

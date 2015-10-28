@@ -15,7 +15,8 @@ p, div {
     font-family: $font-stack;
 }
 
-nav {
+.inline-menu {
+	display: inline;
     position: fixed;
     left: 5px;
     bottom: 5px;
