@@ -4,6 +4,21 @@
 window.api_key = "{{ user.apiKey }}";
 window.root = "{{ root }}";
 </script>
+<div class="inline-menu">
+    Logged in as {{ user.username }}
+    &mdash;
+    <a href="/logout">Log Out</a>
+    &mdash;
+    <a href="/uploads">Your Uploads</a>
+    {% if _cfg("donation-page") == "yes" %}
+    &mdash;
+    <a href="/donate">Donate</a>
+    {% endif %}
+    {% if _cfg("resources-page") == "yes" %}
+    &mdash;
+    <a href="/resources">Resources</a>
+    {% endif %}
+</div>
 <div class="text-center">
     <h1>Hello!</h1>
     <h4>Upload limit is {{ _cfg("max-upload") }}.</h4>
@@ -44,21 +59,6 @@ window.root = "{{ root }}";
         {{ "{:.1f}".format(total_space / 1024 / 1024 / 1024) }} GB
         in use
     </p>
-    <div class="inline-menu">
-        Logged in as {{ user.username }}
-        &mdash;
-        <a href="/logout">Log Out</a>
-        &mdash;
-        <a href="/uploads">Your Uploads</a>
-        {% if _cfg("donation-page") == "yes" %}
-        &mdash;
-        <a href="/donate">Donate</a>
-        {% endif %}
-        {% if _cfg("resources-page") == "yes" %}
-        &mdash;
-        <a href="/resources">Resources</a>
-        {% endif %}
-    </div>
 </div>
 {% endblock %}
 {% block modal %}
