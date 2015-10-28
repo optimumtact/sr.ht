@@ -30,34 +30,36 @@ window.root = "{{ root }}";
     API Info
 </button>
 <hr />
-{% if user.admin and approvals != 0 %}
-<p class="text-center text-muted">
-{{ approvals }} account{%if approvals != 1%}s{%endif%} <a href="/approvals">pending approval</a>.
-</p>
-{% endif %}
-<p class="text-center text-muted">
-#{{ irc_channel }} on {{ irc_server }}<br />
-    {{ "{:,}".format(total) }} uploads to date<br />
-    {{ "{:.1f}".format(used_space / 1024 / 1024 / 1024) }} GB
-    of
-    {{ "{:.1f}".format(total_space / 1024 / 1024 / 1024) }} GB
-    in use
-</p>
-<nav>
-    Logged in as {{ user.username }}
-    &mdash;
-    <a href="/logout">Log Out</a>
-    &mdash;
-    <a href="/uploads">Your Uploads</a>
-    {% if _cfg("donation-page") == "yes" %}
-    &mdash;
-    <a href="/donate">Donate</a>
+<div class="text-center">
+    {% if user.admin and approvals != 0 %}
+    <p class="text-muted">
+    {{ approvals }} account{%if approvals != 1%}s{%endif%} <a href="/approvals">pending approval</a>.
+    </p>
     {% endif %}
-    {% if _cfg("resources-page") == "yes" %}
-    &mdash;
-    <a href="/resources">Resources</a>
-    {% endif %}
-</nav>
+    <p class="text-muted">
+    #{{ irc_channel }} on {{ irc_server }}<br />
+        {{ "{:,}".format(total) }} uploads to date<br />
+        {{ "{:.1f}".format(used_space / 1024 / 1024 / 1024) }} GB
+        of
+        {{ "{:.1f}".format(total_space / 1024 / 1024 / 1024) }} GB
+        in use
+    </p>
+    <nav>
+        Logged in as {{ user.username }}
+        &mdash;
+        <a href="/logout">Log Out</a>
+        &mdash;
+        <a href="/uploads">Your Uploads</a>
+        {% if _cfg("donation-page") == "yes" %}
+        &mdash;
+        <a href="/donate">Donate</a>
+        {% endif %}
+        {% if _cfg("resources-page") == "yes" %}
+        &mdash;
+        <a href="/resources">Resources</a>
+        {% endif %}
+    </nav>
+</div>
 {% endblock %}
 {% block modal %}
 <div class="modal fade" id="api-modal">
