@@ -8,7 +8,7 @@
         <li>For support, email <a href="mailto:{{ owner_email }}">{{ owner_email }}</a>.</li>
         <li>For support or social, hang out in #{{ irc_channel }} on {{ irc_server }}.</li>
         <li>All uploads are visible to the public. Only members may upload.</li>
-        <li>Upload limit is {{ max-upload }}.</li>
+        <li>Upload limit is {{ _cfg("max-upload") }}.</li>
         <li>Do not upload child porn or malware, you'll be banned without mercy.</li>
         {% if _cfg("donation-page") == "yes" %}
         <li>We request you <a href="/donate">donate</a> if you have the means.</li>
