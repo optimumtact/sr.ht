@@ -3,9 +3,9 @@ $font-stack: 'Open Sans', sans-serif;
 @import url(https://fonts.googleapis.com/css?family=Open+Sans:400,400italic,700);
 
 body {
-	margin-top: 10px;
+    margin-top: 10px;
     background: white;
-	font-family: $font-stack;
+    font-family: $font-stack;
 }
 
 h1, h2, h3, h4, h5, h6 {
@@ -28,7 +28,6 @@ p, div {
 
 .container {
     max-width: 600px;
-    position: relative;
     z-index: 1;
 }
 

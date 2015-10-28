@@ -5,15 +5,15 @@
 <div class="well">
     <p>Welcome to {{ domain }}, {{ user.username }}. Here's everything you need to know.</p>
     <ol>
-		<li>For support, email <a href="mailto:{{ owner_email }}">{{ owner_email }}</a>.</li>
-		<li>For support or social, hang out in #{{ irc_channel }} on {{ irc_server }}.</li>
-		<li>All uploads are visible to the public. Only members may upload.</li>
+        <li>For support, email <a href="mailto:{{ owner_email }}">{{ owner_email }}</a>.</li>
+        <li>For support or social, hang out in #{{ irc_channel }} on {{ irc_server }}.</li>
+        <li>All uploads are visible to the public. Only members may upload.</li>
+        <li>Upload limit is {{ max-upload }}.</li>
         <li>Do not upload child porn or malware, you'll be banned without mercy.</li>
         {% if _cfg("donation-page") == "yes" %}
-		<li>We request you <a href="/donate">donate</a> if you have the means.</li>
+        <li>We request you <a href="/donate">donate</a> if you have the means.</li>
         {% endif %}
-		<li>The source code is <a href="{{ git_repo }}">here</a>, feel free to send pull requests
-            or host your own version.</li>
+        <li>The source code is <a href="{{ git_repo }}">here</a>, feel free to send pull requests or host your own version.</li>
         {% if _cfg("resources-page") == "yes" %}
         <li>Some extra stuff is provided for members, <a href="/resources">full list here</a>.</li>
         {% endif %}
