@@ -7,6 +7,14 @@ body {
 	font-family: $font-stack;
 }
 
+h1, h2, h3, h4, h5, h6 {
+    font-family: $font-stack;
+}
+
+p, div {
+    font-family: $font-stack;
+}
+
 nav {
     position: fixed;
     left: 5px;
