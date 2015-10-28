@@ -126,7 +126,7 @@ def script():
 
 @html.route("/script.plain")
 def script_plain():
-    with open("templates/srht", "r") as f:
+    with open("templates/pstepw", "r") as f:
         resp = f.read()
     return Response(resp, mimetype="text/plain")
 
