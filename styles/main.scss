@@ -1,5 +1,8 @@
+$font-stack: 'Open Sans', sans-serif;
+
 body {
-    background: white;
+    background: #EEE;
+	font-family: $font-stack;
 }
 
 nav {
@@ -15,10 +18,9 @@ nav {
 }
 
 .container {
-    width: 600px;
+    max-width: 600px;
     position: relative;
     z-index: 1;
-    background: rgba(255, 255, 255, 0.7);
 }
 
 .modal-backdrop {
