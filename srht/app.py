@@ -90,7 +90,8 @@ def inject():
         'git_repo': _cfg("git_repo"),
         'irc_server': _cfg("irc_server"),
         'irc_channel': _cfg("irc_channel"),
-        'paypal_button_id': _cfg("paypal_button_id"),
+        'donate_link': _cfg("donate_link"),
+        'donate_button_image': _cfg("donate_button_image"),
         'site_cost': _cfg("site_cost"),
         'current_financial_status': _cfg("current_financial_status"),
         '_cfg': _cfg
