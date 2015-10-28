@@ -78,7 +78,7 @@ Run this again whenever you pull the code.
 **Deployment**
 
 What you do from here depends on your site-specific configuration. If you just
-want to run the site for development, you can source the virtualenv and run
+want to run the site for development, run
 
     python app.py
 
