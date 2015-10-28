@@ -2,7 +2,7 @@
 
 Private file hosting for you and your friends.
 
-![](https://sr.ht/9087.png)
+![preview](https://u.pste.pw/qVgM.png)
 
 I run a private instance of u.pste.pw *at* [u.pste.pw](https://u.pste.pw). You can request
 an invite if you'd like to join. Otherwise, here are the setup instructions
