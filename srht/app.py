@@ -61,7 +61,8 @@ if not app.debug:
            _cfg("error-from"),
            [_cfg("error-to")],
            'sr.ht application exception occured',
-           credentials=(_cfg("smtp-user"), _cfg("smtp-password")))
+           credentials=(_cfg("smtp-user"), _cfg("smtp-password")),
+           secure=())
         mail_handler.setLevel(logging.ERROR)
         app.logger.addHandler(mail_handler)
 
