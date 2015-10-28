@@ -127,7 +127,7 @@ def script():
 @html.route("/script.plain")
 def script_plain():
     with open("templates/pstepw", "r") as f:
-        resp = f.read()
+        resp = f.read().replace('{{ domain }}', _cfg('domain'))
     return Response(resp, mimetype="text/plain")
 
 @html.route("/approvals")
