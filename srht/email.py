@@ -24,10 +24,10 @@ def send_invite(user):
             })))
     message['X-MC-Important'] = "true"
     message['X-MC-PreserveRecipients'] = "false"
-    message['Subject'] = "Your u.pste.pw account is approved"
-    message['From'] = "noreply@pste.pw"
+    message['Subject'] = "Your %s account is approved" % _cfg("domain")
+    message['From'] = _cfg("smtp-from")
     message['To'] = user.email
-    smtp.sendmail("noreply@pste.pw", [ user.email ], message.as_string())
+    smtp.sendmail(_cfg("smtp-host"), [ user.email ], message.as_string())
     smtp.quit()
 
 def send_rejection(user):
@@ -39,10 +39,10 @@ def send_rejection(user):
         message = MIMEText(f.read())
     message['X-MC-Important'] = "true"
     message['X-MC-PreserveRecipients'] = "false"
-    message['Subject'] = "Your pste.pw account has been rejected"
-    message['From'] = "noreply@pste.pw"
+    message['Subject'] = "Your %s account has been rejected" % _cfg("domain")
+    message['From'] = _cfg("smtp-from")
     message['To'] = user.email
-    smtp.sendmail("noreply@pste.pw", [ user.email ], message.as_string())
+    smtp.sendmail(_cfg("smtp-from"), [ user.email ], message.as_string())
     smtp.quit()
 
 def send_reset(user):
@@ -60,8 +60,8 @@ def send_reset(user):
             })))
     message['X-MC-Important'] = "true"
     message['X-MC-PreserveRecipients'] = "false"
-    message['Subject'] = "Reset your pste.pw password"
-    message['From'] = "noreply@pste.pw"
+    message['Subject'] = "Reset your %s password" % _cfg("domain")
+    message['From'] = _cfg("smtp-from")
     message['To'] = user.email
-    smtp.sendmail("noreply@pste.pw", [ user.email ], message.as_string())
+    smtp.sendmail(_cfg("smtp-from"), [ user.email ], message.as_string())
     smtp.quit()
