@@ -24,10 +24,10 @@ def send_invite(user):
             })))
     message['X-MC-Important'] = "true"
     message['X-MC-PreserveRecipients'] = "false"
-    message['Subject'] = "Your sr.ht account is approved"
-    message['From'] = "mailer@sr.ht"
+    message['Subject'] = "Your u.pste.pw account is approved"
+    message['From'] = "noreply@pste.pw"
     message['To'] = user.email
-    smtp.sendmail("mailer@sr.ht", [ user.email ], message.as_string())
+    smtp.sendmail("noreply@pste.pw", [ user.email ], message.as_string())
     smtp.quit()
 
 def send_rejection(user):
@@ -39,10 +39,10 @@ def send_rejection(user):
         message = MIMEText(f.read())
     message['X-MC-Important'] = "true"
     message['X-MC-PreserveRecipients'] = "false"
-    message['Subject'] = "Your sr.ht account has been rejected"
-    message['From'] = "mailer@sr.ht"
+    message['Subject'] = "Your pste.pw account has been rejected"
+    message['From'] = "noreply@pste.pw"
     message['To'] = user.email
-    smtp.sendmail("mailer@sr.ht", [ user.email ], message.as_string())
+    smtp.sendmail("noreply@pste.pw", [ user.email ], message.as_string())
     smtp.quit()
 
 def send_reset(user):
@@ -60,8 +60,8 @@ def send_reset(user):
             })))
     message['X-MC-Important'] = "true"
     message['X-MC-PreserveRecipients'] = "false"
-    message['Subject'] = "Reset your sr.ht password"
-    message['From'] = "mailer@sr.ht"
+    message['Subject'] = "Reset your pste.pw password"
+    message['From'] = "noreply@pste.pw"
     message['To'] = user.email
-    smtp.sendmail("mailer@sr.ht", [ user.email ], message.as_string())
+    smtp.sendmail("noreply@pste.pw", [ user.email ], message.as_string())
     smtp.quit()

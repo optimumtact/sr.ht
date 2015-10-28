@@ -1,7 +1,7 @@
 #!/bin/bash
 #
-# srht - Upload files/scrots/urls to sr.ht (rip pomf & uguu)
-# By onodera, modified by SirCmpwn
+# srht - Upload files/scrots/urls to {{ domain }} (rip pomf & uguu)
+# By onodera, modified by TheReverend403
 
 ## CONFIGURATION
 source ~/.config/srht
@@ -63,7 +63,7 @@ desktop() {
 
 # This function uploads the $file
 upload() {
-	url="$(curl --silent -F key="$key" -F file="@$uploadme" "https://sr.ht/api/upload" | grep -o -i "https://sr.ht/*.[a-z0-9._-]*")"
+	url="$(curl --silent -F key="$key" -F file="@$uploadme" "https://{{ domain }}/api/upload" | grep -o -i "https://{{ domain }}/*.[a-z0-9._-]*")"
 }
 
 # This function logs the url,  copies the url to the clipboard, and/or opens the url in your browser

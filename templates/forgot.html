@@ -1,12 +1,12 @@
 {% extends "layout.html" %}
 {% block body %}
 <div class="text-center">
-    <h1><a href="/">sr.ht</a></h1>
+    <h1><a href="/">{{ domain }}</a></h1>
     <h4>Reset password</h4>
 </div>
 <hr />
 {% if success %}
-<p>We've sent you an email with further instructions. It should arrive soon. <a href="mailto:support@kerbalstuff.com">Email us</a>
+<p>We've sent you an email with further instructions. It should arrive soon. <a href="mailto:{{ owner_email }}">Email us</a>
 if you run into trouble.</p>
 {% else %}
 <div class="row">

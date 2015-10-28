@@ -18,6 +18,7 @@ smtp-host=
 smtp-port=
 smtp-user=
 smtp-password=
+smtp-from=noreply@pste.pw
 # Exceptions are emailed here
 error-to=
 error-from=
@@ -43,3 +44,12 @@ donation-page=no
 # Set to 'yes' to add a link to /resources on the home page (for members)
 # Usually only relevant for members of sr.ht upstream
 resources-page=no
+
+# These are strings that will be displayed in relevant locations throughout the UI
+irc_server=irc.rizon.net
+irc_channel=leliana
+git_repo=https://github.com/TheReverend403/u.pste.pw
+donate_link=
+donate_button_image=
+site_cost=$0/month
+current_financial_status=$0

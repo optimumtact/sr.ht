@@ -1,4 +1,4 @@
-Your sr.ht account has been approved, {{user.username}}. You can now login here:
+Your u.pste.pw account has been approved, {{user.username}}. You can now login here:
 
 {{protocol}}://{{domain}}/login
 
