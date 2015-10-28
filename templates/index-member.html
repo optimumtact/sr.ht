@@ -7,8 +7,6 @@ window.root = "{{ root }}";
 <div class="text-center">
     <p>Logged in as {{ user.username  }}</p>
     <div class="inline-menu">
-        <a href="/logout">Log Out</a>
-        &mdash;
         <a href="/uploads">Your Uploads</a>
         {% if _cfg("donation-page") == "yes" %}
         &mdash;
@@ -17,6 +15,8 @@ window.root = "{{ root }}";
         {% if _cfg("resources-page") == "yes" %}
         &mdash;
         <a href="/resources">Resources</a>
+        &mdash;
+        <a href="/logout">Log Out</a>
         {% endif %}
     </div>
 </div>
