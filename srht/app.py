@@ -86,5 +86,12 @@ def inject():
         'random': random,
         'owner': _cfg("owner"),
         'owner_email': _cfg("owner_email"),
+        'git_repo': _cfg("git_repo"),
+        'irc_server': _cfg("irc_server"),
+        'irc_channel': _cfg("irc_channel"),
+        'donate_link': _cfg("donate_link"),
+        'donate_button_image': _cfg("donate_button_image"),
+        'site_cost': _cfg("site_cost"),
+        'current_financial_status': _cfg("current_financial_status"),
         '_cfg': _cfg
     }
