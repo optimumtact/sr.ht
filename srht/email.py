@@ -29,7 +29,7 @@ def send_invite(user):
     message['Subject'] = "Your %s account is approved" % _cfg("domain")
     message['From'] = _cfg("smtp-from")
     message['To'] = user.email
-    smtp.sendmail(_cfg("smtp-host"), [ user.email ], message.as_string())
+    smtp.sendmail(_cfg("smtp-from"), [ user.email ], message.as_string())
     smtp.quit()
 
 def send_rejection(user):
