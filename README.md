@@ -1,12 +1,19 @@
-# sr.ht
+# u.pste.pw (fork of [sr.ht](https://github.com/SirCmpwn/sr.ht))
 
 Private file hosting for you and your friends.
 
 ![](https://sr.ht/9087.png)
 
-I run a private instance of sr.ht *at* [sr.ht](https://sr.ht). You can request
-an invite if you know me personally. Otherwise, here are the setup instructions
+I run a private instance of u.pste.pw *at* [u.pste.pw](https://u.pste.pw). You can request
+an invite if you'd like to join. Otherwise, here are the setup instructions
 to run it on your own infrastructure:
+
+## Differences from upstream
+
+* Fixed a few instances where page redirects would take you to the local IP of the sr.ht instance, which obviously isn't connectable from outside.
+* Removed most hardcoded branding and moved it to config strings.
+* Switched to simplex bootstrap theme
+* Some minor style fixes
 
 ## Running the site
 
@@ -27,11 +34,10 @@ You'll need these things (Arch packages in parenthesis, some from AUR):
 * Python 3 (python)
 * PostgreSQL (postgresql)
 * scss (ruby-sass)
-* Flask (python-flask)
-* SQLAlchemy (python-sqlalchemy)
-* Flask-Login (python-flask-login)
-* psycopg2 (python-psycopg2)
-* bcrypt (python-bcrypt)
+
+And for the rest
+
+    pip install -r requirements.txt
 
 Use the packages your OS provides, or build them from source.
 
@@ -44,7 +50,7 @@ string that looks like this when you're done:
 
 The connection string I use on localhost is this:
 
-    postgresql://postgres@localhost/sr.ht
+    postgresql://postgres@localhost/u.pste.pw
 
 We need to be able to create/alter/insert/update/delete in the database you
 give it.
@@ -53,8 +59,8 @@ give it.
 
 Find a place you want the code to live.
 
-    $ git clone git://github.com/SirCmpwn/sr.ht.git
-    $ cd sr.ht
+    $ git clone git://github.com/TheReverend403/u.pste.pw.git
+    $ cd u.pste.pw
 
 **Configure the site**
 
@@ -81,7 +87,11 @@ There's a sample nginx config in the configs/ directory here, but you'll probabl
 want to tweak it to suit your needs. Here's how you can run gunicorn, put this in
 your init scripts:
 
-    /path/to/sr.ht/bin/gunicorn app:app -b 127.0.0.1:8000
+    gunicorn app:app -b 127.0.0.1:8000
+
+Note: you may have to install gunicorn first with
+
+    pip install gunicorn
 
 The `-b` parameter specifies an endpoint to use. You probably want to bind this to
 localhost and proxy through from nginx. I'd also suggest blocking the port you
@@ -99,7 +109,6 @@ nginx configuration is available in `nginx/`, modify it to suit your environment
 You can become an admin like so:
 
     $ cd /path/to/sr.ht/
-    $ source bin/activate
     $ python
     >>> from srht.database import db
     >>> from srht.objects import User
@@ -116,8 +125,7 @@ We use alembic for schema migrations between versions. The first time you run th
 application, the schema will be created. However, you need to tell alembic about
 it. Run the application at least once, then:
 
-    $ cd /path/to/sr.ht/
-    $ source bin/activate
+    $ cd /path/to/u.pste.pw/
     $ python
     >>> from alembic.config import Config
     >>> from alembic import command
