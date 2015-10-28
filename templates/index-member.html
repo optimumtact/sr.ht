@@ -36,7 +36,7 @@ window.root = "{{ root }}";
 </p>
 {% endif %}
 <p class="text-center text-muted">
-    #leliana on irc.rizon.net<br />
+#{{ irc_channel }} on {{ irc_server }}<br />
     {{ "{:,}".format(total) }} uploads to date<br />
     {{ "{:.1f}".format(used_space / 1024 / 1024 / 1024) }} GB
     of
