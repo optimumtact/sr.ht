@@ -14,6 +14,7 @@ def send_invite(user):
     if _cfg("smtp-host") == "":
         return
     smtp = smtplib.SMTP(_cfg("smtp-host"), _cfgi("smtp-port"))
+    smtp.starttls()
     smtp.login(_cfg("smtp-user"), _cfg("smtp-password"))
     with open("emails/invite") as f:
         message = MIMEText(html.parser.HTMLParser().unescape(\
@@ -25,30 +26,32 @@ def send_invite(user):
     message['X-MC-Important'] = "true"
     message['X-MC-PreserveRecipients'] = "false"
     message['Subject'] = "Your sr.ht account is approved"
-    message['From'] = "mailer@sr.ht"
+    message['From'] = _cfg("smtp-from")
     message['To'] = user.email
-    smtp.sendmail("mailer@sr.ht", [ user.email ], message.as_string())
+    smtp.sendmail(_cfg("smtp-from"), [ user.email ], message.as_string())
     smtp.quit()
 
 def send_rejection(user):
     if _cfg("smtp-host") == "":
         return
     smtp = smtplib.SMTP(_cfg("smtp-host"), _cfgi("smtp-port"))
+    smtp.starttls()
     smtp.login(_cfg("smtp-user"), _cfg("smtp-password"))
     with open("emails/reject") as f:
         message = MIMEText(f.read())
     message['X-MC-Important'] = "true"
     message['X-MC-PreserveRecipients'] = "false"
     message['Subject'] = "Your sr.ht account has been rejected"
-    message['From'] = "mailer@sr.ht"
+    message['From'] = _cfg("smtp-from")
     message['To'] = user.email
-    smtp.sendmail("mailer@sr.ht", [ user.email ], message.as_string())
+    smtp.sendmail(_cfg("smtp-from"), [ user.email ], message.as_string())
     smtp.quit()
 
 def send_reset(user):
     if _cfg("smtp-host") == "":
         return
     smtp = smtplib.SMTP(_cfg("smtp-host"), _cfgi("smtp-port"))
+    smtp.starttls()
     smtp.login(_cfg("smtp-user"), _cfg("smtp-password"))
     with open("emails/reset") as f:
         message = MIMEText(html.parser.HTMLParser().unescape(\
@@ -61,7 +64,7 @@ def send_reset(user):
     message['X-MC-Important'] = "true"
     message['X-MC-PreserveRecipients'] = "false"
     message['Subject'] = "Reset your sr.ht password"
-    message['From'] = "mailer@sr.ht"
+    message['From'] = _cfg("smtp-from")
     message['To'] = user.email
-    smtp.sendmail("mailer@sr.ht", [ user.email ], message.as_string())
+    smtp.sendmail(_cfg("smtp-from"), [ user.email ], message.as_string())
     smtp.quit()
