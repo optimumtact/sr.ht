@@ -20,7 +20,7 @@
 <h3>{{ client.name }}</h3>
 <div class="row">
     <div class="col-md-4">
-        <p>{{ len(client.users) }} users</p>
+        <p>{{ len(client.tokens) }} users</p>
         <a href="/oauth/clients/{{ client.client_secret }}/regenerate" class="btn btn-info btn-block btn-sm">
             Regenerate secret
         </a>

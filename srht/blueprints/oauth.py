@@ -138,3 +138,20 @@ def exchange():
     r.delete("oauth.exchange.client." + code)
     r.delete("oauth.exchange.user." + code)
     return { "token": token.token }
+
+@oauth.route("/oauth/tokens")
+@loginrequired
+def tokens():
+    return render_template("oauth-tokens.html")
+
+@oauth.route("/oauth/tokens/<token>/revoke")
+@loginrequired
+def revoke_token(token):
+    token = OAuthToken.query.filter(OAuthToken.token == token).first()
+    if not token:
+        abort(404)
+    if token.user != current_user:
+        abort(404)
+    db.delete(token)
+    db.commit()
+    return redirect("/oauth/tokens")
