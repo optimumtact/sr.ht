@@ -12,10 +12,12 @@ import hashlib
 oauth = Blueprint('oauth', __name__, template_folder='../../templates')
 
 @oauth.route("/oauth/clients")
+@loginrequired
 def clients():
     return render_template("oauth-clients.html")
 
 @oauth.route("/oauth/clients", methods=["POST"])
+@loginrequired
 def clients_POST():
     name = request.form.get("name")
     info_url = request.form.get("info_url")
@@ -26,12 +28,15 @@ def clients_POST():
         return render_template("oauth-clients.html", errors="URL fields must be a URL.")
     if not redirect_uri.startswith("http://") and not redirect_uri.startswith("https://"):
         return render_template("oauth-clients.html", errors="URL fields must be a URL.")
+    if len(user.clients) > 10:
+        return render_template("oauth-clients.html", errors="You can only have 10 clients, chill out dude.")
     client = OAuthClient(current_user, name, info_url, redirect_uri)
     db.add(client)
     db.commit()
     return redirect("/oauth/clients")
 
 @oauth.route("/oauth/clients/<secret>/regenerate")
+@loginrequired
 def regenerate(secret):
     client = OAuthClient.query.filter(OAuthClient.client_secret == secret).first()
     if not client:
@@ -42,6 +47,7 @@ def regenerate(secret):
     return redirect("/oauth/clients")
 
 @oauth.route("/oauth/clients/<secret>/revoke")
+@loginrequired
 def revoke_all(secret):
     client = OAuthClient.query.filter(OAuthClient.client_secret == secret).first()
     if not client:
@@ -50,6 +56,7 @@ def revoke_all(secret):
     return redirect("/oauth/clients")
 
 @oauth.route("/oauth/clients/<secret>/delete")
+@loginrequired
 def delete_client(secret):
     client = OAuthClient.query.filter(OAuthClient.client_secret == secret).first()
     if not client:
