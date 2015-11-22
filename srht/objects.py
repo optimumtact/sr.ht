@@ -88,22 +88,23 @@ class OAuthClient(Base):
     def __repr__(self):
         return "<OAuthClient {} {} by {}>".format(self.id, self.name, self.user.username)
 
-    def __init__(self, user, name, uri):
+    def __init__(self, user, name, uri, redirect_uri):
         self.created = datetime.now()
         self.user = user
         self.name = name
         self.uri = uri
+        self.redirect_uri = redirect_uri
         salt = os.urandom(40)
-        self.client_id = hashlib.sha256(salt).hexdigest()[20:]
+        self.client_id = hashlib.sha256(salt).hexdigest()[:20]
         salt = os.urandom(40)
-        self.client_secret = hashlib.sha256(salt).hexdigest()[40:]
+        self.client_secret = hashlib.sha256(salt).hexdigest()[:40]
 
 class OAuthToken(Base):
     __tablename__ = 'oauth_tokens'
     id = Column(Integer, primary_key=True)
     created = Column(DateTime, nullable=False)
     user_id = Column(Integer, ForeignKey('user.id'))
-    user = relationship('User', backref=backref('clients'))
+    user = relationship('User', backref=backref('tokens'))
     client_id = Column(Integer, ForeignKey('oauth_clients.id'))
     client = relationship('OAuthClient', backref=backref('tokens'))
     last_used = Column(DateTime)

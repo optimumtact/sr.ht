@@ -1,0 +1,102 @@
+{% extends "layout.html" %}
+{% block body %} 
+<div class="text-center">
+    <h1>OAuth Clients</h1>
+    <p>
+    You can register OAuth clients to integrate your software with sr.ht accounts.
+    In other words, you can use this to make new services for other sr.ht users.
+    </p>
+    <p>
+        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#oauth-modal">
+        View OAuth Documentation
+        </button>
+    </p>
+</div>
+<hr />
+{% for client in user.clients %}
+<h3>{{ client.name }}</h3>
+<div class="row">
+    <div class="col-md-4">
+        <p>{{ len(client.users) }} users</p>
+        <a href="/oauth/clients/{{ client.client_secret }}/regenerate" class="btn btn-info btn-block btn-sm">
+            Regenerate secret
+        </a>
+        <a href="/oauth/clients/{{ client.client_secret }}/revoke" class="btn btn-warning btn-block btn-sm">
+            Revoke all tokens
+        </a>
+        <a href="/oauth/clients/{{ client.client_secret }}/delete" class="btn btn-danger btn-block btn-sm">
+            Delete client
+        </a>
+    </div>
+    <div class="col-md-8">
+        <dl>
+            <dt>Client ID</dt>
+            <dd>{{ client.client_id }}</dd>
+            <dt>Client Secret</dt>
+            <dd>{{ client.client_secret }}</dd>
+        </dl>
+        <p>Do not share your client secret.</p>
+    </div>
+</div>
+{% endfor %}
+<h3>Register New Client</h3>
+{% if errors %}
+<div class="alert alert-danger">
+    {{ errors }}
+</div>
+{% endif %}
+<form action="/oauth/clients" method="POST">
+    <div class="form-group">
+        <input name="name" type="text" class="form-control" placeholder="Client Name" />
+    </div>
+    <div class="form-group">
+        <input name="info_url" type="text" class="form-control" placeholder="Info URL" />
+    </div>
+    <div class="form-group">
+        <input name="redirect_uri" type="text" class="form-control" placeholder="Redirect URI" />
+    </div>
+    <div class="form-group">
+        <input type="submit" class="btn btn-primary" value="Register Client" />
+    </div>
+</form>
+{% endblock %}
+
+{% block modal %}
+<div class="modal fade" id="oauth-modal">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal"
+                    aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title">Using OAuth</h4>
+            </div>
+            <div class="modal-body">
+                <p>
+                OAuth allows you to write applications that use sr.ht accounts as the authentication
+                provider. The basic flow is this:
+                </p>
+                <ol>
+                    <li>Direct users to {{ root }}/oauth/authorize?client_id=<strong>your_client_id</strong></li>
+                    <li>Users log into their sr.ht account and say "yes" to giving you access</li>
+                    <li>User is redirected to http://<strong>redirect_uri</strong>?code=<strong>exchange_token</strong></li>
+                    <li>
+                        Your backend makes a POST to {{ root }}/oauth/exchange with code=<strong>exchange_token</strong>,
+                        client_id=<strong>your_client_id</strong>, and client_secret=<strong>your_client_secret</strong>.
+                        You will receive <code>{ "token": "the actual oauth token" }</code> in response.
+                    </li>
+                    <li>
+                        Make authenticated API requests by setting <code>Authorization: oauth_token</code>
+                        in your request headers.
+                    </li>
+                </ol>
+                <p>
+                Currently, the only API available to OAuth clients is getting user information via <code>GET {{ root }}/api/user</code>.
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Dismiss</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
