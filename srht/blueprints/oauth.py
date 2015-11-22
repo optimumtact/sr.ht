@@ -6,6 +6,8 @@ from srht.common import *
 from srht.config import _cfg
 
 from datetime import datetime, timedelta
+import urllib
+import redis
 import os
 import hashlib
 
@@ -64,3 +66,75 @@ def delete_client(secret):
     db.delete(client)
     db.commit()
     return redirect("/oauth/clients")
+
+@oauth.route("/oauth/authorize")
+@loginrequired
+def authorize():
+    client_id = request.args.get("client_id")
+    if not client_id:
+        return render_template("oauth-authorize.html", errors="Missing client_id in URL")
+    client = OAuthClient.query.filter(OAuthClient.client_id == client_id).first()
+    if not client:
+        abort(404)
+    return render_template("oauth-authorize.html", client=client)
+
+@oauth.route("/oauth/authorize", methods=["POST"])
+@loginrequired
+def authorize_POST():
+    client_id = request.form.get("client_id")
+    if not client_id:
+        return render_template("oauth-authorize.html", errors="Missing client_id")
+    client = OAuthClient.query.filter(OAuthClient.client_id == client_id).first()
+    if not client:
+        abort(404)
+    salt = os.urandom(40)
+    code = hashlib.sha256(salt).hexdigest()[:10]
+    r = redis.Redis()
+    r.setex("oauth.exchange.client." + code, client_id, 600) # expires in 10 minutes
+    r.setex("oauth.exchange.user." + code, current_user.id, 600)
+    params = {
+        "code": code
+    }
+    parts = list(urllib.parse.urlparse(client.redirect_uri))
+    parsed = urllib.parse.parse_qs(parts[4])
+    parsed.update(params)
+    parts[4] = urllib.parse.urlencode(parsed)
+    return redirect(urllib.parse.urlunparse(parts))
+
+@oauth.route("/oauth/exchange", methods=["POST"])
+@json_output
+def exchange():
+    client_id = request.form.get("client_id")
+    client_secret = request.form.get("client_secret")
+    code = request.form.get("code")
+    if not client_id:
+        return { "error": "Missing client_id" }, 400
+
+    client = OAuthClient.query.filter(OAuthClient.client_id == client_id).first()
+    if not client:
+        return { "error": "Unknown client" }, 404
+
+    if client.client_secret != client_secret:
+        return { "error": "Incorrect client secret" }, 401
+
+    r = redis.Redis()
+    _client_id = r.get("oauth.exchange.client." + code)
+    user_id = r.get("oauth.exchange.user." + code)
+    if not client_id or not user_id:
+        return { "error": "Unknown or expired exchange code" }, 404
+
+    _client_id = _client_id.decode("utf-8")
+    user_id = int(user_id.decode("utf-8"))
+    user = User.query.filter(User.id == user_id).first()
+    if not user or _client_id != client.client_id:
+        return { "error": "Unknown or expired exchange code" }, 404
+
+    token = OAuthToken.query.filter(OAuthToken.client == client, OAuthToken.user == user).first()
+    if not token:
+        token = OAuthToken(user, client)
+        db.add(token)
+        db.commit()
+
+    r.delete("oauth.exchange.client." + code)
+    r.delete("oauth.exchange.user." + code)
+    return { "token": token.token }

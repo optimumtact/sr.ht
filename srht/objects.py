@@ -119,4 +119,4 @@ class OAuthToken(Base):
         self.user = user
         self.client = client
         salt = os.urandom(40)
-        token = hashlib.sha256(salf).hexdigest()[32:]
+        self.token = hashlib.sha256(salt).hexdigest()[32:]
