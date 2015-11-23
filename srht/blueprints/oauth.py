@@ -30,7 +30,7 @@ def clients_POST():
         return render_template("oauth-clients.html", errors="URL fields must be a URL.")
     if not redirect_uri.startswith("http://") and not redirect_uri.startswith("https://"):
         return render_template("oauth-clients.html", errors="URL fields must be a URL.")
-    if len(user.clients) > 10:
+    if len(current_user.clients) > 10:
         return render_template("oauth-clients.html", errors="You can only have 10 clients, chill out dude.")
     client = OAuthClient(current_user, name, info_url, redirect_uri)
     db.add(client)
