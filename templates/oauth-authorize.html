@@ -1,6 +1,6 @@
 {% extends "layout.html" %}
 {% block title %}
-<title>Authorize sr.ht account access</title>
+<title>Authorize {{ domain }} account access</title>
 {% endblock %}
 {% block body %} 
 <div class="text-center">
@@ -14,7 +14,7 @@
 {% if client %}
 <hr />
 <p class="text-justify">
-{{ client.name }} would like access to your sr.ht account. If given access,
+{{ client.name }} would like access to your {{ domain }} account. If given access,
 {{ client.user.username }} will be able to see your username and email address,
 but will not be able to upload on your behalf.
 </p>

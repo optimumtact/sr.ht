@@ -1,13 +1,13 @@
 {% extends "layout.html" %}
 {% block title %}
-<title>Manage sr.ht OAuth Clients</title>
+<title>Manage {{ domain }} OAuth Clients</title>
 {% endblock %}
 {% block body %} 
 <div class="text-center">
     <h1>OAuth Clients</h1>
     <p>
-    You can register OAuth clients to integrate your software with sr.ht accounts.
-    In other words, you can use this to make new services for other sr.ht users.
+    You can register OAuth clients to integrate your software with {{ domain }} accounts.
+    In other words, you can use this to make new services for other {{ domain }} users.
     </p>
     <p>
         <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#oauth-modal">
@@ -75,12 +75,12 @@
             </div>
             <div class="modal-body">
                 <p>
-                OAuth allows you to write applications that use sr.ht accounts as the authentication
+                OAuth allows you to write applications that use {{ domain }} accounts as the authentication
                 provider. The basic flow is this:
                 </p>
                 <ol>
                     <li>Direct users to {{ root }}/oauth/authorize?client_id=<strong>your_client_id</strong></li>
-                    <li>Users log into their sr.ht account and say "yes" to giving you access</li>
+                    <li>Users log into their {{ domain }} account and say "yes" to giving you access</li>
                     <li>User is redirected to http://<strong>redirect_uri</strong>?code=<strong>exchange_token</strong></li>
                     <li>
                         Your backend makes a POST to {{ root }}/oauth/exchange with code=<strong>exchange_token</strong>,
