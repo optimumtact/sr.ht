@@ -89,7 +89,7 @@ def authorize_POST():
         abort(404)
     salt = os.urandom(40)
     code = hashlib.sha256(salt).hexdigest()[:10]
-    r = redis.Redis()
+    r = redis.Redis(unix_socket_path=_cfg("socket"), db=_cfg("database"))
     r.setex("oauth.exchange.client." + code, client_id, 600) # expires in 10 minutes
     r.setex("oauth.exchange.user." + code, current_user.id, 600)
     params = {
@@ -117,7 +117,7 @@ def exchange():
     if client.client_secret != client_secret:
         return { "error": "Incorrect client secret" }, 401
 
-    r = redis.Redis()
+    r = redis.Redis(unix_socket_path=_cfg("socket"), db=_cfg("database"))
     _client_id = r.get("oauth.exchange.client." + code)
     user_id = r.get("oauth.exchange.user." + code)
     if not client_id or not user_id:
