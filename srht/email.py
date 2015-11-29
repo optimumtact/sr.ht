@@ -10,6 +10,29 @@ from srht.database import db
 from srht.objects import User
 from srht.config import _cfg, _cfgi
 
+def send_request(user):
+    if _cfg("smtp-host") == "":
+        return
+    smtp = smtplib.SMTP(_cfg("smtp-host"), _cfgi("smtp-port"))
+    smtp.ehlo()
+    smtp.starttls()
+    smtp.login(_cfg("smtp-user"), _cfg("smtp-password"))
+    with open("emails/new_request") as f:
+        message = MIMEText(html.parser.HTMLParser().unescape(
+            pystache.render(f.read(), {
+                'user': user,
+                "domain": _cfg("domain"),
+                "protocol": _cfg("protocol")
+            })))
+    message['X-MC-Important'] = "true"
+    message['X-MC-PreserveRecipients'] = "false"
+    message['Subject'] = "New %s account request" % _cfg("domain")
+    message['From'] = _cfg("smtp-from")
+    message['To'] = _cfg("owner_email")
+    smtp.sendmail(_cfg("smtp-from"), [ _cfg("owner_email") ],
+            message.as_string())
+    smtp.quit()
+
 def send_invite(user):
     if _cfg("smtp-host") == "":
         return

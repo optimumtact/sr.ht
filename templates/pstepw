@@ -63,7 +63,7 @@ desktop() {
 
 # This function uploads the $file
 upload() {
-	url="$(curl --silent -F key="$key" -F file="@$uploadme" "https://{{ domain }}/api/upload" | grep -o -i "https://{{ domain }}/*.[a-z0-9._-]*")"
+	url="$(curl --silent -F key="$key" -F file="@$uploadme" "{{ protocol }}://{{ domain }}/api/upload" | grep -o -i "{{ protocol }}://{{ domain }}/*.[a-z0-9._-]*")"
 }
 
 # This function logs the url,  copies the url to the clipboard, and/or opens the url in your browser

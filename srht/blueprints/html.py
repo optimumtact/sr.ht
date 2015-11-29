@@ -4,7 +4,7 @@ from sqlalchemy import desc, or_, and_
 from srht.objects import *
 from srht.common import *
 from srht.config import _cfg
-from srht.email import send_reset
+from srht.email import send_reset, send_request
 
 from datetime import datetime, timedelta
 import binascii
@@ -70,6 +70,7 @@ def register():
     user.comments = comments
     db.add(user)
     db.commit()
+    send_request_notification(user)
     return render_template("index.html", registered=True)
 
 @html.route("/login", methods=['GET', 'POST'])
@@ -127,7 +128,8 @@ def script():
 @html.route("/script.plain")
 def script_plain():
     with open("templates/pstepw", "r") as f:
-        resp = f.read().replace('{{ domain }}', _cfg('domain'))
+        resp = f.read().replace('{{ protocol }}', _cfg('protocol'))
+        resp = resp.replace('{{ domain }}', _cfg('domain'))
     return Response(resp, mimetype="text/plain")
 
 @html.route("/approvals")
