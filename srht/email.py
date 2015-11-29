@@ -10,7 +10,7 @@ from srht.database import db
 from srht.objects import User
 from srht.config import _cfg, _cfgi
 
-def send_request(user):
+def send_request_notification(user):
     if _cfg("smtp-host") == "":
         return
     smtp = smtplib.SMTP(_cfg("smtp-host"), _cfgi("smtp-port"))

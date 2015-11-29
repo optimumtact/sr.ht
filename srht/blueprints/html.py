@@ -4,7 +4,7 @@ from sqlalchemy import desc, or_, and_
 from srht.objects import *
 from srht.common import *
 from srht.config import _cfg
-from srht.email import send_reset, send_request
+from srht.email import send_reset, send_request_notification
 
 from datetime import datetime, timedelta
 import binascii
