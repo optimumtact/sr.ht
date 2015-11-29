@@ -1,0 +1,3 @@
+{{ user.username }} ({{ user.email }}) has just requested an account for {{ domain }}.
+
+Approve or deny this request at {{protocol}}://{{domain}}/approvals
