@@ -48,7 +48,7 @@ string that looks like this when you're done:
 
     postgresql://username:password@hostname:port/database
 
-The connection string I use on localhost is this:
+The connection string I use on u.pste.pw is this:
 
     postgresql://postgres@localhost/u.pste.pw
 
