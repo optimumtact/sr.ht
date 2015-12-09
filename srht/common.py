@@ -102,3 +102,6 @@ def file_link(path):
 
 def disown_link(path):
     return _cfg("protocol") + "://"  + _cfg("domain") + "/disown?filename=" + path
+
+def delete_link(path):
+    return _cfg("protocol") + "://"  + _cfg("domain") + "/delete?filename=" + path

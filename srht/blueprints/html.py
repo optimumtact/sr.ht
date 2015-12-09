@@ -207,3 +207,16 @@ def disown():
         db.commit()
         return redirect("%s://%s/uploads" % (_cfg('protocol'), _cfg('domain')))
     return render_template("not_found.html")
+
+@html.route("/delete", methods=['GET'])
+@loginrequired
+def delete():
+    if request.method == 'GET':
+        filename = request.args.get('filename')
+        file = Upload.query.filter_by(path=filename).first()
+        if file and current_user == file.user:
+            db.delete(file)
+            db.commit()
+            os.remove(os.path.join(_cfg("storage"), file.path))
+            return redirect("%s://%s/uploads" % (_cfg('protocol'), _cfg('domain')))
+    return render_template("not_found.html")

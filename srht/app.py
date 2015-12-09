@@ -85,6 +85,7 @@ def inject():
         'url_for': url_for,
         'file_link': file_link,
         'disown_link': disown_link,
+        'delete_link': delete_link,
         'user': current_user,
         'random': random,
         'owner': _cfg("owner"),

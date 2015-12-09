@@ -129,6 +129,31 @@ def disown():
             "filename": filename
     }
 
+@api.route("/api/delete", methods=["POST"])
+@json_output
+def delete():
+    key = request.form.get('key')
+    filename = request.form.get('filename')
+    if not key:
+        return { "error": "API key is required" }, 401
+    if not filename:
+        return { "error": "File is required" }, 400
+    user = User.query.filter(User.apiKey == key).first()
+    if not user:
+        return { "error": "API key not recognized" }, 403
+    file = Upload.query.filter_by(path=filename).first()
+    if file and user == file.user:
+        db.delete(file)
+        os.remove(os.path.join(_cfg("storage"), file.path))
+        db.commit()
+        return {
+                "success": True,
+                "filename": filename
+        }
+
+    else:
+    	return { "error": "File doesn't exist or is not belonging to you" }, 400
+
 def get_hash(f):
     f.seek(0)
     return base64.urlsafe_b64encode(hashlib.md5(f.read()).digest()).decode("utf-8")
