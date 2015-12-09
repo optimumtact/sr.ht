@@ -122,16 +122,12 @@ You can become an admin like so:
 ## SQL Stuff
 
 We use alembic for schema migrations between versions. The first time you run the
-application, the schema will be created. However, you need to tell alembic about
-it. Run the application at least once, then:
+application, the schema will be created. However, you need to tell alembic that 
+you're already on the latest version
 
     $ cd /path/to/u.pste.pw/
-    $ python
-    >>> from alembic.config import Config
-    >>> from alembic import command
-    >>> alembic_cfg = Config("alembic.ini")
-    >>> command.stamp(alembic_cfg, "head")
-    >>> exit()
+    $ bin/activate
+    $ bin/alembic -c alembic.ini stamp head
 
 Congrats, you've got a schema in place. Run `alembic upgrade head` after pulling
 the code to update your schema to the latest version. Do this before you restart
