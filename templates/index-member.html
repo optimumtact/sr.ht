@@ -8,6 +8,10 @@ window.root = "{{ root }}";
     <p>Logged in as {{ user.username  }}</p>
     <div class="inline-menu">
         <a href="/uploads">Your Uploads</a>
+        {% if user.admin %}
+        &mdash;
+        <a href="/admin_uploads">All uploads</a>
+        {% endif %}
         {% if _cfg("donation-page") == "yes" %}
         &mdash;
         <a href="/donate">Donate</a>

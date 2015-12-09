@@ -142,7 +142,7 @@ def delete():
     if not user:
         return { "error": "API key not recognized" }, 403
     file = Upload.query.filter_by(path=filename).first()
-    if file and user == file.user:
+    if file and (user.admin or user == file.user):
         db.delete(file)
         os.remove(os.path.join(_cfg("storage"), file.path))
         db.commit()
