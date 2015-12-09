@@ -6,7 +6,14 @@ except ImportError:
     # Python 2 support
     from ConfigParser import ConfigParser
 
-logger = logging.getLogger("sr.ht")
+config = ConfigParser()
+config.readfp(open('config.ini'))
+env = 'dev'
+
+_cfg = lambda k: config.get(env, k)
+_cfgi = lambda k: int(_cfg(k))
+
+logger = logging.getLogger(_cfg("domain"))
 logger.setLevel(logging.DEBUG)
 
 sh = logging.StreamHandler()
@@ -19,9 +26,3 @@ logger.addHandler(sh)
 # scss logger
 logging.getLogger("scss").addHandler(sh)
 
-config = ConfigParser()
-config.readfp(open('config.ini'))
-env = 'dev'
-
-_cfg = lambda k: config.get(env, k)
-_cfgi = lambda k: int(_cfg(k))

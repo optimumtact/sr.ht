@@ -10,7 +10,7 @@ import hashlib
 
 class Upload(Base):
     __tablename__ = 'upload'
-    id = Column(Integer, primary_key = True)
+    id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey('user.id'))
     user = relationship('User', backref=backref('upload', order_by=id, lazy='dynamic'))
     hash = Column(String, nullable=False)
@@ -27,8 +27,8 @@ class Upload(Base):
 class User(Base):
     __tablename__ = 'user'
     id = Column(Integer, primary_key = True)
-    username = Column(String(128), nullable = False, index = True)
-    email = Column(String(256), nullable = False, index = True)
+    username = Column(String(128), nullable=False, index=True)
+    email = Column(String(256), nullable=False, index=True)
     admin = Column(Boolean())
     password = Column(String)
     created = Column(DateTime)
@@ -71,3 +71,52 @@ class User(Base):
         return False
     def get_id(self):
         return self.username
+
+class OAuthClient(Base):
+    __tablename__ = 'oauth_clients'
+    id = Column(Integer, primary_key=True)
+    created = Column(DateTime, nullable=False)
+    user_id = Column(Integer, ForeignKey('user.id'))
+    user = relationship('User', backref=backref('clients'))
+    name = Column(Unicode(256), nullable=False)
+    description = Column(Unicode(2048))
+    uri = Column(String(256), nullable=False)
+    redirect_uri = Column(String(256))
+    client_id = Column(String(20), nullable=False)
+    client_secret = Column(String(40), nullable=False)
+
+    def __repr__(self):
+        return "<OAuthClient {} {} by {}>".format(self.id, self.name, self.user.username)
+
+    def __init__(self, user, name, uri, redirect_uri):
+        self.created = datetime.now()
+        self.user = user
+        self.name = name
+        self.uri = uri
+        self.redirect_uri = redirect_uri
+        salt = os.urandom(40)
+        self.client_id = hashlib.sha256(salt).hexdigest()[:20]
+        salt = os.urandom(40)
+        self.client_secret = hashlib.sha256(salt).hexdigest()[:40]
+
+class OAuthToken(Base):
+    __tablename__ = 'oauth_tokens'
+    id = Column(Integer, primary_key=True)
+    created = Column(DateTime, nullable=False)
+    user_id = Column(Integer, ForeignKey('user.id'))
+    user = relationship('User', backref=backref('tokens'))
+    client_id = Column(Integer, ForeignKey('oauth_clients.id'))
+    client = relationship('OAuthClient', backref=backref('tokens'))
+    last_used = Column(DateTime)
+    token = Column(String(32), nullable=False)
+    scopes = Column(String(256))
+
+    def __repr__(self):
+        return "<OAuthToken {} {}>".format(self.id, self.token)
+
+    def __init__(self, user, client):
+        self.created = datetime.now()
+        self.user = user
+        self.client = client
+        salt = os.urandom(40)
+        self.token = hashlib.sha256(salt).hexdigest()[32:]

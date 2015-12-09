@@ -1,10 +1,10 @@
 {% extends "layout.html" %}
 {% block body %} 
 <div class="text-center">
-    <h1><a href="/">sr.ht</a></h1>
+    <h1><a href="/">{{ domain }}</a></h1>
 </div>
 <hr />
-<p>Write this into <code>~/.config/srht</code>:</p>
+<p>Write this into <code>~/.config/pstepw</code>:</p>
 <pre>
 #!/bin/bash
 
@@ -13,7 +13,7 @@ key={{ user.apiKey }}
 # Log URLs
 log=false
 # Log file location (if relevant)
-logfile="$HOME/.srht"
+logfile="$HOME/.pstepw"
 # Copy links to clipboard after upload (requires xclip)
 clipboard=true
 # Send a notification when done
@@ -21,7 +21,7 @@ notify=true
 # Open URL in browser
 browser=true
 </pre>
-<p>Write this to <code>/usr/local/bin/srht</code> (<a href="/script.plain">plaintext version</a>).
+<p>Write this to <code>/usr/local/bin/pstepw</code> (<a href="/script.plain">plaintext version</a>).
 It depends on slop and maim.</p>
-<pre>{% include "srht" %}</pre>
+<pre>{% include "pstepw" %}</pre>
 {% endblock %}

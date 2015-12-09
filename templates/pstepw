@@ -1,10 +1,10 @@
 #!/bin/bash
 #
-# srht - Upload files/scrots/urls to sr.ht (rip pomf & uguu)
-# By onodera, modified by SirCmpwn
+# pstepw - Upload files/scrots/urls to {{ domain }} (rip pomf & uguu)
+# By onodera, modified by TheReverend403
 
 ## CONFIGURATION
-source ~/.config/srht
+source ~/.config/pstepw
 
 ## FUNCTIONS
 
@@ -12,7 +12,7 @@ source ~/.config/srht
 selection() {
 	uploadme="/tmp/scrot.png"
 
-	maim --hidecursor -s -b 3 -c 250,250,250 "$uploadme" 2> "/dev/null"
+	maim --hidecursor -s -b 2 -c 1,0,0,0.6 "$uploadme" 2> "/dev/null"
 	if [[ "$?" -ge 1 ]]; then
 		echo "Selection cancelled."
 		exit 1
@@ -63,7 +63,7 @@ desktop() {
 
 # This function uploads the $file
 upload() {
-	url="$(curl --silent -F key="$key" -F file="@$uploadme" "https://sr.ht/api/upload" | grep -o -i "https://sr.ht/*.[a-z0-9._-]*")"
+	url="$(curl --silent -F key="$key" -F file="@$uploadme" "{{ protocol }}://{{ domain }}/api/upload" | grep -o -i "{{ protocol }}://{{ domain }}/*.[a-z0-9._-]*")"
 }
 
 # This function logs the url,  copies the url to the clipboard, and/or opens the url in your browser
@@ -97,7 +97,7 @@ feedback() {
 if [[ "$#" -ge 1 ]]; then
 	case "$@" in
 		-h|--help)
-			echo "usage: srht [options] [file/url]"
+			echo "usage: pstepw [options] [file/url]"
 			echo "options:"
 			echo "  -h,   --help            print help and exit"
 			echo "  -p,   --paste       	upload your clipboard as text"
@@ -109,7 +109,7 @@ if [[ "$#" -ge 1 ]]; then
 			selection
 			;;
 		-v|--version)
-			echo "srht 0.9.1"
+			echo "pstepw 0.9.1"
 			exit 0
 			;;
 		-p|--paste)

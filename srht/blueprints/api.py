@@ -94,7 +94,7 @@ def upload():
     f.seek(0)
     f.save(os.path.join(_cfg("storage"), upload.path))
 
-    if not upload.shorthash:
+    if upload.shorthash is None:
         return {
             "success": False,
             "error": "Upload interrupted"

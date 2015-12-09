@@ -1,16 +1,17 @@
 {% extends "layout.html" %}
 {% block body %} 
 <div class="text-center">
-    <h1><a href="/">sr.ht</a></h1>
+    <h1><a href="/">{{ domain }}</a></h1>
     <h4>Donations</h4>
 </div>
-<hr />
-<p>All members are expected to donate if they are able and there is a deficit. Not much
-is needed but the success of the site depends on everyone. sr.ht costs $50/year
-for the certificate and $129/year for the domain. Hosting is free, I work at a VPS company.</p>
-<h3 class="text-center">Current Status</h3>
-<h2 class="text-center">$-103.63</h2>
-<p class="text-center"><small class="text-muted">This number updates on the 1st of each month</small></p>
-<h3 class="text-center">Donate</h3>
-<a href="https://drewdevault.com/donate?project=2"><img src="https://drewdevault.com/donate/static/donate-with-fosspay.png" alt="Donate with fosspay" /></a>
+<hr/>
+<div class="text-center">
+<p>We request members make a donation if they are able and there is a deficit. Not much
+is needed but the success of the site depends on everyone. The server for {{ domain }} costs about {{ site_cost }}</p>
+<p>If you can't donate money, consider donating a little time by helping us <a href="{{ git_repo }}">improve the site's code.</a>
+<h3>Current Status</h3>
+<h2>{{ current_financial_status }}</h2>
+<hr/>
+<a href="{{ donate_link }}"><img src="{{ donate_button_image }}" alt="Donate" /></a>
+</div>
 {% endblock %}

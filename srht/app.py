@@ -15,6 +15,7 @@ from srht.network import *
 
 from srht.blueprints.html import html
 from srht.blueprints.api import api
+from srht.blueprints.oauth import oauth
 
 app = Flask(__name__)
 app.secret_key = _cfg("secret-key")
@@ -36,6 +37,7 @@ login_manager.anonymous_user = lambda: None
 
 app.register_blueprint(html)
 app.register_blueprint(api)
+app.register_blueprint(oauth)
 
 try:
     locale.setlocale(locale.LC_ALL, 'en_US')
@@ -61,7 +63,8 @@ if not app.debug:
            _cfg("error-from"),
            [_cfg("error-to")],
            'sr.ht application exception occured',
-           credentials=(_cfg("smtp-user"), _cfg("smtp-password")))
+           credentials=(_cfg("smtp-user"), _cfg("smtp-password")),
+           secure=())
         mail_handler.setLevel(logging.ERROR)
         app.logger.addHandler(mail_handler)
 
@@ -86,5 +89,12 @@ def inject():
         'random': random,
         'owner': _cfg("owner"),
         'owner_email': _cfg("owner_email"),
+        'git_repo': _cfg("git_repo"),
+        'irc_server': _cfg("irc_server"),
+        'irc_channel': _cfg("irc_channel"),
+        'donate_link': _cfg("donate_link"),
+        'donate_button_image': _cfg("donate_button_image"),
+        'site_cost': _cfg("site_cost"),
+        'current_financial_status': _cfg("current_financial_status"),
         '_cfg': _cfg
     }

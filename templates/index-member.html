@@ -5,8 +5,20 @@ window.api_key = "{{ user.apiKey }}";
 window.root = "{{ root }}";
 </script>
 <div class="text-center">
-    <h1>Hello!</h1>
-    <h4>Upload limit is {{ _cfg("max-upload") }}.</h4>
+    <p>Logged in as {{ user.username  }}</p>
+    <div class="inline-menu">
+        <a href="/uploads">Your Uploads</a>
+        {% if _cfg("donation-page") == "yes" %}
+        &mdash;
+        <a href="/donate">Donate</a>
+        {% endif %}
+        {% if _cfg("resources-page") == "yes" %}
+        &mdash;
+        <a href="/resources">Resources</a>
+        &mdash;
+        <a href="/logout">Log Out</a>
+        {% endif %}
+    </div>
 </div>
 <hr />
 {% include "notice.html" %}
@@ -30,34 +42,21 @@ window.root = "{{ root }}";
     API Info
 </button>
 <hr />
-{% if user.admin and approvals != 0 %}
-<p class="text-center text-muted">
-{{ approvals }} account{%if approvals != 1%}s{%endif%} <a href="/approvals">pending approval</a>.
-</p>
-{% endif %}
-<p class="text-center text-muted">
-    #stew on irc.rizon.net<br />
-    {{ "{:,}".format(total) }} uploads to date<br />
-    {{ "{:.1f}".format(used_space / 1024 / 1024 / 1024) }} GB
-    of
-    {{ "{:.1f}".format(total_space / 1024 / 1024 / 1024) }} GB
-    in use
-</p>
-<nav>
-    Logged in as {{ user.username }}
-    &mdash;
-    <a href="/logout">Log Out</a>
-    &mdash;
-    <a href="/uploads">Your Uploads</a>
-    {% if _cfg("donation-page") == "yes" %}
-    &mdash;
-    <a href="/donate">Donate</a>
+<div class="text-center">
+    {% if user.admin and approvals != 0 %}
+    <p class="text-muted">
+    {{ approvals }} account{%if approvals != 1%}s{%endif%} <a href="/approvals">pending approval</a>.
+    </p>
     {% endif %}
-    {% if _cfg("resources-page") == "yes" %}
-    &mdash;
-    <a href="/resources">Resources</a>
-    {% endif %}
-</nav>
+    <p class="text-muted">
+    #{{ irc_channel }} on {{ irc_server }}<br />
+        {{ "{:,}".format(total) }} uploads to date<br />
+        {{ "{:.1f}".format(used_space / 1024 / 1024 / 1024) }} GB
+        of
+        {{ "{:.1f}".format(total_space / 1024 / 1024 / 1024) }} GB
+        in use
+    </p>
+</div>
 {% endblock %}
 {% block modal %}
 <div class="modal fade" id="api-modal">
@@ -71,7 +70,7 @@ window.root = "{{ root }}";
             <div class="modal-body">
                 <p>Your API key is:</p>
                 <pre class="apikey">{{ user.apiKey }}</pre>
-                <p>This key allows anyone to upload to sr.ht as you. Do not lose it. Upload like so:</p>
+                <p>This key allows anyone to upload to {{ domain }} as you. Do not lose it. Upload like so:</p>
                 <pre id="syntaxKey">curl \
     -F key={{user.apiKey}} \
     -F file=@example.png \

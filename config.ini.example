@@ -5,7 +5,7 @@ environment=dev
 [dev]
 # Change this to the actual location of your site
 protocol=http
-domain=localhost:5000
+domain=example.com
 # Change this value to something random and secret
 secret-key=hello world
 
@@ -18,19 +18,26 @@ smtp-host=
 smtp-port=
 smtp-user=
 smtp-password=
+smtp-from=noreply@example.com
+
 # Exceptions are emailed here
 error-to=
 error-from=
 
 # Where to store uploads (absolute path)
-storage=/home/sircmpwn/sources/sr.ht/storage/
+storage=/var/www/example.com/storage/
 
 # Site ownership information for support and such
 owner=Your name
-owner_email=your@email.com
+owner_email=you@example.com
 
 # SQL connection string
-connection-string=postgresql://postgres@localhost/sr.ht
+# Also copy this to alembic.ini or your migrations will probably not work.
+connection-string=postgresql://postgres@localhost/example.com
+
+# Redis connection info
+socket="/home/user/.tmp/redis.sock"
+database=0
 
 # This is NOT enforced - it's just for the UI
 # You need to set client_max_body_size 50M; or similar in your nginx.conf
@@ -43,3 +50,21 @@ donation-page=no
 # Set to 'yes' to add a link to /resources on the home page (for members)
 # Usually only relevant for members of sr.ht upstream
 resources-page=no
+
+# These are strings that will be displayed in relevant locations throughout the UI
+## IRC server and channel will be displayed in the index
+irc_server=irc.rizon.net
+irc_channel=leliana
+
+## A link to the repo hosting your site's code.
+git_repo=https://github.com/TheReverend403/u.pste.pw
+
+## A link users can click to donate. Works best with Paypal button links.
+donate_link=
+## URL to an image to use as your donate button. Works best with Paypal donate buttons.
+donate_button_image=
+
+## A purely cosmetic string used in /donate to inform users how much your site costs to run
+site_cost=$0/month
+## A purely cosmetic string use in /donate to inform your users about your site's current deficit
+current_financial_status=$0

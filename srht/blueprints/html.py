@@ -4,7 +4,7 @@ from sqlalchemy import desc, or_, and_
 from srht.objects import *
 from srht.common import *
 from srht.config import _cfg
-from srht.email import send_reset
+from srht.email import send_reset, send_request_notification
 
 from datetime import datetime, timedelta
 import binascii
@@ -70,13 +70,14 @@ def register():
     user.comments = comments
     db.add(user)
     db.commit()
+    send_request_notification(user)
     return render_template("index.html", registered=True)
 
 @html.route("/login", methods=['GET', 'POST'])
 def login():
     if request.method == 'GET':
         if current_user:
-            return redirect("/")
+            return redirect("%s://%s/" % (_cfg('protocol'), _cfg('domain')))
         reset = request.args.get('reset') == '1'
         return render_template("login.html", **{ 'return_to': request.args.get('return_to'), 'reset': reset })
     else:
@@ -93,17 +94,17 @@ def login():
         if not bcrypt.hashpw(password.encode('UTF-8'), user.password) == user.password:
             return render_template("login.html", **{ "username": username, "errors": 'Your username or password is incorrect.' })
         if not user.approved:
-            return redirect("/pending")
+            return redirect("%s/://%s/pending" % (_cfg('protocol'), _cfg('domain')))
         login_user(user, remember=remember)
         if 'return_to' in request.form and request.form['return_to']:
             return redirect(urllib.parse.unquote(request.form.get('return_to')))
-        return redirect("/")
+        return redirect("%s://%s/" % (_cfg('protocol'), _cfg('domain')))
 
 @html.route("/logout")
 @loginrequired
 def logout():
     logout_user()
-    return redirect("/")
+    return redirect("%s://%s/" % (_cfg('protocol'), _cfg('domain')))
 
 @html.route("/pending")
 def pending():
@@ -126,8 +127,9 @@ def script():
 
 @html.route("/script.plain")
 def script_plain():
-    with open("templates/srht", "r") as f:
-        resp = f.read()
+    with open("templates/pstepw", "r") as f:
+        resp = f.read().replace('{{ protocol }}', _cfg('protocol'))
+        resp = resp.replace('{{ domain }}', _cfg('domain'))
     return Response(resp, mimetype="text/plain")
 
 @html.route("/approvals")
@@ -168,12 +170,12 @@ def forgot_password():
 def reset_password(username, confirmation):
     user = User.query.filter(User.username == username).first()
     if not user:
-        redirect("/")
+        redirect("%s://%s/" % (_cfg('protocol'), _cfg('domain')))
     if request.method == 'GET':
         if user.passwordResetExpiry == None or user.passwordResetExpiry < datetime.now():
             return render_template("reset.html", expired=True)
         if user.passwordReset != confirmation:
-            redirect("/")
+            redirect("%s://%s/" % (_cfg('protocol'), _cfg('domain')))
         return render_template("reset.html", username=username, confirmation=confirmation)
     else:
         if user.passwordResetExpiry == None or user.passwordResetExpiry < datetime.now():
@@ -190,7 +192,7 @@ def reset_password(username, confirmation):
         user.passwordReset = None
         user.passwordResetExpiry = None
         db.commit()
-        return redirect("/login?reset=1")
+        return redirect("%s://%s/login?reset=1" % (_cfg('protocol'), _cfg('domain')))
 
 @html.route("/uploads")
 @loginrequired
@@ -203,5 +205,5 @@ def disown():
         filename = request.args.get('filename')
         Upload.query.filter_by(path=filename).first().hidden = True
         db.commit()
-        return redirect("/uploads")
+        return redirect("%s://%s/uploads" % (_cfg('protocol'), _cfg('domain')))
     return render_template("not_found.html")
