@@ -91,7 +91,7 @@ def login():
         user = User.query.filter(User.username.ilike(username)).first()
         if not user:
             return render_template("login.html", **{ "username": username, "errors": 'Your username or password is incorrect.' })
-        if not bcrypt.hashpw(password.encode('UTF-8'), user.password) == user.password:
+        if not bcrypt.hashpw(password.encode('UTF-8'), user.password.encode('UTF-8')) == user.password.encode('UTF-8'):
             return render_template("login.html", **{ "username": username, "errors": 'Your username or password is incorrect.' })
         if not user.approved:
             return redirect("%s/://%s/pending" % (_cfg('protocol'), _cfg('domain')))

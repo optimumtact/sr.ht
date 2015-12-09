@@ -4,7 +4,7 @@
 # By onodera, modified by TheReverend403
 
 ## CONFIGURATION
-source ~/.config/pstepw
+source ~/.config/fsingulo
 
 ## FUNCTIONS
 
@@ -97,7 +97,7 @@ feedback() {
 if [[ "$#" -ge 1 ]]; then
 	case "$@" in
 		-h|--help)
-			echo "usage: pstepw [options] [file/url]"
+			echo "usage: fsingulo [options] [file/url]"
 			echo "options:"
 			echo "  -h,   --help            print help and exit"
 			echo "  -p,   --paste       	upload your clipboard as text"
@@ -109,7 +109,7 @@ if [[ "$#" -ge 1 ]]; then
 			selection
 			;;
 		-v|--version)
-			echo "pstepw 0.9.1"
+			echo "fsingulo 0.9.1"
 			exit 0
 			;;
 		-p|--paste)
