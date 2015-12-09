@@ -94,7 +94,7 @@ def login():
         if not bcrypt.hashpw(password.encode('UTF-8'), user.password.encode('UTF-8')) == user.password.encode('UTF-8'):
             return render_template("login.html", **{ "username": username, "errors": 'Your username or password is incorrect.' })
         if not user.approved:
-            return redirect("%s/://%s/pending" % (_cfg('protocol'), _cfg('domain')))
+            return redirect("%s://%s/pending" % (_cfg('protocol'), _cfg('domain')))
         login_user(user, remember=remember)
         if 'return_to' in request.form and request.form['return_to']:
             return redirect(urllib.parse.unquote(request.form.get('return_to')))
