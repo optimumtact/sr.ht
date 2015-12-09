@@ -1,3 +1,4 @@
+#!bin/python3
 from srht.database import db
 from srht.objects import User
 from datetime import datetime
@@ -38,10 +39,10 @@ def approve_user(arguments):
 interface = """
 Command line admin interface
 Usage:
-    cli_admin admin promote <name>
-    cli_admin admin demote <name>
-    cli_admin admin list
-    cli_admin user approve <name>
+    manage admin promote <name>
+    manage admin demote <name>
+    manage admin list
+    manage user approve <name>
 
 Options:
     -h --help Show this screen.
