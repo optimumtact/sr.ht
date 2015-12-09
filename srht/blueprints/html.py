@@ -79,7 +79,8 @@ def login():
         if current_user:
             return redirect("%s://%s/" % (_cfg('protocol'), _cfg('domain')))
         reset = request.args.get('reset') == '1'
-        return render_template("login.html", **{ 'return_to': request.args.get('return_to'), 'reset': reset })
+        return_to = request.args.get('return_to')
+        return render_template("login.html", **{ 'return_to': return_to, 'reset': reset })
     else:
         username = request.form['username']
         password = request.form['password']
@@ -88,16 +89,22 @@ def login():
             remember = True
         else:
             remember = False
+
         user = User.query.filter(User.username.ilike(username)).first()
         if not user:
             return render_template("login.html", **{ "username": username, "errors": 'Your username or password is incorrect.' })
+
         if not bcrypt.hashpw(password.encode('UTF-8'), user.password.encode('UTF-8')) == user.password.encode('UTF-8'):
             return render_template("login.html", **{ "username": username, "errors": 'Your username or password is incorrect.' })
+
         if not user.approved:
             return redirect("%s://%s/pending" % (_cfg('protocol'), _cfg('domain')))
+
         login_user(user, remember=remember)
-        if 'return_to' in request.form and request.form['return_to']:
-            return redirect(urllib.parse.unquote(request.form.get('return_to')))
+
+        if 'return_to' in request.form and request.form.get('return_to'):
+            return redirect(urllib.parse.unquote_plus(request.form.get('return_to')))
+
         return redirect("%s://%s/" % (_cfg('protocol'), _cfg('domain')))
 
 @html.route("/logout")
