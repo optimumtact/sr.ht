@@ -76,6 +76,7 @@ def upload():
     upload.hash = get_hash(f)
     existing = Upload.query.filter(Upload.hash == upload.hash).first()
     if existing:
+        db.rollback()#file already exists, end this session
         return {
             "success": True,
             "hash": existing.hash,
