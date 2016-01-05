@@ -1,12 +1,6 @@
-# u.pste.pw (fork of [sr.ht](https://github.com/SirCmpwn/sr.ht))
+(fork of [sr.ht](https://github.com/SirCmpwn/sr.ht))
 
-Private file hosting for you and your friends.
-
-![preview](https://u.pste.pw/qVgM.png)
-
-I run a private instance of u.pste.pw *at* [u.pste.pw](https://u.pste.pw). You can request
-an invite if you'd like to join. Otherwise, here are the setup instructions
-to run it on your own infrastructure:
+Private file hosting with python/nginx
 
 ## Differences from upstream
 
@@ -14,6 +8,8 @@ to run it on your own infrastructure:
 * Removed most hardcoded branding and moved it to config strings.
 * Switched to simplex bootstrap theme
 * Some minor style fixes
+* Improvements to administration
+* Being able to delete files from the web interface
 
 ## Running the site
 
@@ -48,10 +44,6 @@ string that looks like this when you're done:
 
     postgresql://username:password@hostname:port/database
 
-The connection string I use on u.pste.pw is this:
-
-    postgresql://postgres@localhost/u.pste.pw
-
 We need to be able to create/alter/insert/update/delete in the database you
 give it.
 
@@ -59,8 +51,8 @@ give it.
 
 Find a place you want the code to live.
 
-    $ git clone git://github.com/TheReverend403/u.pste.pw.git
-    $ cd u.pste.pw
+    $ git clone git://github.com/optimumtact/sr.ht.git
+    $ cd sr.ht
 
 **Configure the site**
 
@@ -102,22 +94,15 @@ When running in a production enviornment, run `python app.py` at least once and
 then read the SQL stuff below before you let it go for good.
 
 nginx configuration is available in `nginx/`, modify it to suit your environment.
-**nginx is required to run u.pste.pw properly**.
+**nginx is required to run this website properly**.
 
 ## Becoming an admin
 
-You can become an admin like so:
+You can become an admin with the management cli script
 
     $ cd /path/to/sr.ht/
-    $ python
-    >>> from srht.database import db
-    >>> from srht.objects import User
-    >>> from datetime import datetime
-    >>> u = User.query.filter(User.username == "your username").first()
-    >>> u.approved = True # approve yourself
-    >>> u.approvalDate = datetime.now()
-    >>> u.admin = True # make yourself an admin
-    >>> db.commit()
+    $ python manage.py user approve {youruser}
+    $ python manage.py admin promote {youruser}
 
 ## SQL Stuff
 
@@ -125,7 +110,7 @@ We use alembic for schema migrations between versions. The first time you run th
 application, the schema will be created. However, you need to tell alembic that 
 you're already on the latest version
 
-    $ cd /path/to/u.pste.pw/
+    $ cd /path/to/sr.ht
     $ bin/activate
     $ bin/alembic -c alembic.ini stamp head
 
