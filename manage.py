@@ -55,4 +55,4 @@ if __name__ == '__main__':
     elif(arguments['admin'] and arguments['list']):
         list_admin(arguments)
     elif(arguments['user'] and arguments['approve']):
-        remove_admin(arguments)
+        approve_user(arguments)
