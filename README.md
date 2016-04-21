@@ -8,7 +8,8 @@ Private file hosting with python/nginx
 * Removed most hardcoded branding and moved it to config strings.
 * Switched to simplex bootstrap theme
 * Some minor style fixes
-* Improvements to administration
+* Improvements to administration with some cli scripting
+* Removed the anime branding and replaced with a more sfw icon
 * Being able to delete files from the web interface
 
 ## Running the site
