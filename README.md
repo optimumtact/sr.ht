@@ -32,6 +32,10 @@ You'll need these things (Arch packages in parenthesis, some from AUR):
 * PostgreSQL (postgresql)
 * scss (ruby-sass)
 
+The following ubuntu/debian packages would also be useful, equivalents should exist on your system
+
+    apt-get install build-essential libssl-dev libffi-dev python3-dev
+
 And for the rest
 
     pip install -r requirements.txt
