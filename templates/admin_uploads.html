@@ -1,5 +1,8 @@
 {% extends "layout.html" %}
 {% block body %} 
+<script>
+window.api_key = "{{ user.apiKey }}";
+</script>
 <div class="text-center">
     <h1><a href="/">{{ domain }}</a></h1>
     <h4>All Uploads (Admin view)</h4>
@@ -26,10 +29,11 @@
                 {% endif %}
             </td>
             <td>
-                <a href="{{ admin_delete_link(upload.path) }}">delete</a>
+                <a href="#" class="btn btn-sm btn-danger delete" data-filename="{{ upload.path }}">delete</a>
             </td>
         </tr>
         {% endfor %}
     </tbody>
 </table>
+<script src="/static/delete.js"></script>
 {% endblock %}
