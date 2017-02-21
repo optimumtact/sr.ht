@@ -204,32 +204,3 @@ def uploads():
 @loginrequired
 def uploads_admin():
     return render_template("admin_uploads.html", uploads=Upload.query.all())
-
-@html.route("/disown", methods=['GET'])
-@loginrequired
-def disown():
-    if request.method == 'GET':
-        filename = request.args.get('filename')
-        Upload.query.filter_by(path=filename).first().hidden = True
-        db.commit()
-        return redirect("%s://%s/uploads" % (_cfg('protocol'), _cfg('domain')))
-    return render_template("not_found.html")
-
-@html.route("/delete", methods=['GET'])
-@loginrequired
-def delete():
-    if request.method == 'GET':
-        filename = request.args.get('filename')
-        returnto = request.args.get('return_to')
-        if returnto:
-            returnto = urllib.parse.unquote_plus(returnto)
-        else:
-            returnto = "{0}://{1}/uploads".format(_cfg('protocol'), _cfg('domain'))
-
-        file = Upload.query.filter_by(path=filename).first()
-        if file and (current_user.admin or current_user == file.user):
-            db.delete(file)
-            db.commit()
-            os.remove(os.path.join(_cfg("storage"), file.path))
-            return redirect(returnto)
-    return render_template("not_found.html")
