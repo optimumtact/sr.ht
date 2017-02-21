@@ -19,6 +19,8 @@ from srht.blueprints.oauth import oauth
 
 app = Flask(__name__)
 app.secret_key = _cfg("secret-key")
+if _cfg("securecookie") and _cfg("securecookie") == "True":
+    app.config.update(SESSION_COOKIE_SECURE=True)
 app.jinja_env.cache = None
 init_db()
 login_manager = LoginManager()

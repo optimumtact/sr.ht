@@ -9,6 +9,10 @@ domain=example.com
 # Change this value to something random and secret
 secret-key=hello world
 
+#If the secure cookie flag should be set in the app
+#set to True for https sites, otherwise set to False
+securecookie=False
+
 # On the debug server, this lets you choose what to bind to
 debug-host=0.0.0.0
 debug-port=5000
