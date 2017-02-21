@@ -34,6 +34,17 @@ def approve_user(arguments):
     else:
         print('Not a valid user')
 
+def reset_password(arguments):
+    u = User.query.filter(User.username == arguments['<name>']).first()
+    if(u):
+        password = arguments['<password>']
+        if len(password) < 5 or len(password) > 256:
+            print('Password must be between 5 and 256 characters.')
+            return
+        u.set_password(password)  
+        db.commit()
+    else:
+        print('Not a valid user')
 
 interface = """
 Command line admin interface
@@ -42,6 +53,7 @@ Usage:
     manage admin demote <name>
     manage admin list
     manage user approve <name>
+    manage user reset_password <name> <password>
 
 Options:
     -h --help Show this screen.
@@ -56,3 +68,5 @@ if __name__ == '__main__':
         list_admin(arguments)
     elif(arguments['user'] and arguments['approve']):
         approve_user(arguments)
+    elif(arguments['user'] and arguments['reset_password']):
+        reset_password(arguments)
