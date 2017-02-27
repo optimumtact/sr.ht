@@ -33,15 +33,23 @@ def index():
         approvals = User.query.filter(User.approved == False).filter(User.rejected == False).count()
         return render_template("index-member.html", new=new, total=total, \
                 used_space=used_space, free_space=free_space, total_space=total_space, approvals=approvals)
-    return render_template("index.html")
+    registration=False
+    if _cfg("registration") and _cfg("registration") == "True":
+        registration=True
+    return render_template("index.html", registration=registration)
 
 @html.route("/register", methods=['POST'])
 def register():
+    errors = list()
+    registration=True
+    if _cfg("registration") and _cfg("registration") != "True":
+        registration=False
+        errors.append('Registration is currently disabled')
+
     email = request.form.get('email')
     username = request.form.get('username')
     password = request.form.get('password')
     comments = request.form.get('comments')
-    errors = list()
     if not email:
         errors.append('Email is required.')
     else:
@@ -64,14 +72,14 @@ def register():
         if len(password) < 5 or len(password) > 256:
             errors.append('Password must be between 5 and 256 characters.')
     if len(errors) != 0:
-        return render_template("index.html", username=username, email=email, errors=errors)
+        return render_template("index.html", username=username, email=email, errors=errors, registration=registration)
     # All good, create an account for them
     user = User(username, email, password)
     user.comments = comments
     db.add(user)
     db.commit()
     send_request_notification(user)
-    return render_template("index.html", registered=True)
+    return render_template("index.html", registered=True, registration=registration)
 
 @html.route("/login", methods=['GET', 'POST'])
 def login():

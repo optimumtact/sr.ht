@@ -1,6 +1,7 @@
 {% extends "layout.html" %}
 {% block body %} 
 {% include "index-about.html" %}
+{% if registration %}
 <hr />
 <h4 class="text-center">Request Account</h4>
 {% if registered %}
@@ -41,5 +42,16 @@ decision is made.</p>
 </form>
 <hr />
 <p>You can run {{ domain }} on your own servers if you can't get an account. Get the source here: <a href="{{ git_repo }}">{{ git_repo }}</a>.</p>
+{% endif %}
+{% else %}
+<hr />
+{% if errors %}
+<div class="alert alert-danger">
+    {% for error in errors %}
+    <p>{{ error }}</p>
+    {% endfor %}
+</div>
+{% endif %}
+<p>Self registration is not currently allowed, contact the server owner for an account</p>
 {% endif %}
 {% endblock %}

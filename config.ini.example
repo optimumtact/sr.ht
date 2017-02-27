@@ -17,6 +17,10 @@ securecookie=False
 debug-host=0.0.0.0
 debug-port=5000
 
+#Set to false to disable users registering their own accounts
+#useful for private sites you don't want to give accounts out for
+registration=True
+
 # To send emails, fill out these details
 smtp-host=
 smtp-port=
