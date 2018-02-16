@@ -39,7 +39,6 @@ class User(Base):
     comments = Column(Unicode(512))
     approved = Column(Boolean())
     rejected = Column(Boolean())
-    tox_id = Column(String(76))
 
     def set_password(self, password):
         self.password = bcrypt.hashpw(password.encode('UTF-8'), bcrypt.gensalt()).decode('UTF-8')
