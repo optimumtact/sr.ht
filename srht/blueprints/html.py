@@ -133,6 +133,11 @@ def resources():
 def script():
     return render_template("script.html")
 
+@html.route("/sharex")
+@loginrequired
+def sharex():
+    return render_template("sharex.html")
+
 @html.route("/script.plain")
 def script_plain():
     with open("templates/pstepw", "r") as f:
