@@ -101,12 +101,11 @@ then read the SQL stuff below before you let it go for good.
 nginx configuration is available in `nginx/`, modify it to suit your environment.
 **nginx is required to run this website properly**.
 
-## Becoming an admin
+## Becoming an admin and bootstrapping initial user
 
 You can become an admin with the management cli script
-
     $ cd /path/to/sr.ht/
-    $ python manage.py user approve {youruser}
+    $ python manage.py user create {yourusername} {password} {emailaddress}
     $ python manage.py admin promote {youruser}
 
 ## SQL Stuff

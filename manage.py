@@ -34,6 +34,17 @@ def approve_user(arguments):
     else:
         print('Not a valid user')
 
+def create_user(arguments):
+    u = User(arguments['<name>'], arguments['<email>'], arguments['<password>']);
+    if(u):
+        u.approved = True # approve user
+        u.approvalDate = datetime.now()
+        db.add(u)
+        db.commit()
+        print('User created')
+    else:
+        print('Couldn\'t create the uer')
+
 def reset_password(arguments):
     u = User.query.filter(User.username == arguments['<name>']).first()
     if(u):
@@ -53,6 +64,7 @@ Usage:
     manage admin demote <name>
     manage admin list
     manage user approve <name>
+    manage user create <name> <password> <email>
     manage user reset_password <name> <password>
 
 Options:
@@ -68,5 +80,7 @@ if __name__ == '__main__':
         list_admin(arguments)
     elif(arguments['user'] and arguments['approve']):
         approve_user(arguments)
+    elif(arguments['user'] and arguments['create']):
+        create_user(arguments)
     elif(arguments['user'] and arguments['reset_password']):
         reset_password(arguments)
