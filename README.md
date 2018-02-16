@@ -26,21 +26,31 @@ Quick overview:
 
 **Install the dependencies**
 
-You'll need these things (Arch packages in parenthesis, some from AUR):
+You'll need these things
 
 * Python 3 (python)
 * PostgreSQL (postgresql)
 * scss (ruby-sass)
 
-The following ubuntu/debian packages would also be useful, equivalents should exist on your system
+The following ubuntu/debian packages would also be useful/required for some pip dependencies, equivalents should exist on your system
 
     apt-get install build-essential libssl-dev libffi-dev python3-dev
 
-And for the rest
+**Clone the repository**
 
+Find a place you want the code to live.
+
+    $ git clone git://github.com/optimumtact/sr.ht.git
+    $ cd sr.ht
+
+**Python dependencies**
+I recommend using a virtual environment to host the sites dependencies and run it out of there
+
+    virtualenv -p python3 venv
+    source venv/bin/activate
     pip install -r requirements.txt
 
-Use the packages your OS provides, or build them from source.
+The provided systemd files assume that the site is hosted in a virtualenv named venv
 
 **Set up services**
 
@@ -51,13 +61,6 @@ string that looks like this when you're done:
 
 We need to be able to create/alter/insert/update/delete in the database you
 give it.
-
-**Clone the repository**
-
-Find a place you want the code to live.
-
-    $ git clone git://github.com/optimumtact/sr.ht.git
-    $ cd sr.ht
 
 **Configure the site**
 
@@ -104,6 +107,7 @@ nginx configuration is available in `nginx/`, modify it to suit your environment
 ## Becoming an admin and bootstrapping initial user
 
 You can become an admin with the management cli script
+
     $ cd /path/to/sr.ht/
     $ python manage.py user create {yourusername} {password} {emailaddress}
     $ python manage.py admin promote {youruser}
