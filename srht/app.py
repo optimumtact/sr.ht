@@ -15,7 +15,6 @@ from srht.network import *
 
 from srht.blueprints.html import html
 from srht.blueprints.api import api
-from srht.blueprints.oauth import oauth
 
 app = Flask(__name__)
 app.secret_key = _cfg("secret-key")
@@ -39,7 +38,6 @@ login_manager.anonymous_user = lambda: None
 
 app.register_blueprint(html)
 app.register_blueprint(api)
-app.register_blueprint(oauth)
 
 try:
     locale.setlocale(locale.LC_ALL, 'en_US')

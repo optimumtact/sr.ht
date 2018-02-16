@@ -10,10 +10,6 @@ window.root = "{{ root }}";
 </div>
 <hr />
 <div class="text-center">
-    <h3>Third Party Integrations</h3>
-	<p>{{ domain }} offers OAuth to allow users to create new things for other members to use.</p>
-    <p><a href="/oauth/tokens">Manage Client Authorizations</a> &mdash; <a href="/oauth/clients">Register and Manage Clients</a></p>
-    <p>If you make something neat, <a href="mailto:{{owner_email}}">let me know</a> and I'll feature it here.</p>
     <h3>Bash script</h3>
     <p>You can upload to {{ domain }} with our <a href="/script">bash script</a>.</p>
     <h3>Android app</h3>
@@ -21,19 +17,4 @@ window.root = "{{ root }}";
     <h3>More stuff?</h3>
     <p><a href="mailto:{{owner_email}}">Get in touch</a> if you have any more ideas worth hosting here.</p>
 </div>
-{% endblock %}
-{% block scripts %}
-<script>
-(function() {
-    var tox_id = document.getElementById("tox-id");
-    tox_id.addEventListener("change", function() {
-        var xhr = new XMLHttpRequest();
-        xhr.open("POST", "/api/tox");
-        var form = new FormData();
-        form.append("key", window.api_key);
-        form.append("id", tox_id.value);
-        xhr.send(form);
-    });
-})();
-</script>
 {% endblock %}

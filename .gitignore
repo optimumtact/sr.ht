@@ -12,3 +12,4 @@ storage/
 pip-selfcheck.json
 .sass-cache/
 overrides/
+venv/
