@@ -90,6 +90,7 @@ def inject():
         'user': current_user,
         'random': random,
         'owner': _cfg("owner"),
+        'owner_name': _cfg("owner"),
         'owner_email': _cfg("owner_email"),
         'git_repo': _cfg("git_repo"),
         'irc_server': _cfg("irc_server"),

@@ -177,6 +177,22 @@ def forgot_password():
         send_reset(user)
         return render_template("forgot.html", success=True)
 
+@html.route("/change", methods=['GET', 'POST'])
+@loginrequired
+def change_password():
+    if request.method == 'GET':
+        return render_template("change.html")
+    else:
+        password = request.form.get('password')
+        password2 = request.form.get('password2')
+        if not password or not password2:
+            return render_template("change.html",errors="Please fill out both fields.")
+        if password != password2:
+            return render_template("change.html",errors="You seem to have mistyped one of these, please try again.")
+        current_user.set_password(password)
+        db.commit()
+        return redirect("%s://%s/" % (_cfg('protocol'), _cfg('domain')))
+
 @html.route("/reset", methods=['GET', 'POST'])
 @html.route("/reset/<username>/<confirmation>", methods=['GET', 'POST'])
 @with_session
