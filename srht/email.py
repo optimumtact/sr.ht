@@ -3,6 +3,7 @@ import pystache
 import os
 import html.parser
 from email.mime.text import MIMEText
+import email.utils
 from werkzeug.utils import secure_filename
 from flask import url_for
 
@@ -29,6 +30,9 @@ def send_request_notification(user):
     message['Subject'] = "New %s account request" % _cfg("domain")
     message['From'] = _cfg("smtp-from")
     message['To'] = _cfg("owner_email")
+
+    message["Date"] = email.utils.formatdate(localtime=True)
+    message['Message-ID'] = email.utils.make_msgid(user.username, _cfg("domain"))
     smtp.sendmail(_cfg("smtp-from"), [ _cfg("owner_email") ],
             message.as_string())
     smtp.quit()
@@ -52,6 +56,8 @@ def send_invite(user):
     message['Subject'] = "Your %s account is approved" % _cfg("domain")
     message['From'] = _cfg("smtp-from")
     message['To'] = user.email
+    message["Date"] = email.utils.formatdate(localtime=True)
+    message['Message-ID'] = email.utils.make_msgid(user.username, _cfg("domain"))
     smtp.sendmail(_cfg("smtp-from"), [ user.email ], message.as_string())
     smtp.quit()
 
@@ -74,6 +80,8 @@ def send_rejection(user):
     message['Subject'] = "Your %s account has been rejected" % _cfg("domain")
     message['From'] = _cfg("smtp-from")
     message['To'] = user.email
+    message["Date"] = email.utils.formatdate(localtime=True)
+    message['Message-ID'] = email.utils.make_msgid(user.username, _cfg("domain"))
     smtp.sendmail(_cfg("smtp-from"), [ user.email ], message.as_string())
     smtp.quit()
 
@@ -97,5 +105,7 @@ def send_reset(user):
     message['Subject'] = "Reset your %s password" % _cfg("domain")
     message['From'] = _cfg("smtp-from")
     message['To'] = user.email
+    message["Date"] = email.utils.formatdate(localtime=True)
+    message['Message-ID'] = email.utils.make_msgid(user.username, _cfg("domain"))
     smtp.sendmail(_cfg("smtp-from"), [ user.email ], message.as_string())
     smtp.quit()
