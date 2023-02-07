@@ -43,66 +43,25 @@ Find a place you want the code to live.
     $ git clone git://github.com/optimumtact/sr.ht.git
     $ cd sr.ht
 
-**Python dependencies**
-I recommend using a virtual environment to host the sites dependencies and run it out of there
-
-    virtualenv -p python3 venv
-    source venv/bin/activate
-    pip install -r requirements.txt
-
-The provided systemd files assume that the site is hosted in a virtualenv named venv
-
-**Set up services**
-
-I'll leave you to set up PostgreSQL however you please. Prepare a connection
-string that looks like this when you're done:
-
-    postgresql://username:password@hostname:port/database
-
-We need to be able to create/alter/insert/update/delete in the database you
-give it.
-
-**Configure the site**
-
-    $ cp alembic.ini.example alembic.ini
-    $ cp config.ini.example config.ini
-
-Edit config.ini and alembic.ini to your liking.
-
-**Compile static assets**
-
-    $ make
-
-Run this again whenever you pull the code.
-
 **Deployment**
 
-What you do from here depends on your site-specific configuration. If you just
-want to run the site for development, run
+This has a working docker-compose file, just install docker, docker-compose and run
 
-    python app.py
+    docker-compose up -d
 
-To run it in production, you probably want to use gunicorn behind an nginx proxy.
-There's a sample nginx config in the configs/ directory here, but you'll probably
-want to tweak it to suit your needs. Here's how you can run gunicorn, put this in
-your init scripts:
+then you can browse to localhost:8080 (by default) to access it
 
-    gunicorn app:app -b 127.0.0.1:8000
+dev builds currently require a full container rebuild, so I might eventually add a version that mounts the source directories instead for ease of use
 
-Note: you may have to install gunicorn first with
+If it fails to start the first time, just run it again, the db might not have stood all the way up before the web container started
 
-    pip install gunicorn
+The Docker uses python:3-slim and hivemind for process management, so it obeys the procfile standard, both gunicorn and nginx run in a single container,
+as the application was originally intended for a nginx + wsgi hosting and needs to share a storage folder
 
-The `-b` parameter specifies an endpoint to use. You probably want to bind this to
-localhost and proxy through from nginx. I'd also suggest blocking the port you
-choose from external access. It's not that gunicorn is *bad*, it's just that nginx
-is better.
+https://github.com/DarthSim/hivemind
 
-When running in a production enviornment, run `python app.py` at least once and
-then read the SQL stuff below before you let it go for good.
+This project is deployed on fly.io for production usage
 
-nginx configuration is available in `nginx/`, modify it to suit your environment.
-**nginx is required to run this website properly**.
 
 ## Becoming an admin and bootstrapping initial user
 
