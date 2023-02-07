@@ -19,7 +19,7 @@ def send_request_notification(user):
     smtp.starttls()
     smtp.login(_cfg("smtpuser"), _cfg("smtppassword"))
     with open("emails/new_request") as f:
-        message = MIMEText(html.unescape(
+        message = MIMEText(html.unescape(\
             pystache.render(f.read(), {
                 'user': user,
                 "domain": _cfg("domain"),
@@ -69,7 +69,7 @@ def send_rejection(user):
     smtp.ehlo()
     smtp.login(_cfg("smtpuser"), _cfg("smtppassword"))
     with open("emails/reject") as f:
-        message = MIMEText(html..unescape(
+        message = MIMEText(html.unescape(\
             pystache.render(f.read(), {
                 'user': user,
                 "domain": _cfg("domain"),
