@@ -36,9 +36,9 @@ Then start the project with compose
     
     docker-compose up -d
 
-then you can browse to localhost:8080 (by default) to access it
+then you can browse to localhost:5000 (by default) to access it
 
-dev builds currently require a full container rebuild, so I might eventually add a version that mounts the source directories instead for ease of use
+dev builds with docker mount the source directory, if you're using the docker-compose in production, swap to the standard Dockerfile for the image
 
 If it fails to start the first time, just run it again, the db might not have stood all the way up before the web container started
 
