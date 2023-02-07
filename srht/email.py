@@ -1,7 +1,7 @@
 import smtplib
 import pystache
 import os
-import html.parser
+import html
 from email.mime.text import MIMEText
 import email.utils
 from werkzeug.utils import secure_filename
@@ -19,7 +19,7 @@ def send_request_notification(user):
     smtp.starttls()
     smtp.login(_cfg("smtpuser"), _cfg("smtppassword"))
     with open("emails/new_request") as f:
-        message = MIMEText(html.parser.HTMLParser().unescape(
+        message = MIMEText(html.unescape(
             pystache.render(f.read(), {
                 'user': user,
                 "domain": _cfg("domain"),
@@ -45,7 +45,7 @@ def send_invite(user):
     smtp.starttls()
     smtp.login(_cfg("smtpuser"), _cfg("smtppassword"))
     with open("emails/invite") as f:
-        message = MIMEText(html.parser.HTMLParser().unescape(\
+        message = MIMEText(html.unescape(\
             pystache.render(f.read(), {
                 'user': user,
                 "domain": _cfg("domain"),
@@ -69,7 +69,7 @@ def send_rejection(user):
     smtp.ehlo()
     smtp.login(_cfg("smtpuser"), _cfg("smtppassword"))
     with open("emails/reject") as f:
-        message = MIMEText(html.parser.HTMLParser().unescape(
+        message = MIMEText(html..unescape(
             pystache.render(f.read(), {
                 'user': user,
                 "domain": _cfg("domain"),
@@ -93,7 +93,7 @@ def send_reset(user):
     smtp.ehlo()
     smtp.login(_cfg("smtpuser"), _cfg("smtppassword"))
     with open("emails/reset") as f:
-        message = MIMEText(html.parser.HTMLParser().unescape(\
+        message = MIMEText(html.unescape(\
             pystache.render(f.read(), {
                 'user': user,
                 "domain": _cfg("domain"),
