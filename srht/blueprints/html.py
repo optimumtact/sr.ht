@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, abort, request, redirect, session, url_for, send_file, Response
-from flask.ext.login import current_user, login_user, logout_user
+from flask_login import current_user, login_user, logout_user
 from sqlalchemy import desc, or_, and_
 from srht.objects import *
 from srht.common import *

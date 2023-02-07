@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request, g, Response, redirect, url_for
-from flask.ext.login import LoginManager, current_user
+from flask_login import LoginManager, current_user
 from jinja2 import FileSystemLoader, ChoiceLoader
 
 import random
@@ -17,7 +17,7 @@ from srht.blueprints.html import html
 from srht.blueprints.api import api
 
 app = Flask(__name__)
-app.secret_key = _cfg("secret-key")
+app.secret_key = _cfg("secret_key")
 if _cfg("securecookie") and _cfg("securecookie") == "True":
     app.config.update(SESSION_COOKIE_SECURE=True)
 app.jinja_env.cache = None
@@ -56,14 +56,14 @@ if not app.debug:
             sys.exit(1)
         return render_template("internal_error.html"), 500
     # Error handler
-    if _cfg("error-to") != "":
+    if _cfg("errorto") != "":
         import logging
         from logging.handlers import SMTPHandler
-        mail_handler = SMTPHandler((_cfg("smtp-host"), _cfg("smtp-port")),
-           _cfg("error-from"),
-           [_cfg("error-to")],
+        mail_handler = SMTPHandler((_cfg("smtphost"), _cfg("smtpport")),
+           _cfg("errorfrom"),
+           [_cfg("errorto")],
            'sr.ht application exception occured',
-           credentials=(_cfg("smtp-user"), _cfg("smtp-password")),
+           credentials=(_cfg("smtpuser"), _cfg("smtppassword")),
            secure=())
         mail_handler.setLevel(logging.ERROR)
         app.logger.addHandler(mail_handler)

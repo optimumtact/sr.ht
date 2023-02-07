@@ -1,16 +1,10 @@
 import logging
+import os
+from dotenv import load_dotenv
+load_dotenv()
 
-try:
-    from configparser import ConfigParser
-except ImportError:
-    # Python 2 support
-    from ConfigParser import ConfigParser
-
-config = ConfigParser()
-config.readfp(open('config.ini'))
-env = 'dev'
-
-_cfg = lambda k: config.get(env, k)
+# we also try the os environ
+_cfg = lambda k: os.getenv(k)
 _cfgi = lambda k: int(_cfg(k))
 
 logger = logging.getLogger(_cfg("domain"))
