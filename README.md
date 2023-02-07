@@ -28,9 +28,12 @@ Find a place you want the code to live.
 This has a working docker-compose file, just install docker, docker-compose
 
 Then copy the example env file and adjust for your needs
+
     cp env.dev.example .env.dev
     nano .env.dev
+    
 Then start the project with compose
+    
     docker-compose up -d
 
 then you can browse to localhost:8080 (by default) to access it
@@ -50,10 +53,11 @@ This project is deployed on fly.io for production usage, and should be trivial t
 ## Becoming an admin and bootstrapping initial user
 
 You can become an admin with the management cli script
-    $ docker-compose exec -it web bin/bash
-    $ cd /app
-    $ python manage.py user create {yourusername} {password} {emailaddress}
-    $ python manage.py admin promote {youruser}
+
+    docker-compose exec -it web bin/bash
+    cd /app
+    python manage.py user create {yourusername} {password} {emailaddress}
+    python manage.py admin promote {youruser}
 
 ## Customization
 
