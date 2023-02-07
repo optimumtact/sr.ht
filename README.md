@@ -15,27 +15,6 @@ Private file hosting with python/nginx
 ## Running the site
 
 Quick overview:
-
-1. Install dependencies
-2. Set up dependencies
-3. Clone the repository
-7. Configure the site
-8. Compile static assets
-9. Set up SQL
-10. Deployment
-
-**Install the dependencies**
-
-You'll need these things
-
-* Python 3 (python)
-* PostgreSQL (postgresql)
-* scss (ruby-sass)
-
-The following ubuntu/debian packages would also be useful/required for some pip dependencies, equivalents should exist on your system
-
-    apt-get install build-essential libssl-dev libffi-dev python3-dev
-
 **Clone the repository**
 
 Find a place you want the code to live.
@@ -45,8 +24,13 @@ Find a place you want the code to live.
 
 **Deployment**
 
-This has a working docker-compose file, just install docker, docker-compose and run
 
+This has a working docker-compose file, just install docker, docker-compose
+
+Then copy the example env file and adjust for your needs
+    cp env.dev.example .env.dev
+    nano .env.dev
+Then start the project with compose
     docker-compose up -d
 
 then you can browse to localhost:8080 (by default) to access it
@@ -60,30 +44,16 @@ as the application was originally intended for a nginx + wsgi hosting and needs 
 
 https://github.com/DarthSim/hivemind
 
-This project is deployed on fly.io for production usage
+This project is deployed on fly.io for production usage, and should be trivial to get started with flyctl launch (choose the option to create a pg db otherwise the app wont boot because it wont have a DATABASE_URL secret)
 
 
 ## Becoming an admin and bootstrapping initial user
 
 You can become an admin with the management cli script
-
-    $ cd /path/to/sr.ht/
+    $ docker-compose exec -it web bin/bash
+    $ cd /app
     $ python manage.py user create {yourusername} {password} {emailaddress}
     $ python manage.py admin promote {youruser}
-
-## SQL Stuff
-
-We use alembic for schema migrations between versions. The first time you run the
-application, the schema will be created. However, you need to tell alembic that 
-you're already on the latest version
-
-    $ cd /path/to/sr.ht
-    $ bin/activate
-    $ bin/alembic -c alembic.ini stamp head
-
-Congrats, you've got a schema in place. Run `alembic upgrade head` after pulling
-the code to update your schema to the latest version. Do this before you restart
-the site.
 
 ## Customization
 
@@ -91,3 +61,5 @@ You can customize the appearance of the site with template overrides. Create a
 directory called `overrides` and copy templates from the `templates` directory
 into `overrides`. Modify them as you see fit, they will be used instead of the
 version from `templates`.
+
+Although I don't know why you would do this when you can just modify source
