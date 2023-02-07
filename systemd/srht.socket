@@ -1,9 +1,0 @@
-[Unit]
-Description=srht gunicorn socket
-
-[Socket]
-ListenStream=/run/srht/socket
-ListenStream=127.0.0.1:8000
-
-[Install]
-WantedBy=sockets.target
