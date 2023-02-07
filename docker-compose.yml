@@ -2,11 +2,15 @@ version: '3.8'
 
 services:
   web:
-    build: .
+    image: srht_dev
+    build:
+      context: .
+      dockerfile: ./Dockerfile.dev
     volumes:
       - storage:/storage
+      - "./:/app"
     ports:
-      - 127.0.0.1:8080:8000
+      - 127.0.0.1:5000:8000
     env_file:
       - ./.env.dev
     depends_on:
