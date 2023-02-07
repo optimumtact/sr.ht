@@ -6,7 +6,7 @@ services:
     volumes:
       - storage:/storage
     ports:
-      - 8080:8080
+      - 127.0.0.1:8080:80
     env_file:
       - ./.env.dev
     depends_on:
