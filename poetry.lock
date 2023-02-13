@@ -68,6 +68,18 @@ Flask = ">=1.0.4"
 Werkzeug = ">=1.0.1"
 
 [[package]]
+name = "flask-sqlalchemy"
+version = "3.0.3"
+description = "Add SQLAlchemy support to your Flask application."
+category = "main"
+optional = false
+python-versions = ">=3.7"
+
+[package.dependencies]
+Flask = ">=2.2"
+SQLAlchemy = ">=1.4.18"
+
+[[package]]
 name = "greenlet"
 version = "2.0.2"
 description = "Lightweight in-process concurrent programming"
@@ -222,7 +234,7 @@ watchdog = ["watchdog"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.10"
-content-hash = "40ec805ac8611101646fda85364482e6e02e9f76165dfae7d8b8594698460cb5"
+content-hash = "b22470c8b576d5a0485ce7783bffc8d3f19a4bb99ffd7b57a1fca651191d3005"
 
 [metadata.files]
 bcrypt = []
@@ -231,6 +243,7 @@ colorama = []
 docopt = []
 flask = []
 flask-login = []
+flask-sqlalchemy = []
 greenlet = []
 gunicorn = []
 itsdangerous = []

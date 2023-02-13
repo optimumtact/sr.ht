@@ -18,6 +18,7 @@ processes = []
   smtpfrom = "noreply@file.house"
   storage = "/storage/"
   support ="contact me on discord"
+  perpage="40"
 
 [mounts]
   source="filehouse_data"

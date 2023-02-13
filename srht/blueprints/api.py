@@ -30,7 +30,7 @@ def approve(id):
     u = User.query.filter(User.id == id).first()
     u.approved = True
     u.approvalDate = datetime.now()
-    db.commit()
+    db.session.commit()
     send_invite(u)
     return { "success": True }
 
@@ -41,7 +41,7 @@ def approve(id):
 def reject(id):
     u = User.query.filter(User.id == id).first()
     u.rejected = True
-    db.commit()
+    db.session.commit()
     send_rejection(u)
     return { "success": True }
 
@@ -55,7 +55,7 @@ def reset_key():
     if not user:
         return { "error": "API key not recognized" }, 403
     user.generate_api_key()
-    db.commit()
+    db.session.commit()
     return { "key": user.apiKey }
 
 @api.route("/api/upload", methods=["POST"])
@@ -76,7 +76,7 @@ def upload():
     upload.hash = get_hash(f)
     existing = Upload.query.filter(Upload.hash == upload.hash).first()
     if existing:
-        db.rollback()#file already exists, end this session
+        db.session.rollback()#file already exists, end this session
         return {
             "success": True,
             "hash": existing.hash,
@@ -101,8 +101,8 @@ def upload():
             "error": "Upload interrupted"
         }
 
-    db.add(upload)
-    db.commit()
+    db.session.add(upload)
+    db.session.commit()
     return {
         "success": True,
         "hash": upload.hash,
@@ -123,7 +123,7 @@ def disown():
     if not user:
         return { "error": "API key not recognized" }, 403
     Upload.query.filter_by(path=filename).first().hidden = True
-    db.commit()
+    db.session.commit()
     return {
             "success": True,
             "filename": filename
@@ -143,9 +143,9 @@ def delete():
         return { "error": "API key not recognized" }, 403
     file = Upload.query.filter_by(path=filename).first()
     if file and (user.admin or user == file.user):
-        db.delete(file)
+        db.session.delete(file)
         os.remove(os.path.join(_cfg("storage"), file.path))
-        db.commit()
+        db.session.commit()
         return {
                 "success": True,
                 "filename": filename

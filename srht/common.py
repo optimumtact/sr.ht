@@ -3,7 +3,7 @@ from flask_login import current_user
 from werkzeug.utils import secure_filename
 from functools import wraps
 from srht.objects import User
-from srht.database import db, Base
+from srht.database import db
 from srht.config import _cfg
 
 import json

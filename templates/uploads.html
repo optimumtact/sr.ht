@@ -5,7 +5,7 @@ window.api_key = "{{ user.apiKey }}";
 </script>
 <div class="text-center">
     <h1><a href="/">{{ domain }}</a></h1>
-    <h4>My Uploads</h4>
+    <h4>My Uploads - {{ pagination.first }} - {{ pagination.last }} of {{ pagination.total }} </h4>
 </div>
 <hr />
 <table class="table">
@@ -17,7 +17,7 @@ window.api_key = "{{ user.apiKey }}";
         </tr>
     </thead>
     <tbody>
-        {% for upload in uploads %}
+        {% for upload in pagination.items %}
         <tr>
             <td><a href="{{ file_link(upload.path) }}">{{ upload.path }}</a></td>
             <td>{{ upload.original_name }}</td>
@@ -36,5 +36,40 @@ window.api_key = "{{ user.apiKey }}";
         {% endfor %}
     </tbody>
 </table>
+<div class="pagination">
+    {% if pagination.has_prev %}
+        <span>
+            <a class='page-number' href="{{ url_for(endpoint, page=pagination.prev_num) }}">
+                {{ '<<<' }}
+            </a>
+        </span>
+    {% endif %}
+
+    {% for number in pagination.iter_pages() %}
+        {% if number %} 
+            {% if pagination.page != number %}
+                <span>
+                        <a class='page-number'
+                            href="{{ url_for(endpoint, page=number) }}">
+                        {{ number }}
+                        </a>
+                </span>
+            {% else %}
+                <span class='current-page-number'>{{ number }}</span>
+            {% endif %}
+        {% else %}
+                <span class="ellipsis">...</span>
+        {% endif %}
+    {% endfor %}
+
+    {% if pagination.has_next %}
+        <span>
+            <a class='page-number'
+                href="{{ url_for(endpoint, page=pagination.next_num) }}">
+                {{ '>>>' }}
+            </a>
+        </span>
+    {% endif %}
+</div>
 <script src="/static/delete.js"></script>
 {% endblock %}

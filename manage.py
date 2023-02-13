@@ -1,4 +1,4 @@
-from srht.database import db
+from srht.app import db, app
 from srht.objects import User
 from datetime import datetime
 from docopt import docopt
@@ -8,7 +8,7 @@ def remove_admin(arguments):
     u = User.query.filter(User.username == arguments['<name>']).first()
     if(u):
         u.admin = False # remove admin
-        db.commit()
+        db.session.commit()
     else:
         print('Not a valid user')
 
@@ -16,7 +16,7 @@ def make_admin(arguments):
     u = User.query.filter(User.username == arguments['<name>']).first()
     if(u):
         u.admin = True # make admin
-        db.commit()
+        db.session.commit()
     else:
         print('Not a valid user')
 
@@ -30,7 +30,7 @@ def approve_user(arguments):
     if(u):
         u.approved = True # approve user
         u.approvalDate = datetime.now()
-        db.commit()
+        db.session.commit()
     else:
         print('Not a valid user')
 
@@ -39,8 +39,8 @@ def create_user(arguments):
     if(u):
         u.approved = True # approve user
         u.approvalDate = datetime.now()
-        db.add(u)
-        db.commit()
+        db.session.add(u)
+        db.session.commit()
         print('User created')
     else:
         print('Couldn\'t create the uer')
@@ -53,7 +53,7 @@ def reset_password(arguments):
             print('Password must be between 5 and 256 characters.')
             return
         u.set_password(password)  
-        db.commit()
+        db.session.commit()
     else:
         print('Not a valid user')
 
@@ -71,16 +71,17 @@ Options:
     -h --help Show this screen.
 """
 if __name__ == '__main__':
-    arguments = docopt(interface, version='make admin 0.1')
-    if(arguments['admin'] and arguments['promote']):
-        make_admin(arguments)
-    elif(arguments['admin'] and arguments['demote']):
-        remove_admin(arguments)
-    elif(arguments['admin'] and arguments['list']):
-        list_admin(arguments)
-    elif(arguments['user'] and arguments['approve']):
-        approve_user(arguments)
-    elif(arguments['user'] and arguments['create']):
-        create_user(arguments)
-    elif(arguments['user'] and arguments['reset_password']):
-        reset_password(arguments)
+    with app.app_context():
+        arguments = docopt(interface, version='make admin 0.1')
+        if(arguments['admin'] and arguments['promote']):
+            make_admin(arguments)
+        elif(arguments['admin'] and arguments['demote']):
+            remove_admin(arguments)
+        elif(arguments['admin'] and arguments['list']):
+            list_admin(arguments)
+        elif(arguments['user'] and arguments['approve']):
+            approve_user(arguments)
+        elif(arguments['user'] and arguments['create']):
+            create_user(arguments)
+        elif(arguments['user'] and arguments['reset_password']):
+            reset_password(arguments)

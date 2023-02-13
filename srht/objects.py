@@ -1,14 +1,14 @@
 from sqlalchemy import Column, Integer, String, Unicode, Boolean, DateTime
 from sqlalchemy import ForeignKey, Table, UnicodeText, Text, text
 from sqlalchemy.orm import relationship, backref
-from .database import Base
+from .database import db
 
 from datetime import datetime
 import bcrypt
 import os
 import hashlib
 
-class Upload(Base):
+class Upload(db.Model):
     __tablename__ = 'upload'
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey('user.id'))
@@ -24,7 +24,7 @@ class Upload(Base):
         self.created = datetime.now()
         self.hidden = False
 
-class User(Base):
+class User(db.Model):
     __tablename__ = 'user'
     id = Column(Integer, primary_key = True)
     username = Column(String(128), nullable=False, index=True)

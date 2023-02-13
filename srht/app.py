@@ -4,11 +4,10 @@ from jinja2 import FileSystemLoader, ChoiceLoader
 
 import random
 import sys
-import os
 import locale
 
 from srht.config import _cfg, _cfgi
-from srht.database import db, init_db
+from srht.database import db
 from srht.objects import User
 from srht.common import *
 from srht.network import *
@@ -21,7 +20,8 @@ app.secret_key = _cfg("secret_key")
 if _cfg("securecookie") and _cfg("securecookie") == "True":
     app.config.update(SESSION_COOKIE_SECURE=True)
 app.jinja_env.cache = None
-init_db()
+app.config["SQLALCHEMY_DATABASE_URI"] = _cfg("DATABASE_URL")
+db.init_app(app)
 login_manager = LoginManager()
 login_manager.init_app(app)
 
@@ -49,8 +49,8 @@ if not app.debug:
     def handle_500(e):
         # shit
         try:
-            db.rollback()
-            db.close()
+            db.session.rollback()
+            db.session.session.close()
         except:
             # shit shit
             sys.exit(1)

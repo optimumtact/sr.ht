@@ -3,7 +3,7 @@ from flask_login import current_user, login_user, logout_user
 from sqlalchemy import desc, or_, and_
 from srht.objects import *
 from srht.common import *
-from srht.config import _cfg
+from srht.config import _cfg, _cfgi
 from srht.email import send_reset, send_request_notification
 
 from datetime import datetime, timedelta
@@ -76,8 +76,8 @@ def register():
     # All good, create an account for them
     user = User(username, email, password)
     user.comments = comments
-    db.add(user)
-    db.commit()
+    db.session.add(user)
+    db.session.commit()
     send_request_notification(user)
     return render_template("index.html", registered=True, registration=registration)
 
@@ -173,7 +173,7 @@ def forgot_password():
             return render_template("forgot.html", bad_email=True, email=email)
         user.passwordReset = binascii.b2a_hex(os.urandom(20)).decode("utf-8")
         user.passwordResetExpiry = datetime.now() + timedelta(days=1)
-        db.commit()
+        db.session.commit()
         send_reset(user)
         return render_template("forgot.html", success=True)
 
@@ -190,7 +190,7 @@ def change_password():
         if password != password2:
             return render_template("change.html",errors="You seem to have mistyped one of these, please try again.")
         current_user.set_password(password)
-        db.commit()
+        db.session.commit()
         return redirect("%s://%s/" % (_cfg('protocol'), _cfg('domain')))
 
 @html.route("/reset", methods=['GET', 'POST'])
@@ -220,16 +220,22 @@ def reset_password(username, confirmation):
         user.set_password(password)
         user.passwordReset = None
         user.passwordResetExpiry = None
-        db.commit()
+        db.session.commit()
         return redirect("%s://%s/login?reset=1" % (_cfg('protocol'), _cfg('domain')))
 
-@html.route("/uploads")
+@html.route("/uploads", methods=['GET'], defaults={'page':1})
+@html.route("/uploads/<page>", methods=['GET'])
 @loginrequired
-def uploads():
-    return render_template("uploads.html", uploads=current_user.upload.filter_by(hidden=False))
+def uploads(page):
+    page = int(page)
+    uploads = db.paginate(db.select(Upload).filter_by(user_id=current_user.id).filter_by(hidden=False).order_by(Upload.created), page=page, per_page=_cfgi("perpage"))
+    return render_template("uploads.html", pagination=uploads, endpoint='html.uploads')
 
-@html.route("/admin_uploads")
+@html.route("/admin_uploads", methods=['GET'], defaults={'page':1})
+@html.route("/admin_uploads/<page>", methods=['GET'])
 @adminrequired
 @loginrequired
-def uploads_admin():
-    return render_template("admin_uploads.html", uploads=Upload.query.all())
+def uploads_admin(page):
+    page = int(page)
+    uploads = db.paginate(db.select(Upload).order_by(Upload.created), page=page, per_page=_cfgi("perpage"))
+    return render_template("admin_uploads.html", pagination=uploads, endpoint='html.uploads_admin')

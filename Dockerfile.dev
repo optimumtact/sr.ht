@@ -1,13 +1,11 @@
-FROM python:3-alpine as base
-# Dev image is much simpler
-FROM base
+FROM python:3-alpine
+# Dev image comes with basically more stuff for dev, a bash shell and runs the bask flask server
 # set environment variables
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
-RUN apk update && apk add postgresql-dev musl-dev gcc python3-dev sassc make curl
-RUN apk add nginx libpq
+RUN apk update 
+RUN apk add postgresql-dev musl-dev gcc python3-dev sassc make curl bash bash-doc bash-completion nginx libpq
 COPY nginx/basic.conf /etc/nginx/http.d/default.conf
-RUN apk update && apk add postgresql-dev musl-dev gcc python3-dev sassc make curl
 COPY requirements.txt /requirements.txt
 RUN pip install -r /requirements.txt
 CMD ["python", "/app/debug.py"]
