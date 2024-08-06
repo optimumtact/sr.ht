@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request, url_for
-from flask_login import LoginManager, current_user
+from flask_login import LoginManager, current_user, login_user
 from jinja2 import FileSystemLoader, ChoiceLoader
 
 import random
@@ -42,6 +42,16 @@ app.jinja_loader = ChoiceLoader(
 def load_user(username):
     return User.query.filter(User.username == username).first()
 
+
+# Middleware to log in user based on request headers
+# TODO create user?
+@app.before_request
+def authenticate_user_from_header():
+    if _cfg('headerlogin') == "True":
+        username = request.headers.get('Remote-User')
+        user = User.query.filter(User.username.ilike(username)).first()
+        if (user):
+            login_user(user)
 
 login_manager.anonymous_user = lambda: None
 
