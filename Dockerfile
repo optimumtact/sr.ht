@@ -34,11 +34,10 @@ FROM base
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
 
-
-# Copy requirements from builder
-COPY --from=builder /venv /venv
 RUN export DEBIAN_FRONTEND=noninteractive && apt update 
 RUN export DEBIAN_FRONTEND=noninteractive && apt-get -yq install nginx postgresql ffmpeg
+# Copy requirements from builder
+COPY --from=builder /venv /venv
 WORKDIR /app
 # Bundle app sources
 COPY Procfile Procfile
