@@ -18,6 +18,8 @@ services:
     image: postgres:13
     volumes:
       - postgres_data:/var/lib/postgresql/data/
+      - ./init/srht.schema:/docker-entrypoint-initdb.d/srht.schema
+      - ./init/init-db.sh:/docker-entrypoint-initdb.d/init-db.sh
 
 volumes:
   postgres_data:
