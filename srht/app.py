@@ -13,6 +13,8 @@ from srht.common import admin_delete_link, file_link, disown_link, delete_link
 
 from srht.blueprints.html import html
 from srht.blueprints.api import api
+from pathlib import Path
+import os
 
 app = Flask(__name__)
 app.secret_key = _cfg("secret_key")
@@ -23,6 +25,10 @@ app.config["SQLALCHEMY_DATABASE_URI"] = _cfg("DATABASE_URL")
 db.init_app(app)
 login_manager = LoginManager()
 login_manager.init_app(app)
+
+# Create thumbnail dir if ti doesnt exist
+thumbnaildir = Path(os.path.join(_cfg("storage"), "thumbnails"))
+os.makedirs(thumbnaildir, exist_ok=True)
 
 app.jinja_loader = ChoiceLoader(
     [
