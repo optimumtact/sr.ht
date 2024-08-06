@@ -1,14 +1,22 @@
-FROM python:3.10-alpine as base
+FROM python:3.10 AS base
 
-FROM base as builder
+FROM base AS builder
 
 # Builder image
 RUN mkdir /install
-RUN apk update && apk add postgresql-dev musl-dev gcc python3-dev sassc make curl g++
+RUN mkdir /app
+ENV PATH="/root/.local/bin:${PATH}"
+RUN export DEBIAN_FRONTEND=noninteractive && apt update 
+RUN export DEBIAN_FRONTEND=noninteractive && apt-get -yq install postgresql gcc python3-dev sassc make curl g++ ffmpeg pipx
 RUN curl https://github.com/DarthSim/hivemind/releases/download/v1.1.0/hivemind-v1.1.0-linux-amd64.gz -fsL -o hivemind-v1.1.0-linux-amd64.gz && gunzip hivemind-v1.1.0-linux-amd64.gz && chmod u+x hivemind-v1.1.0-linux-amd64
-WORKDIR /install
-COPY requirements.txt /requirements.txt
-RUN pip install --prefix="/install" -r /requirements.txt
+RUN pipx install poetry
+RUN pipx inject poetry poetry-plugin-bundle
+
+# Set the working directory
+WORKDIR /src
+# Copy the Poetry configuration files
+COPY pyproject.toml poetry.lock* ./
+RUN poetry bundle venv --python=/usr/bin/python3 --only=main /venv
 
 # Now do the static images
 COPY _static /_static
@@ -28,8 +36,9 @@ ENV PYTHONUNBUFFERED 1
 
 
 # Copy requirements from builder
-COPY --from=builder /install /usr/local
-RUN apk add nginx libpq
+COPY --from=builder /venv /venv
+RUN export DEBIAN_FRONTEND=noninteractive && apt update 
+RUN export DEBIAN_FRONTEND=noninteractive && apt-get -yq install nginx postgresql ffmpeg
 WORKDIR /app
 # Bundle app sources
 COPY Procfile Procfile
@@ -37,7 +46,7 @@ COPY srht srht
 COPY templates templates
 COPY emails emails
 COPY manage.py manage.py
-COPY nginx/basic.conf /etc/nginx/http.d/default.conf
+COPY nginx/basic.conf /etc/nginx/sites-available/default
 COPY --from=builder /static /app/static
 COPY --from=builder /hivemind-v1.1.0-linux-amd64 .
 CMD ["/app/hivemind-v1.1.0-linux-amd64"]
