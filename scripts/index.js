@@ -91,6 +91,7 @@ function uploadFile(file, progress) {
     var bar = progress.querySelector(".progress-bar");
     var xhr = new XMLHttpRequest();
     xhr.open("POST", "/api/upload");
+    console.log('Hello world yo');
     xhr.onload = function() {
         var response = JSON.parse(xhr.responseText);
         progress.innerHTML = "<a href='" + response.url + "'>" + response.url + "</a>";

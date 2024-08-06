@@ -322,4 +322,5 @@ def uploads_admin(page):
 
 @html.route("/<path:filename>", methods=["GET"])
 def serve_file(filename):
-    return send_from_directory('/storage', filename)
+    print(_cfg('storage'), filename)
+    return send_from_directory(_cfg("storage"), filename)

@@ -14,3 +14,5 @@ pip-selfcheck.json
 overrides/
 venv/
 .env*
+data/
+docker-compose.yml

@@ -25,30 +25,44 @@ Find a place you want the code to live.
 **Deployment**
 
 
-This has a working docker-compose file, just install docker, docker-compose
+This has a working docker-compose file, just install docker and docker-compose
 
 Then copy the example env file and adjust for your needs
 
-    cp env.dev.example .env.dev
-    nano .env.dev
+    cp env.dev.example .env
+    nano .env
     
+Soft link the production docker-compose to docker-compose.yml
+    ln -s docker-compose-prod.yml docker-compose.yml
+
 Then start the project with compose
-    
     docker-compose up -d
 
 then you can browse to localhost:5000 (by default) to access it
 
-dev builds with docker mount the source directory, if you're using the docker-compose in production, swap to the standard Dockerfile for the image
+** Dev deployment **
+This has a working docker-compose file for the database, so you can install docker + docker-compose + poetry + dotenv
+
+Then copy the example env file and adjust for your needs
+    cp env.dev.example .env
+    nano .env
+    
+Soft link the dev docker-compose to docker-compose.yml
+    ln -s docker-compose-dev.yml docker-compose.yml
+
+Then start the project with compose
+    docker-compose up -d
+
+Then run the flask developer app, with dotenv and poetry to manage the requirements
+    dotenv run poetry run python debug.py 
 
 If it fails to start the first time, just run it again, the db might not have stood all the way up before the web container started
 
+** About the production deployment **
 The Docker uses python:3-slim and hivemind for process management, so it obeys the procfile standard, both gunicorn and nginx run in a single container,
 as the application was originally intended for a nginx + wsgi hosting and needs to share a storage folder
 
 https://github.com/DarthSim/hivemind
-
-This project is deployed on fly.io for production usage, and should be trivial to get started with flyctl launch (choose the option to create a pg db otherwise the app wont boot because it wont have a DATABASE_URL secret)
-
 
 ## Becoming an admin and bootstrapping initial user
 

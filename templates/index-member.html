@@ -4,6 +4,8 @@
 window.api_key = "{{ user.apiKey }}";
 window.root = "{{ root }}";
 </script>
+
+<div class="small">
 <div class="text-center">
     <p>Logged in as {{ user.username  }}</p>
     <div class="inline-menu">
@@ -95,3 +97,4 @@ window.root = "{{ root }}";
 {% block scripts %}
 <script src="/static/index.js"></script>
 {% endblock %}
+</div>
