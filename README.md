@@ -22,7 +22,7 @@ Find a place you want the code to live.
     $ git clone git://github.com/optimumtact/sr.ht.git
     $ cd sr.ht
 
-**Deployment**
+## Deployment
 
 
 This has a working docker-compose file, just install docker and docker-compose
@@ -40,7 +40,7 @@ Then start the project with compose
 
 then you can browse to localhost:5000 (by default) to access it
 
-** Dev deployment **
+## Dev deployment
 This has a working docker-compose file for the database, so you can install docker + docker-compose + poetry + dotenv
 
 Then copy the example env file and adjust for your needs
