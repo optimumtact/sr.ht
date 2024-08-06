@@ -5,6 +5,7 @@ from flask import (
     request,
     redirect,
     Response,
+    send_from_directory
 )
 from flask_login import current_user, login_user, logout_user
 from sqlalchemy import desc
@@ -317,3 +318,8 @@ def uploads_admin(page):
         per_page=_cfgi("perpage"),
     )
     return render_template("admin_uploads.html", pagination=uploads, endpoint="html.uploads_admin")
+
+
+@html.route("/<path:filename>", methods=["GET"])
+def serve_file(filename):
+    return send_from_directory('/storage', filename)
