@@ -228,7 +228,7 @@ def reset_password(username, confirmation):
 @loginrequired
 def uploads(page):
     page = int(page)
-    uploads = db.paginate(db.select(Upload).filter_by(user_id=current_user.id).filter_by(hidden=False).order_by(Upload.created), page=page, per_page=_cfgi("perpage"))
+    uploads = db.paginate(db.select(Upload).filter_by(user_id=current_user.id).filter_by(hidden=False).order_by(desc(Upload.created)), page=page, per_page=_cfgi("perpage"))
     return render_template("uploads.html", pagination=uploads, endpoint='html.uploads')
 
 @html.route("/admin_uploads", methods=['GET'], defaults={'page':1})
@@ -237,5 +237,5 @@ def uploads(page):
 @loginrequired
 def uploads_admin(page):
     page = int(page)
-    uploads = db.paginate(db.select(Upload).order_by(Upload.created), page=page, per_page=_cfgi("perpage"))
+    uploads = db.paginate(db.select(Upload).order_by(desc(Upload.created)), page=page, per_page=_cfgi("perpage"))
     return render_template("admin_uploads.html", pagination=uploads, endpoint='html.uploads_admin')

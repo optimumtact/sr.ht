@@ -1,10 +1,10 @@
-FROM python:3-alpine as base
+FROM python:3.10-alpine as base
 
 FROM base as builder
 
 # Builder image
 RUN mkdir /install
-RUN apk update && apk add postgresql-dev musl-dev gcc python3-dev sassc make curl
+RUN apk update && apk add postgresql-dev musl-dev gcc python3-dev sassc make curl g++
 RUN curl https://github.com/DarthSim/hivemind/releases/download/v1.1.0/hivemind-v1.1.0-linux-amd64.gz -fsL -o hivemind-v1.1.0-linux-amd64.gz && gunzip hivemind-v1.1.0-linux-amd64.gz && chmod u+x hivemind-v1.1.0-linux-amd64
 WORKDIR /install
 COPY requirements.txt /requirements.txt
