@@ -73,8 +73,9 @@ def upload():
     filename = ''.join(c for c in f.filename if c.isalnum() or c == '.')
     upload = Upload()
     upload.user = user
-    upload.hash = get_hash(f)
-    existing = Upload.query.filter(Upload.hash == upload.hash).first()
+    hash = get_hash(f)
+    upload.hash = hash
+    existing = Upload.query.filter(Upload.hash == hash).first()
     if existing:
         db.session.rollback()#file already exists, end this session
         return {
