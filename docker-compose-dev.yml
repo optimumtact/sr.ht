@@ -3,8 +3,7 @@ services:
     image: postgres:13
     volumes:
       - postgres_data:/var/lib/postgresql/data/
-      - ./init/srht.schema:/docker-entrypoint-initdb.d/srht.schema
-      - ./init/init-db.sh:/docker-entrypoint-initdb.d/init-db.sh
+      - ./db_schema/srhtschema.sql:/docker-entrypoint-initdb.d/srhtschema.sql
     environment:
       - POSTGRES_USER=hello_flask
       - POSTGRES_PASSWORD=hello_flask

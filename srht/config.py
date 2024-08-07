@@ -1,6 +1,8 @@
 import logging
 import os
+
 from dotenv import load_dotenv
+
 load_dotenv()
 
 # we also try the os environ
@@ -19,4 +21,3 @@ logger.addHandler(sh)
 
 # scss logger
 logging.getLogger("scss").addHandler(sh)
-

@@ -1,16 +1,24 @@
-from flask import Blueprint, request
-from srht.objects import Upload, User
-from srht.common import adminrequired, with_session, json_output, file_link, generate_thumbnail
-from srht.config import _cfg
-from srht.email import send_invite, send_rejection
-from srht.database import db
-
-from datetime import datetime
-import hashlib
-import os
-import locale
 import base64
+import hashlib
+import locale
+import os
+from datetime import datetime
 from pathlib import Path
+
+from flask import Blueprint, request
+
+from srht.common import (
+    adminrequired,
+    file_link,
+    generate_thumbnail,
+    json_output,
+    with_session,
+)
+from srht.config import _cfg
+from srht.database import db
+from srht.email import send_invite, send_rejection
+from srht.objects import Upload, User
+from srht.task_queue import queue_thumbnail_job
 
 encoding = locale.getdefaultlocale()[1]
 api = Blueprint("api", __name__, template_folder="../../templates")
@@ -82,23 +90,24 @@ def upload():
             "url": file_link(existing.path),
         }
     upload.path = os.path.join(upload.hash + extension(filename))
-    upload.original_name = f.filename
+    upload.original_name = filename
 
     # Save files to the directories as required
-    savefile = Path(os.path.join(_cfg("storage"), upload.path))
-    thumbnaildir = Path(os.path.join(_cfg("storage"), "thumbnails"))
+    savefile = upload.get_storage_path()
+    # thumbnaildir = Path(os.path.join(_cfg("storage"), "thumbnails"))
     # Rewind the file and save it to the directory
     f.seek(0)
     f.save(savefile)
-    thumbnail = generate_thumbnail(savefile, thumbnaildir)
+    # thumbnail = generate_thumbnail(savefile, thumbnaildir)
     # Save the thumbnail name
-    upload.thumbnail = 'thumbnails'+'/'+thumbnail.name
+    # upload.thumbnail = 'thumbnails'+'/'+thumbnail.name
 
     if upload.hash is None:
         return {"success": False, "error": "Upload interrupted"}
 
     db.session.add(upload)
     db.session.commit()
+    queue_thumbnail_job(upload)
     return {
         "success": True,
         "hash": upload.hash,

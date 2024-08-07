@@ -37,7 +37,7 @@ CREATE TABLE public.upload (
 );
 
 
-ALTER TABLE public.upload OWNER TO hello_flask;
+
 
 --
 -- Name: upload_id_seq; Type: SEQUENCE; Schema: public; Owner: hello_flask
@@ -52,7 +52,7 @@ CREATE SEQUENCE public.upload_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.upload_id_seq OWNER TO hello_flask;
+
 
 --
 -- Name: upload_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: hello_flask
@@ -82,7 +82,7 @@ CREATE TABLE public."user" (
 );
 
 
-ALTER TABLE public."user" OWNER TO hello_flask;
+
 
 --
 -- Name: user_id_seq; Type: SEQUENCE; Schema: public; Owner: hello_flask
@@ -97,7 +97,7 @@ CREATE SEQUENCE public.user_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.user_id_seq OWNER TO hello_flask;
+
 
 --
 -- Name: user_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: hello_flask

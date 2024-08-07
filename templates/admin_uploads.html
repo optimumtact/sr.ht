@@ -15,7 +15,7 @@ window.api_key = "{{ user.apiKey }}";
 <div class="gallery">
     {% for upload in pagination.items %}
     <div>
-        <a href="{{ file_link(upload.path) }}"><img src="{{ file_link(upload.thumbnail) }}"></a>
+        <a href="{{ file_link(upload.path) }}"><img class="{{ thumbnail_class(upload.thumbnail) }}" src="{{ thumbnail_link(upload.thumbnail) }}"></a>
         <div class="imageattribute">
             {{ upload.original_name }}
         </div>

@@ -1,20 +1,27 @@
-from flask import Flask, render_template, request, url_for
-from flask_login import LoginManager, current_user, login_user
-from jinja2 import FileSystemLoader, ChoiceLoader
-
+import locale
+import os
 import random
 import sys
-import locale
+from pathlib import Path
 
+from flask import Flask, render_template, request, url_for
+from flask_login import LoginManager, current_user, login_user
+from jinja2 import ChoiceLoader, FileSystemLoader
+
+from srht.blueprints.api import api
+from srht.blueprints.html import html
+from srht.common import (
+    admin_delete_link,
+    delete_link,
+    disown_link,
+    file_link,
+    thumbnail_class,
+    thumbnail_link,
+    validate_storage_directory,
+)
 from srht.config import _cfg
 from srht.database import db
 from srht.objects import User
-from srht.common import admin_delete_link, file_link, disown_link, delete_link
-
-from srht.blueprints.html import html
-from srht.blueprints.api import api
-from pathlib import Path
-import os
 
 app = Flask(__name__)
 app.secret_key = _cfg("secret_key")
@@ -26,10 +33,7 @@ db.init_app(app)
 login_manager = LoginManager()
 login_manager.init_app(app)
 
-# Create thumbnail dir if ti doesnt exist
-thumbnaildir = Path(os.path.join(_cfg("storage"), "thumbnails"))
-os.makedirs(thumbnaildir, exist_ok=True)
-
+validate_storage_directory()
 app.jinja_loader = ChoiceLoader(
     [
         FileSystemLoader("overrides"),
@@ -47,11 +51,12 @@ def load_user(username):
 # TODO create user?
 @app.before_request
 def authenticate_user_from_header():
-    if _cfg('headerlogin') == "True":
-        username = request.headers.get('Remote-User')
+    if _cfg("headerlogin") == "True":
+        username = request.headers.get("Remote-User")
         user = User.query.filter(User.username.ilike(username)).first()
-        if (user):
+        if user:
             login_user(user)
+
 
 login_manager.anonymous_user = lambda: None
 
@@ -70,7 +75,7 @@ if not app.debug:
         # shit
         try:
             db.session.rollback()
-            db.session.session.close()
+            db.session.close()
         except:
             # shit shit
             sys.exit(1)
@@ -110,6 +115,8 @@ def inject():
         "locale": locale,
         "url_for": url_for,
         "file_link": file_link,
+        "thumbnail_link": thumbnail_link,
+        "thumbnail_class": thumbnail_class,
         "disown_link": disown_link,
         "delete_link": delete_link,
         "admin_delete_link": admin_delete_link,

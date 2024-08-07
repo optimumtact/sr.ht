@@ -1,0 +1,14 @@
+
+CREATE TABLE IF NOT EXISTS job (
+    id SERIAL PRIMARY KEY,
+    priority INTEGER DEFAULT 100,
+    status INTEGER CHECK (status IN (1, 2, 3, 4)) NOT NULL,
+    data JSONB NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS message (
+    id SERIAL PRIMARY KEY,
+    job_id INTEGER,
+    created TIMESTAMP WITH TIME ZONE,
+    FOREIGN KEY (job_id) REFERENCES job (id)
+);

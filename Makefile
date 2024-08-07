@@ -49,3 +49,6 @@ watch:
 		-e close_write styles/ \
 		-e close_write _static/; \
 		do make; done
+
+dev:
+	while true; do poetry run dotenv run python debug.py; done
