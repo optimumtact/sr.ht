@@ -87,7 +87,7 @@ class GenerateImageThumbnail(Task):
     ) -> Path:
         print(f"Generating video thumbnail to {thumbnail_file_path}")
         video = VideoFileClip(uploaded_file_path.as_posix())
-        video.save_frame(thumbnail_file_path, t=max(0.25, video.duration / 3))
+        video.save_frame(thumbnail_file_path, t=min(0.25, video.duration / 3))
         # Now we defer to the thumbnail generation
         self.generate_image_thumbnail(thumbnail_file_path, thumbnail_file_path, size)
         return thumbnail_file_path
