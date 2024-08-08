@@ -45,6 +45,7 @@ COPY srht srht
 COPY templates templates
 COPY emails emails
 COPY manage.py manage.py
+COPY db_schema/updates /migrations
 COPY nginx/basic.conf /etc/nginx/sites-available/default
 COPY --from=builder /static /app/static
 COPY --from=builder /hivemind-v1.1.0-linux-amd64 .
