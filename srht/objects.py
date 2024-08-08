@@ -11,11 +11,11 @@ from sqlalchemy import (
     DateTime,
     ForeignKey,
     Integer,
+    LargeBinary,
     String,
     Unicode,
 )
-from sqlalchemy.dialects.postgresql import JSONB
-from sqlalchemy.orm import backref, relationship
+from sqlalchemy.orm import Mapped, backref, mapped_column, relationship
 
 from srht.config import _cfg
 
@@ -24,7 +24,7 @@ from .database import db
 
 class Upload(db.Model):
     __tablename__ = "upload"
-    id = Column(Integer, primary_key=True)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey("user.id"))
     user = relationship("User", backref=backref("upload", order_by=id, lazy="dynamic"))
     hash = Column(String, nullable=False)
@@ -52,29 +52,33 @@ class Upload(db.Model):
             return thumbnaildir
         raise Exception("Invalid storage directory")
 
+    def save_file(self, f):
+        # In case it was read from
+        f.seek(0)
+        f.save(self.get_storage_path())
 
-class Message(db.Model):
-    """A simple message record for a task queue"""
 
-    __tablename__ = "message"
+class Job(db.Model):
+    __tablename__ = "job"
+    id = Column(Integer, primary_key=True)
+    priority = Column(Integer, default=100)
+    status: Mapped[int] = mapped_column(Integer, nullable=False)
+    tasktype: Mapped[int] = mapped_column(Integer, nullable=False)
+    pickledclass: Mapped[bytes] = mapped_column(LargeBinary, nullable=False)
+
+
+class PendingJob(db.Model):
+    """Just a queue of jobs that need handling by a processor (cron etc)"""
+
+    __tablename__ = "pending_job"
     id = Column(Integer, primary_key=True)
     job_id = Column(Integer, ForeignKey("job.id"))
     job = relationship("Job", backref=backref("message", order_by=id, lazy="dynamic"))
     created = Column(DateTime)
 
-    def __init__(self):
+    def __init__(self, job: Job):
         self.created = datetime.now()
-
-
-class Job(db.Model):
-    failed = 4
-    queued = 1
-    complete = 2
-    __tablename__ = "job"
-    id = Column(Integer, primary_key=True)
-    priority = Column(Integer, default=100)
-    status = Column(Integer, CheckConstraint("status IN (1, 2, 3, 4)"), nullable=False)
-    data = Column(JSONB, nullable=False)
+        self.job_id = job.id
 
 
 class User(db.Model):

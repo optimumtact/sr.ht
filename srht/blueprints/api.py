@@ -7,18 +7,12 @@ from pathlib import Path
 
 from flask import Blueprint, request
 
-from srht.common import (
-    adminrequired,
-    file_link,
-    generate_thumbnail,
-    json_output,
-    with_session,
-)
+from srht.common import adminrequired, file_link, json_output, with_session
 from srht.config import _cfg
 from srht.database import db
 from srht.email import send_invite, send_rejection
 from srht.objects import Upload, User
-from srht.task_queue import queue_thumbnail_job
+from srht.tasks import GenerateImageThumbnail
 
 encoding = locale.getdefaultlocale()[1]
 api = Blueprint("api", __name__, template_folder="../../templates")
@@ -93,21 +87,15 @@ def upload():
     upload.original_name = filename
 
     # Save files to the directories as required
-    savefile = upload.get_storage_path()
-    # thumbnaildir = Path(os.path.join(_cfg("storage"), "thumbnails"))
-    # Rewind the file and save it to the directory
-    f.seek(0)
-    f.save(savefile)
-    # thumbnail = generate_thumbnail(savefile, thumbnaildir)
-    # Save the thumbnail name
-    # upload.thumbnail = 'thumbnails'+'/'+thumbnail.name
+    upload.save_file(f)
 
     if upload.hash is None:
         return {"success": False, "error": "Upload interrupted"}
 
     db.session.add(upload)
     db.session.commit()
-    queue_thumbnail_job(upload)
+    task = GenerateImageThumbnail(upload.id)
+    task.queue()
     return {
         "success": True,
         "hash": upload.hash,

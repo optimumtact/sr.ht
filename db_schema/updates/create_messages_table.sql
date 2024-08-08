@@ -2,13 +2,14 @@
 CREATE TABLE IF NOT EXISTS job (
     id SERIAL PRIMARY KEY,
     priority INTEGER DEFAULT 100,
-    status INTEGER CHECK (status IN (1, 2, 3, 4)) NOT NULL,
-    data JSONB NOT NULL
+    status INTEGER NOT NULL,
+    tasktype INTEGER NOT NULL,
+    pickledclass BYTEA NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS message (
+CREATE TABLE IF NOT EXISTS pending_job (
     id SERIAL PRIMARY KEY,
     job_id INTEGER,
     created TIMESTAMP WITH TIME ZONE,
-    FOREIGN KEY (job_id) REFERENCES job (id)
+    FOREIGN KEY (job_id) REFERENCES job (id) ON DELETE CASCADE
 );

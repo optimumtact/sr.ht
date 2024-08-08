@@ -7,28 +7,24 @@ from sqlalchemy import text
 from srht.app import app, db
 from srht.config import _cfg
 from srht.objects import Job, Upload, User
-from srht.task_queue import get_next_message, handle_thumbnail_job, queue_thumbnail_job
+from srht.tasks import GenerateImageThumbnail, Task
 
 
 def do_task(arguments):
     count = int(arguments["<count>"])
     start = 0
     while count > start:
-        job = get_next_message()
-        if job:
-            upload = Upload.query.filter(Upload.id == job.data["uploadid"]).one()
-            handle_thumbnail_job(upload)
-            job.status = Job.complete
-            db.session.add(job)
-            db.session.commit()
+        task = Task.get_next_task()
+        if task:
+            task.run()
         start += 1
 
 
 def queue_task_for_missing_thumbnails(arguments):
-    uploads = Upload.query.all()
+    uploads = Upload.query.filter(Upload.thumbnail == None).all()
     for upload in uploads:
-        queue_thumbnail_job(upload)
-    db.session.commit()
+        task = GenerateImageThumbnail(upload.id)
+        task.queue()
 
 
 def apply_migrations(arguments):
@@ -124,14 +120,15 @@ Usage:
     manage.py user reset_password <name> <password>
     manage.py database migrate
     manage.py task run <count>
-    manage.py task missingthumbnails
+    manage.py thumbnails queue
+    manage.py thumbnails recreate <url> #TODO
 
 Options:
     -h --help Show this screen.
 """
 if __name__ == "__main__":
     with app.app_context():
-        arguments = docopt(interface, version="make admin 0.1")
+        arguments = docopt(interface, version="1")
         if arguments["admin"] and arguments["promote"]:
             make_admin(arguments)
         elif arguments["admin"] and arguments["demote"]:
@@ -148,5 +145,5 @@ if __name__ == "__main__":
             apply_migrations(arguments)
         elif arguments["task"] and arguments["run"]:
             do_task(arguments)
-        elif arguments["task"] and arguments["missingthumbnails"]:
+        elif arguments["thumbnails"] and arguments["queue"]:
             queue_task_for_missing_thumbnails(arguments)

@@ -4,11 +4,8 @@ import urllib
 from functools import wraps
 from pathlib import Path
 
-import magic
 from flask import Response, abort, jsonify, redirect, request
 from flask_login import current_user
-from moviepy.video.io.VideoFileClip import VideoFileClip
-from PIL import Image
 
 from srht.config import _cfg
 from srht.database import db
@@ -21,81 +18,6 @@ def validate_storage_directory() -> bool:
     thumbnaildir = Path(os.path.join(path, "thumbnails"))
     os.makedirs(thumbnaildir, exist_ok=True)
     return True
-
-
-def is_valid_image_pillow(file_name: Path) -> bool:
-    """Check if an image is a valid iamge
-
-    Args:
-        file_name (Path): The file path to check
-
-    Returns:
-        bool: True if the image is a valid image
-    """
-    try:
-        with Image.open(file_name) as img:
-            img.verify()
-            return True
-    except (IOError, SyntaxError):
-        return False
-
-
-def generate_thumbnail(uploaded_file_path: Path, thumbnail_path: Path, size=(500, 500)) -> Path:
-    """Generate a thumbnail from a given file path
-    will attempt to guess the media type and use PIL or pyvideo as needed
-
-    Args:
-        image_path (Path): The image path
-        thumbnail_path (Path): The thumbnail directory
-        size (tuple, optional): The image size. Defaults to (128, 128).
-
-    Returns:
-        bool: True if the thumbnail was created successfully.
-    """
-    thumbnail_file_path = thumbnail_path.joinpath(uploaded_file_path.name)
-    guessed_mimetype = magic.from_file(uploaded_file_path, mime=True)
-    if guessed_mimetype is not None:
-        type, extension = guessed_mimetype.split("/")
-        if type == "image":
-            # Does pillow recognise it, otherwise fall through to the default
-            if is_valid_image_pillow(uploaded_file_path):
-                return generate_image_thumbnail(uploaded_file_path, thumbnail_file_path, size)
-        if type == "video":
-            # We want to save the first frame as a png
-            thumbnail_file_path = thumbnail_path.joinpath(uploaded_file_path.stem + ".png")
-            return generate_video_thumbnail(uploaded_file_path, thumbnail_file_path, size)
-    # Unknown file type we want to save as a png of the same name
-    thumbnail_file_path = thumbnail_path.joinpath(uploaded_file_path.stem + ".png")
-    return generate_blank_thumbnail(uploaded_file_path, thumbnail_file_path, size)
-
-
-def generate_blank_thumbnail(
-    uploaded_file_path: Path, thumbnail_file_path: Path, size=(128, 128)
-) -> Path:
-    color = (255, 255, 255, 0)
-    image = Image.new("RGBA", (size[0], size[1]), color)
-    image.save(thumbnail_file_path)
-    return thumbnail_file_path
-
-
-def generate_video_thumbnail(
-    uploaded_file_path: Path, thumbnail_file_path: Path, size=(128, 128)
-) -> Path:
-    print(f"Generating video thumbnail to {thumbnail_file_path}")
-    video = VideoFileClip(uploaded_file_path.as_posix())
-    video.save_frame(thumbnail_file_path, t=1.00)
-    # Now we defer to the thumbnail generation
-    generate_image_thumbnail(thumbnail_file_path, thumbnail_file_path, size)
-    return thumbnail_file_path
-
-
-def generate_image_thumbnail(
-    uploaded_file_path: Path, thumbnail_file_path: Path, size=(128, 128)
-) -> Path:
-    with Image.open(uploaded_file_path) as img:
-        img.thumbnail(size)
-        img.save(thumbnail_file_path)
-        return thumbnail_file_path
 
 
 def firstparagraph(text):
