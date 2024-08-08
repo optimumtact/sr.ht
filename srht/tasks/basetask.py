@@ -48,7 +48,6 @@ class Task:
         self.job.pickledclass = pickle.dumps(self)
         self.job.status = self.status
         self.job.tasktype = self.type
-        print("saving to db")
         db.session.add(self.job)
         db.session.commit()
 
