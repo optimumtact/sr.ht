@@ -1,0 +1,15 @@
+Add a objectid to the job table
+
+Then add a constraint of unique(tasktype, objectid)
+
+This will prevent, e.g double queueing of thumbnail creation tasks and so forth by passing the uploadid
+as the object id
+
+
+Add a Sha1HashGenerationTask and hashsha1 column to uploads, this should sha1 hash the file and store hte result
+
+then add a cli task to queue a job for every single upload that doesn't have a sha1 hash
+
+this will set the basis for a switch from md5 to sha1 hashing going forward
+
+waht to do on conflicts? (should be impossible in theory... but practice always beats theory up)
