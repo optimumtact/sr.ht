@@ -1,5 +1,6 @@
 import logging
 from enum import IntEnum
+import traceback
 
 from sqlalchemy import text
 
@@ -93,8 +94,10 @@ class Task:
         except Exception as e:
             self.failure_count += 1
             self.log_message(f"Task failure {self.failure_count}", log_level=logging.ERROR)
+
+            error_traceback = traceback.format_exc()
             self.log_message(
-                f"Exception: {e}, Stack trace: {e.__traceback__}", log_level=logging.ERROR
+                f"Exception: {e}, Stack trace: {error_traceback}", log_level=logging.ERROR
             )
             if self.failure_count > 5:
                 self.log_message(

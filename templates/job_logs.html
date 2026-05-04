@@ -23,7 +23,7 @@ large
         <tr>
             <td>{{ entry.created.strftime("%Y-%m-%d %H:%M:%S") }}</td>
             <td>{{ entry.level }}</td>
-            <td>{{ entry.message }}</td>
+            <td><pre>{{ entry.message }}</pre></td>
         </tr>
         {% endfor %}
     </tbody>

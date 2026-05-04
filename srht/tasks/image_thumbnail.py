@@ -65,10 +65,12 @@ class GenerateImageThumbnail(Task):
         Returns:
             bool: True if the thumbnail was created successfully.
         """
-        thumbnail_file_path = thumbnail_path.joinpath(uploaded_file_path.name)
+
         guessed_mimetype = magic.from_file(uploaded_file_path, mime=True)
         if guessed_mimetype is not None:
             type, extension = guessed_mimetype.split("/")
+            # Use the extension from the mimetype. This is because some files may have the wrong extension, and we want to be able to handle that. We also want to be able to handle files with no extension.
+            thumbnail_file_path = thumbnail_path.joinpath(uploaded_file_path.stem + f".{extension}")
             if type == "image":
                 # Does pillow recognise it, otherwise fall through to the default
                 if self.is_valid_image_pillow(uploaded_file_path):
