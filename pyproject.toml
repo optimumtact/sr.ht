@@ -1,31 +1,31 @@
-[tool.poetry]
+[project]
 name = "filehouse"
 version = "0.1.0"
 description = "A simple file hosting service"
-authors = ["oranges <email@oranges.net.nz>"]
-license = "MIT License"
-
-[tool.poetry.dependencies]
-python = "^3.10"
-bcrypt = "^4.0.1"
-Flask = "^3.0.3"
-gunicorn = "^22.0.0"
-Flask-SQLAlchemy = "^3.1.1"
-flask-login = "^0.6.3"
-python-dotenv = "^1.0.1"
-pystache = "^0.6.5"
-psycopg2 = "^2.9.9"
-pillow = "^10.4.0"
-moviepy = "^1.0.3"
-python-magic = "^0.4.27"
-docopt = "^0.6.2"
-black = "^24.8.0"
-
-[tool.poetry.dev-dependencies]
+authors = [
+    { name = "oranges", email = "email@oranges.net.nz" }
+]
+license = { text = "MIT License" }
+dependencies = [
+    "bcrypt>=4.0.1",
+    "Flask>=3.0.3",
+    "gunicorn>=22.0.0",
+    "Flask-SQLAlchemy>=3.1.1",
+    "flask-login>=0.6.3",
+    "python-dotenv>=1.0.1",
+    "pystache>=0.6.5",
+    "psycopg2>=2.9.9",
+    "pillow>=10.4.0",
+    "moviepy>=1.0.3",
+    "python-magic>=0.4.27",
+    "docopt>=0.6.2",
+    "black>=24.8.0",
+]
+requires-python = ">=3.10"
 
 [build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 [tool.black]
 line-length = 100

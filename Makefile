@@ -51,4 +51,4 @@ watch:
 		do make; done
 
 dev:
-	while true; do poetry run dotenv run python debug.py; done
+	while true; do uv run python debug.py; done

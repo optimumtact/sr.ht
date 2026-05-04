@@ -41,7 +41,7 @@ Then start the project with compose
 then you can browse to localhost:5000 (by default) to access it
 
 ## Dev deployment
-This has a working docker-compose file for the database, so you can install docker + docker-compose + poetry + dotenv
+This has a working docker-compose file for the database, so you can install docker + docker-compose + uv
 
 Then copy the example env file and adjust for your needs
     cp env.dev.example .env
@@ -53,8 +53,8 @@ Soft link the dev docker-compose to docker-compose.yml
 Then start the project with compose
     docker-compose up -d
 
-Then run the flask developer app, with dotenv and poetry to manage the requirements
-    dotenv run poetry run python debug.py 
+Then run the flask developer app, with uv to manage the requirements
+    uv run python debug.py 
 
 If it fails to start the first time, just run it again, the db might not have stood all the way up before the web container started
 
