@@ -23,8 +23,6 @@ Find a place you want the code to live.
     $ cd sr.ht
 
 ## Deployment
-
-
 This has a working docker-compose file, just install docker and docker-compose
 
 Then copy the example env file and adjust for your needs
@@ -40,38 +38,36 @@ Then start the project with compose
 
 then you can browse to localhost:5000 (by default) to access it
 
+a production deployment shoudl configure various options, but i dont have time to document them
+
 ## Dev deployment
-This has a working docker-compose file for the database, so you can install docker + docker-compose + uv
+This is setup to run out of the box on localhost:5000 using the sample env file and the docker dev template.
 
-Then copy the example env file and adjust for your needs
-    cp env.dev.example .env
-    nano .env
-    
-Soft link the dev docker-compose to docker-compose.yml
-    ln -s docker-compose-dev.yml docker-compose.yml
+You can run 
+```bash
+make build
+make dev
+```
+to spin the project up mounted into a dev container for easy editing.
 
-Then start the project with compose
-    docker-compose up -d
 
-Then run the flask developer app, with uv to manage the requirements
-    uv run python debug.py 
-
-If it fails to start the first time, just run it again, the db might not have stood all the way up before the web container started
 
 ** About the production deployment **
-The Docker uses python:3-slim and hivemind for process management, so it obeys the procfile standard, both gunicorn and nginx run in a single container,
-as the application was originally intended for a nginx + wsgi hosting and needs to share a storage folder
+The compose file for prod uses hivemind for process management, so it obeys the procfile standard, both gunicorn and nginx run in a single container as the application was originally intended for a nginx + wsgi hosting and needs to share a storage folder
 
 https://github.com/DarthSim/hivemind
 
-## Becoming an admin and bootstrapping initial user
+## Bootstrapping initial user
+If you visit the site and there are no users in the user table it will send you on a setup flow for an admin user, the app secret key is required to complete this flow, to prevent driveby users creating the first user
 
-You can become an admin with the management cli script
+## Task management
+The application uses a task management system for background job processing. Tasks are managed through the `manage.py` script.
 
-    docker-compose exec -it web bin/bash
-    cd /app
-    python manage.py user create {yourusername} {password} {emailaddress}
-    python manage.py admin promote {youruser}
+To run tasks:
+
+    python manage.py task run
+
+This will start the task worker that processes queued background jobs. Tasks are typically used for operations that don't need to complete immediately, such as file processing, cleanup operations, and other asynchronous work.
 
 ## Customization
 
