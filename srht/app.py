@@ -53,9 +53,10 @@ def load_user(username):
 def authenticate_user_from_header():
     if _cfg("headerlogin") == "True":
         username = request.headers.get("Remote-User")
-        user = User.query.filter(User.username.ilike(username)).first()
-        if user:
-            login_user(user)
+        if username:
+            user = User.query.filter(User.username.ilike(username)).first()
+            if user:
+                login_user(user)
 
 
 login_manager.anonymous_user = lambda: None
