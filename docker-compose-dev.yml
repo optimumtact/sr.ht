@@ -8,7 +8,29 @@ services:
       - POSTGRES_USER=hello_flask
       - POSTGRES_PASSWORD=hello_flask
       - POSTGRES_DB=hello_flask_dev
+  web:
+    image: srht_web:latest
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    volumes:
+      - ./srht:/app/srht
+      - ./debug.py:/app/debug.py
+      - ./templates:/app/templates
+      - ./emails:/app/emails
+      - ./manage.py:/app/manage.py
+      - ./Procfile:/app/Procfile
+      - ./static:/app/static
+      - storage:/storage
+      - ./db_schema/updates:/migrations
     ports:
-      - 127.0.0.1:11211:5432
+      - 127.0.0.1:5000:5000
+    env_file:
+      - ./env.dev.example
+    depends_on:
+      - db
+    
+    command: /venv/bin/python /app/debug.py
 volumes:
+  storage:
   postgres_data:

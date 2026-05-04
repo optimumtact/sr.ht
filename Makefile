@@ -6,7 +6,12 @@
 # Run `make` to compile static assets
 # Run `make watch` to recompile whenever a change is made
 
-.PHONY: all static watch clean
+.PHONY: all static watch clean manage
+
+ifeq (manage,$(firstword $(MAKECMDGOALS)))
+  MANAGE_ARGS := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
+  $(eval $(MANAGE_ARGS):;@:)
+endif
 
 STYLES:=$(patsubst styles/%.scss,static/%.css,$(wildcard styles/*.scss))
 STYLES+=$(patsubst styles/%.css,static/%.css,$(wildcard styles/*.css))
@@ -50,8 +55,19 @@ watch:
 		-e close_write _static/; \
 		do make; done
 
-dev:
-	while true; do uv run python debug.py; done
+build:
+	docker compose -f docker-compose-dev.yml build
 
+dev:
+	UID=$$(id -u) GID=$$(id -g) docker compose -f docker-compose-dev.yml up
+
+manage:
+	docker compose -f docker-compose-dev.yml exec -it web /venv/bin/python /app/manage.py $(MANAGE_ARGS)
+
+destroy:
+	docker compose -f docker-compose-dev.yml down --volumes
+
+psql:
+	docker compose -f docker-compose-dev.yml exec db psql -U hello_flask hello_flask_dev
 test:
 	uv run pytest tests/

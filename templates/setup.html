@@ -1,0 +1,41 @@
+{% extends "layout.html" %}
+{% block body %}
+<hr />
+<h4 class="text-center">Initial Setup</h4>
+<p>Create the first preapproved account for this instance.</p>
+
+{% if errors %}
+<div class="alert alert-danger">
+    {% for error in errors %}
+    <p>{{ error }}</p>
+    {% endfor %}
+</div>
+{% endif %}
+
+<form action="/setup" method="POST">
+    <div class="form-group">
+        <label for="username">Username</label>
+        <input id="username" name="username" class="form-control"
+            value="{% if username %}{{ username }}{% endif %}" />
+    </div>
+    <div class="form-group">
+        <label for="email">Email Address</label>
+        <input id="email" name="email" class="form-control"
+            value="{% if email %}{{ email }}{% endif %}" />
+    </div>
+    <div class="form-group">
+        <label for="password">Password</label>
+        <input id="password" name="password" type="password" class="form-control" />
+    </div>
+    <div class="form-group">
+        <label for="app_key">App Key</label>
+        <input id="app_key" name="app_key" type="password" class="form-control" />
+    </div>
+    <div class="row">
+        <div class="col-md-3">
+            <input type="submit" class="btn btn-primary" value="Create Account" />
+        </div>
+    </div>
+</form>
+<hr />
+{% endblock %}

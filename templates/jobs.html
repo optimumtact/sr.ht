@@ -1,0 +1,46 @@
+{% extends "layout.html" %}
+{% block containersize %}
+large
+{% endblock %}
+{% block body %}
+<div class="text-center">
+    <h1><a href="/">{{ domain }}</a></h1>
+    <h4>Jobs &mdash; {{ pagination.first }}&ndash;{{ pagination.last }} of {{ pagination.total }}</h4>
+</div>
+<hr />
+{% include 'pagination.html' %}
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Type</th>
+            <th>Status</th>
+            <th>Priority</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for job in pagination.items %}
+        <tr>
+            <td>{{ job.id }}</td>
+            <td>{{ TaskType(job.tasktype).name }}</td>
+            <td>{{ TaskStatus(job.status).name }}</td>
+            <td>{{ job.priority }}</td>
+            <td>
+                {% if job.status == TaskStatus.FAILED %}
+                <form method="post" action="/jobs/{{ job.id }}/retry" style="display:inline">
+                    <button type="submit" class="btn btn-warning btn-sm">Retry</button>
+                </form>
+                {% endif %}
+                {% if job.status in (TaskStatus.COMPLETE, TaskStatus.FAILED) %}
+                <a href="/jobs/{{ job.id }}/logs">View Logs</a>
+                {% endif %}
+            </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="5" class="text-center">No jobs.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% include 'pagination.html' %}
+{% endblock %}

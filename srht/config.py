@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# we also try the os environ
+
 _cfg = lambda k: os.getenv(k)
 _cfgi = lambda k: int(_cfg(k))
 

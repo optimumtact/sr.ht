@@ -1,7 +1,7 @@
 import locale
+import logging
 import os
 import random
-import sys
 from pathlib import Path
 
 from flask import Flask, render_template, request, url_for
@@ -69,34 +69,17 @@ try:
 except:
     pass
 
-if not app.debug:
 
-    @app.errorhandler(500)
-    def handle_500(e):
-        # shit
-        try:
-            db.session.rollback()
-            db.session.close()
-        except:
-            # shit shit
-            sys.exit(1)
-        return render_template("internal_error.html"), 500
-
-    # Error handler
-    if _cfg("errorto") != "":
-        import logging
-        from logging.handlers import SMTPHandler
-
-        mail_handler = SMTPHandler(
-            (_cfg("smtphost"), _cfg("smtpport")),
-            _cfg("errorfrom"),
-            [_cfg("errorto")],
-            "sr.ht application exception occured",
-            credentials=(_cfg("smtpuser"), _cfg("smtppassword")),
-            secure=(),
-        )
-        mail_handler.setLevel(logging.ERROR)
-        app.logger.addHandler(mail_handler)
+@app.errorhandler(500)
+def handle_500(e):
+    if app.debug:
+        raise e
+    try:
+        db.session.rollback()
+        db.session.close()
+    except Exception:
+        app.logger.exception("Failed to clean up DB session after 500")
+    return render_template("internal_error.html"), 500
 
 
 @app.errorhandler(404)

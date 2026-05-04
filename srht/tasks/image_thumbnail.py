@@ -1,3 +1,4 @@
+import logging
 import time
 from pathlib import Path
 
@@ -8,6 +9,8 @@ from PIL import Image
 from srht.database import db
 from srht.objects import Upload
 from srht.tasks import Task, TaskType
+
+logger = logging.getLogger(__name__)
 
 
 class GenerateImageThumbnail(Task):
@@ -77,6 +80,7 @@ class GenerateImageThumbnail(Task):
     def generate_blank_thumbnail(
         self, uploaded_file_path: Path, thumbnail_file_path: Path, size=(128, 128)  #
     ) -> Path:
+        self.log_message(f"Generating blank thumbnail to {thumbnail_file_path}")
         color = (255, 255, 255, 0)
         image = Image.new("RGBA", (size[0], size[1]), color)
         image.save(thumbnail_file_path)
@@ -85,7 +89,7 @@ class GenerateImageThumbnail(Task):
     def generate_video_thumbnail(
         self, uploaded_file_path: Path, thumbnail_file_path: Path, size=(128, 128)
     ) -> Path:
-        print(f"Generating video thumbnail to {thumbnail_file_path}")
+        self.log_message(f"Generating video thumbnail to {thumbnail_file_path}")
         video = VideoFileClip(uploaded_file_path.as_posix())
         # Either get the 25th second, or if the video is smaller than that, 1/3rd of whatever it's duration is
         frame = min(25, video.duration / 3)
@@ -97,6 +101,7 @@ class GenerateImageThumbnail(Task):
     def generate_image_thumbnail(
         self, uploaded_file_path: Path, thumbnail_file_path: Path, size=(128, 128)
     ) -> Path:
+        self.log_message(f"Generating image thumbnail to {thumbnail_file_path}")
         with Image.open(uploaded_file_path) as img:
             img.thumbnail(size)
             img.save(thumbnail_file_path)

@@ -8,6 +8,7 @@ from sqlalchemy import (
     Boolean,
     CheckConstraint,
     Column,
+    Text,
     DateTime,
     ForeignKey,
     Integer,
@@ -130,3 +131,19 @@ class User(db.Model):
 
     def get_id(self):
         return self.username
+
+
+class JobLog(db.Model):
+    __tablename__ = "job_log"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    job_id = Column(Integer, ForeignKey("job.id"), nullable=False, index=True)
+    job = relationship("Job", backref=backref("logs", order_by=id, lazy="dynamic"))
+    created = Column(DateTime, nullable=False)
+    level = Column(Integer, nullable=False)
+    message = Column(Text, nullable=False)
+
+    def __init__(self, job_id: int, level: int, message: str):
+        self.job_id = job_id
+        self.created = datetime.utcnow()
+        self.level = level
+        self.message = message

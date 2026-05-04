@@ -1,4 +1,6 @@
+import logging
 import os
+import sys
 from datetime import datetime
 
 from docopt import docopt
@@ -6,8 +8,31 @@ from sqlalchemy import text
 
 from srht.app import app, db
 from srht.config import _cfg
-from srht.objects import Job, Upload, User
+from srht.objects import Job, PendingJob, Upload, User
 from srht.tasks import GenerateImageThumbnail, Task
+from srht.tasks.basetask import TaskStatus
+
+
+def get_manage_logger():
+    logger = logging.getLogger("srht.manage")
+    logger.setLevel(logging.INFO)
+    logger.propagate = False
+
+    if not any(
+        isinstance(handler, logging.StreamHandler)
+        and getattr(handler, "stream", None) is sys.stdout
+        for handler in logger.handlers
+    ):
+        console_handler = logging.StreamHandler(sys.stdout)
+        console_handler.setLevel(logging.INFO)
+        console_handler.setFormatter(
+            logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+        )
+        logger.addHandler(console_handler)
+    return logger
+
+
+logger = get_manage_logger()
 
 
 def do_task(arguments):
@@ -16,8 +41,36 @@ def do_task(arguments):
     while count > start:
         task = Task.get_next_task()
         if task:
-            task.run()
+            task.run(logger)
         start += 1
+
+
+def stuckfix(arguments):
+    """Re-queue QUEUED jobs that have no PendingJob entry."""
+    import pickle
+
+    pending_job_ids = {
+        row.job_id for row in PendingJob.query.with_entities(PendingJob.job_id).all()
+    }
+    stuck = Job.query.filter(
+        Job.status == int(TaskStatus.QUEUED),
+        Job.id.notin_(pending_job_ids),
+    ).all()
+    if not stuck:
+        logger.info("No stuck jobs found.")
+        return
+    logger.info(f"Found {len(stuck)} stuck job(s). Re-queuing...")
+    for job in stuck:
+        try:
+            task = pickle.loads(job.pickledclass)
+            task.job = job
+            pending = PendingJob(job)
+            db.session.add(pending)
+            db.session.commit()
+            logger.info(f"Re-queued job {job.id}")
+        except Exception as e:
+            logger.error(f"Failed to re-queue job {job.id}: {e}")
+            db.session.rollback()
 
 
 def queue_task_for_missing_thumbnails(arguments):
@@ -43,11 +96,11 @@ def apply_migrations(arguments):
                             # Execute the SQL script
                             db.session.execute(text(sql_script))
                             db.session.commit()
-                            print(f"Executed {filename}")
+                            logger.info(f"Executed {filename}")
 
             except Exception as e:
                 db.session.rollback()
-                print(f"An error occurred: {e}")
+                logger.error(f"An error occurred: {e}")
 
 
 def remove_admin(arguments):
@@ -56,7 +109,7 @@ def remove_admin(arguments):
         u.admin = False  # remove admin
         db.session.commit()
     else:
-        print("Not a valid user")
+        logger.error("Not a valid user")
 
 
 def make_admin(arguments):
@@ -65,13 +118,13 @@ def make_admin(arguments):
         u.admin = True  # make admin
         db.session.commit()
     else:
-        print("Not a valid user")
+        logger.error("Not a valid user")
 
 
 def list_admin(arguments):
     users = User.query.filter(User.admin)
     for u in users:
-        print(u.username)
+        logger.info(u.username)
 
 
 def approve_user(arguments):
@@ -81,7 +134,7 @@ def approve_user(arguments):
         u.approvalDate = datetime.now()
         db.session.commit()
     else:
-        print("Not a valid user")
+        logger.error("Not a valid user")
 
 
 def create_user(arguments):
@@ -91,9 +144,9 @@ def create_user(arguments):
         u.approvalDate = datetime.now()
         db.session.add(u)
         db.session.commit()
-        print("User created")
+        logger.info("User created")
     else:
-        print("Couldn't create the uer")
+        logger.error("Couldn't create the user")
 
 
 def reset_password(arguments):
@@ -101,12 +154,12 @@ def reset_password(arguments):
     if u:
         password = arguments["<password>"]
         if len(password) < 5 or len(password) > 256:
-            print("Password must be between 5 and 256 characters.")
+            logger.error("Password must be between 5 and 256 characters.")
             return
         u.set_password(password)
         db.session.commit()
     else:
-        print("Not a valid user")
+        logger.error("Not a valid user")
 
 
 interface = """
@@ -120,6 +173,7 @@ Usage:
     manage.py user reset_password <name> <password>
     manage.py database migrate
     manage.py task run <count>
+    manage.py task fix stuck
     manage.py thumbnails queue
     manage.py thumbnails recreate <url> #TODO
 
@@ -145,5 +199,7 @@ if __name__ == "__main__":
             apply_migrations(arguments)
         elif arguments["task"] and arguments["run"]:
             do_task(arguments)
+        elif arguments["task"] and arguments["fix"] and arguments["stuck"]:
+            stuckfix(arguments)
         elif arguments["thumbnails"] and arguments["queue"]:
             queue_task_for_missing_thumbnails(arguments)

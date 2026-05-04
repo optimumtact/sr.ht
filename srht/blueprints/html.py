@@ -5,16 +5,17 @@ from flask import (
     request,
     redirect,
     Response,
-    send_from_directory
+    send_from_directory,
+    current_app,
 )
 from flask_login import current_user, login_user, logout_user
 from sqlalchemy import desc
-from srht.objects import User, Upload
+from srht.objects import User, Upload, Job, JobLog
 from srht.config import _cfg, _cfgi
 from srht.common import loginrequired, with_session, adminrequired
 from srht.email import send_reset, send_request_notification
 from srht.database import db
-
+from srht.tasks.basetask import TaskStatus, TaskType
 from datetime import datetime, timedelta
 import binascii
 import os
@@ -26,8 +27,71 @@ import bcrypt
 html = Blueprint("html", __name__, template_folder="../../templates")
 
 
+@html.route("/setup", methods=["GET", "POST"])
+def setup():
+    if User.query.count() != 0:
+        return redirect("%s://%s/" % (_cfg("protocol"), _cfg("domain")))
+
+    if request.method == "GET":
+        return render_template("setup.html")
+
+    errors = []
+    username = request.form.get("username")
+    email = request.form.get("email")
+    password = request.form.get("password")
+    app_key = request.form.get("app_key")
+
+    if not username:
+        errors.append("Username is required.")
+    else:
+        if not re.match(r"^[A-Za-z0-9_]+$", username):
+            errors.append("Usernames are letters, numbers, underscores only.")
+        if len(username) < 3 or len(username) > 24:
+            errors.append("Username must be between 3 and 24 characters.")
+        if User.query.filter(User.username.ilike(username)).first():
+            errors.append("This username is already in use.")
+
+    if not email:
+        errors.append("Email is required.")
+    else:
+        if not re.match(r"^[^@]+@[^@]+\.[^@]+$", email):
+            errors.append("Please use a valid email address.")
+        if User.query.filter(User.email.ilike(email)).first():
+            errors.append("This email is already in use.")
+
+    if not password:
+        errors.append("Password is required.")
+    else:
+        if len(password) < 5 or len(password) > 256:
+            errors.append("Password must be between 5 and 256 characters.")
+
+    if not app_key:
+        errors.append("App key is required.")
+    elif app_key != _cfg("secret_key"):
+        errors.append("App key is incorrect.")
+
+    if errors:
+        return render_template(
+            "setup.html",
+            username=username,
+            email=email,
+            errors=errors,
+        )
+
+    user = User(username, email, password)
+    user.approved = True
+    user.admin = True
+    user.approvalDate = datetime.now()
+    db.session.add(user)
+    db.session.commit()
+
+    return redirect("%s://%s/login" % (_cfg("protocol"), _cfg("domain")))
+
+
 @html.route("/")
 def index():
+    if User.query.count() == 0:
+        return redirect("%s://%s/setup" % (_cfg("protocol"), _cfg("domain")))
     if current_user and current_user.approved:
         new = datetime.now() - timedelta(hours=24) < current_user.approvalDate
         total = Upload.query.count()
@@ -125,7 +189,7 @@ def login():
                 **{
                     "username": username,
                     "errors": "Your username or password is incorrect.",
-                }
+                },
             )
         if not bcrypt.hashpw(
             password.encode("UTF-8"), user.password.encode("UTF-8")
@@ -135,7 +199,7 @@ def login():
                 **{
                     "username": username,
                     "errors": "Your username or password is incorrect.",
-                }
+                },
             )
         if not user.approved:
             return redirect("%s://%s/pending" % (_cfg("protocol"), _cfg("domain")))
@@ -252,7 +316,7 @@ def change_password():
 @html.route("/reset/<username>/<confirmation>", methods=["GET", "POST"])
 @with_session
 def reset_password(username, confirmation):
-    user = User.query.filter(User.username == username).first()
+    user = User.query.filter_by(username=username).first()
     if not user:
         redirect("%s://%s/" % (_cfg("protocol"), _cfg("domain")))
     if request.method == "GET":
@@ -321,5 +385,56 @@ def uploads_admin(page):
 
 @html.route("/<path:filename>", methods=["GET"])
 def serve_file(filename):
-    print(_cfg('storage'), filename)
+    print(_cfg("storage"), filename)
     return send_from_directory(_cfg("storage"), filename)
+
+
+@html.route("/jobs", methods=["GET"], defaults={"page": 1})
+@html.route("/jobs/<int:page>", methods=["GET"])
+@loginrequired
+@adminrequired
+def jobs(page):
+    from srht.tasks.basetask import TaskStatus, TaskType
+
+    pagination = db.paginate(
+        db.select(Job).order_by(desc(Job.id)),
+        page=page,
+        per_page=_cfgi("perpage"),
+    )
+    return render_template(
+        "jobs.html",
+        pagination=pagination,
+        endpoint="html.jobs",
+        TaskType=TaskType,
+        TaskStatus=TaskStatus,
+    )
+
+
+@html.route("/jobs/<int:job_id>/logs", methods=["GET"])
+@loginrequired
+@adminrequired
+def job_logs(job_id):
+    job = db.session.get(Job, job_id)
+    if not job:
+        abort(404)
+    logs = JobLog.query.filter(JobLog.job_id == job_id).order_by(JobLog.created).all()
+    return render_template("job_logs.html", job=job, logs=logs)
+
+
+@html.route("/jobs/<int:job_id>/retry", methods=["POST"])
+@loginrequired
+@adminrequired
+def job_retry(job_id):
+    import pickle
+
+    job = db.session.get(Job, job_id)
+    if not job:
+        abort(404)
+    if job.status != int(TaskStatus.FAILED):
+        abort(400)
+    try:
+        task = pickle.loads(job.pickledclass)
+        task.requeue()
+    except Exception:
+        abort(500)
+    return redirect(f"/jobs/{job_id}/logs")
