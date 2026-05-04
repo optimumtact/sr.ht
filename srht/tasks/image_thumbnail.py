@@ -17,6 +17,27 @@ class GenerateImageThumbnail(Task):
     """An executable task"""
 
     type = TaskType.THUMBNAIL
+    ALLOWED_IMAGE_EXTENSIONS = {
+        "jpg",
+        "jpeg",
+        "png",
+        "gif",
+        "bmp",
+        "tif",
+        "tiff",
+        "webp",
+        "dmi",
+    }
+    ALLOWED_VIDEO_EXTENSIONS = {
+        "mp4",
+        "m4v",
+        "mov",
+        "webm",
+        "avi",
+        "mkv",
+        "mpg",
+        "mpeg",
+    }
 
     def __init__(self, uploadid: int, job: Job | None = None, failure_count: int = 0):
         self.uploadid = uploadid
@@ -51,6 +72,17 @@ class GenerateImageThumbnail(Task):
         except (IOError, SyntaxError):
             return False
 
+    def allowed_extension(self, extension: str) -> bool:
+        """Check if an extension is allowed
+
+        Args:
+            extension (str): The file extension to check
+        """
+        normalized_extension = extension.lower().lstrip(".")
+        return normalized_extension in (
+            self.ALLOWED_IMAGE_EXTENSIONS | self.ALLOWED_VIDEO_EXTENSIONS
+        )
+
     def generate_thumbnail(
         self, uploaded_file_path: Path, thumbnail_path: Path, size=(500, 500)
     ) -> Path:
@@ -69,6 +101,21 @@ class GenerateImageThumbnail(Task):
         guessed_mimetype = magic.from_file(uploaded_file_path, mime=True)
         if guessed_mimetype is not None:
             type, extension = guessed_mimetype.split("/")
+            if type not in ["image", "video"]:
+                return self.generate_blank_thumbnail(
+                    uploaded_file_path,
+                    thumbnail_path.joinpath(uploaded_file_path.stem + ".png"),
+                    size,
+                )
+
+            if not self.allowed_extension(extension):
+                # Fall back rather than feeding uncommon formats into Pillow/moviepy.
+                return self.generate_blank_thumbnail(
+                    uploaded_file_path,
+                    thumbnail_path.joinpath(uploaded_file_path.stem + ".png"),
+                    size,
+                )
+
             # Use the extension from the mimetype. This is because some files may have the wrong extension, and we want to be able to handle that. We also want to be able to handle files with no extension.
             thumbnail_file_path = thumbnail_path.joinpath(uploaded_file_path.stem + f".{extension}")
             if type == "image":
@@ -81,7 +128,11 @@ class GenerateImageThumbnail(Task):
                 # We want to save the first frame as a png
                 thumbnail_file_path = thumbnail_path.joinpath(uploaded_file_path.stem + ".png")
                 return self.generate_video_thumbnail(uploaded_file_path, thumbnail_file_path, size)
-        # Unknown file type, just leave it as a blank image
+        # Not sure how you got here.
+        self.log_message(
+            f"Could not determine file type for {uploaded_file_path}, generating blank thumbnail",
+            log_level=logging.WARNING,
+        )
         thumbnail_file_path = thumbnail_path.joinpath(uploaded_file_path.stem + ".png")
         return self.generate_blank_thumbnail(uploaded_file_path, thumbnail_file_path, size)
 
