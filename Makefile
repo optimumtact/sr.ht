@@ -69,5 +69,7 @@ destroy:
 
 psql:
 	docker compose -f docker-compose-dev.yml exec db psql -U hello_flask hello_flask_dev
+schema:
+	docker compose -f docker-compose-dev.yml exec db pg_dump -U hello_flask -n public -O -x --schema-only hello_flask_dev
 test:
 	uv run pytest tests/

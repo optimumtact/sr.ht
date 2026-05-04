@@ -55,6 +55,7 @@ to spin the project up mounted into a dev container for easy editing.
 
 
 ** About the production deployment **
+
 The compose file for prod uses hivemind for process management, so it obeys the procfile standard, both gunicorn and nginx run in a single container as the application was originally intended for a nginx + wsgi hosting and needs to share a storage folder
 
 https://github.com/DarthSim/hivemind
