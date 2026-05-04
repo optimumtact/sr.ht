@@ -1,4 +1,4 @@
-(fork of [sr.ht](https://github.com/SirCmpwn/sr.ht))
+This is a fork of sr.ht by SirCmpwn from when it was just an image host and not a forge
 
 Private file hosting with python/nginx
 
@@ -11,6 +11,8 @@ Private file hosting with python/nginx
 * Improvements to administration with some cli scripting
 * Removed the anime branding and replaced with a more sfw icon
 * Being able to delete files from the web interface
+* View of uploaded files, thumbnails
+* Task processing and admin logging for tasks (such as thumbnailing)
 
 ## Running the site
 
