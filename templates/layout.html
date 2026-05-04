@@ -14,6 +14,13 @@
     </head>
     <body>
         <div class="container {% block containersize %}{% endblock %}">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            {% for category, message in messages %}
+            <div class="alert alert-{{ category }}" role="alert">{{ message }}</div>
+            {% endfor %}
+            {% endif %}
+            {% endwith %}
             {% block body %}{% endblock %}
         </div>
         <img class="moe hidden-sm hidden-xs hidden-md" src="/static/1.png" alt="moe"/>

@@ -1,5 +1,4 @@
 import logging
-import pickle
 from enum import IntEnum
 
 from sqlalchemy import text
@@ -24,6 +23,13 @@ class Task:
     """An executable task"""
 
     type = TaskType.BASE
+    LATEST_VERSION = 2
+    _registry = {}
+
+    def __init_subclass__(cls, **kwargs):
+        super().__init_subclass__(**kwargs)
+        if hasattr(cls, "type"):
+            Task._registry[int(cls.type)] = cls
 
     def log_message(self, message, log_level=logging.INFO):
         if self.logger:
@@ -35,18 +41,25 @@ class Task:
         except Exception:
             pass
 
-    def __init__(self):
+    def __init__(self, job: Job | None = None, failure_count: int = 0):
         self.logger = None
-        self.job = Job()
-        self.status = TaskStatus.CREATED
-        self.job.status = int(self.status)
-        self.job.pickledclass = b""
-        self.type = TaskType.BASE
-        self.job.tasktype = self.type
-        db.session.add(self.job)
-        db.session.commit()
+        self.type = self.__class__.type
+        self.failure_count = failure_count
+        if job is None:
+            self.job = Job()
+            self.version = Task.LATEST_VERSION
+            self.status = TaskStatus.CREATED
+            self.job.save_task_state(
+                status=int(self.status),
+                tasktype=int(self.type),
+                task_data=self.get_as_json(),
+                version=self.version,
+            )
+        else:
+            self.job = job
+            self.version = job.version
+            self.status = TaskStatus(job.status)
         self.jobid = self.job.id
-        self.failure_count = 0
 
     def queue(self):
         self.status = TaskStatus.QUEUED
@@ -56,7 +69,6 @@ class Task:
         db.session.commit()
 
     def requeue(self):
-        print(f"resetting {self.failure_count} to 0 and re-queuing")
         self.failure_count = 0
         self.status = TaskStatus.QUEUED
         self.save_to_db()
@@ -65,13 +77,14 @@ class Task:
         db.session.commit()
 
     def save_to_db(self):
-        self.job.pickledclass = pickle.dumps(self)
-        self.job.status = self.status
-        self.job.tasktype = self.type
-        db.session.add(self.job)
-        db.session.commit()
+        self.job.save_task_state(
+            status=int(self.status),
+            tasktype=int(self.type),
+            task_data=self.get_as_json(),
+            version=self.version,
+        )
 
-    def run(self, logger):
+    def run(self, logger=None):
         self.logger = logger
         self.log_message(f"Executing job {self.jobid} of type {TaskType(self.type).name}")
         try:
@@ -102,12 +115,19 @@ class Task:
     def execute(self):
         pass
 
+    def get_as_json(self) -> dict:
+        return {"failure_count": self.failure_count}
+
     @staticmethod
     def get_task(jobid: int) -> "Task":
         job = Job.query.filter(Job.id == jobid).one()
-        task = pickle.loads(job.pickledclass)
-        if not issubclass(type(task), Task):
-            raise Exception("Task unpickle got something that was not a task subclass")
+        task_class = Task._registry.get(int(job.tasktype))
+        if task_class is None:
+            raise Exception(f"No task class registered for tasktype={job.tasktype}")
+        task_data = job.taskmetadata or {}
+        task = task_class(job=job, **task_data)
+        if not isinstance(task, Task):
+            raise Exception("Task constructor did not produce a Task subclass")
         return task
 
     @staticmethod

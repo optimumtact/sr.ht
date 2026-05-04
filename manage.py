@@ -47,8 +47,6 @@ def do_task(arguments):
 
 def stuckfix(arguments):
     """Re-queue QUEUED jobs that have no PendingJob entry."""
-    import pickle
-
     pending_job_ids = {
         row.job_id for row in PendingJob.query.with_entities(PendingJob.job_id).all()
     }
@@ -62,11 +60,13 @@ def stuckfix(arguments):
     logger.info(f"Found {len(stuck)} stuck job(s). Re-queuing...")
     for job in stuck:
         try:
-            task = pickle.loads(job.pickledclass)
-            task.job = job
-            pending = PendingJob(job)
-            db.session.add(pending)
-            db.session.commit()
+            if job.version < Task.LATEST_VERSION:
+                logger.info(
+                    f"Skipping job {job.id}; version {job.version} is older than latest {Task.LATEST_VERSION}."
+                )
+                continue
+            task = Task.get_task(job.id)
+            task.queue()
             logger.info(f"Re-queued job {job.id}")
         except Exception as e:
             logger.error(f"Failed to re-queue job {job.id}: {e}")

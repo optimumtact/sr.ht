@@ -7,7 +7,7 @@ from moviepy.video.io.VideoFileClip import VideoFileClip
 from PIL import Image
 
 from srht.database import db
-from srht.objects import Upload
+from srht.objects import Job, Upload
 from srht.tasks import Task, TaskType
 
 logger = logging.getLogger(__name__)
@@ -16,10 +16,16 @@ logger = logging.getLogger(__name__)
 class GenerateImageThumbnail(Task):
     """An executable task"""
 
-    def __init__(self, uploadid: int):
-        super().__init__()
+    type = TaskType.THUMBNAIL
+
+    def __init__(self, uploadid: int, job: Job | None = None, failure_count: int = 0):
         self.uploadid = uploadid
-        self.type = TaskType.THUMBNAIL
+        super().__init__(job=job, failure_count=failure_count)
+
+    def get_as_json(self) -> dict:
+        data = super().get_as_json()
+        data.update({"uploadid": self.uploadid})
+        return data
 
     def execute(self):
         uploaded_file = Upload.query.filter(Upload.id == self.uploadid).one()

@@ -1,0 +1,13 @@
+{% extends "layout.html" %}
+{% block containersize %}
+large
+{% endblock %}
+{% block body %}
+<div class="text-center">
+    <h1><a href="/">{{ domain }}</a></h1>
+    <h4>Task Data for Job #{{ job.id }}</h4>
+</div>
+<p><a href="/jobs">&larr; Back to jobs</a></p>
+<hr />
+<pre>{{ (job.taskmetadata or {}) | tojson(indent=2) }}</pre>
+{% endblock %}

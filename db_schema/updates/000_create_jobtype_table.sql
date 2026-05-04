@@ -2,6 +2,7 @@
 CREATE TABLE IF NOT EXISTS job (
     id SERIAL PRIMARY KEY,
     priority INTEGER DEFAULT 100,
+    version INTEGER NOT NULL DEFAULT 1,
     status INTEGER NOT NULL,
     tasktype INTEGER NOT NULL,
     pickledclass BYTEA NOT NULL

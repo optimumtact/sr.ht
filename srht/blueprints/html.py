@@ -7,6 +7,7 @@ from flask import (
     Response,
     send_from_directory,
     current_app,
+    flash,
 )
 from flask_login import current_user, login_user, logout_user
 from sqlalchemy import desc
@@ -16,6 +17,7 @@ from srht.common import loginrequired, with_session, adminrequired
 from srht.email import send_reset, send_request_notification
 from srht.database import db
 from srht.tasks.basetask import TaskStatus, TaskType
+from srht.tasks import Task
 from datetime import datetime, timedelta
 import binascii
 import os
@@ -407,6 +409,7 @@ def jobs(page):
         endpoint="html.jobs",
         TaskType=TaskType,
         TaskStatus=TaskStatus,
+        Task=Task,
     )
 
 
@@ -421,20 +424,34 @@ def job_logs(job_id):
     return render_template("job_logs.html", job=job, logs=logs)
 
 
+@html.route("/jobs/<int:job_id>/data", methods=["GET"])
+@loginrequired
+@adminrequired
+def job_data(job_id):
+    job = db.session.get(Job, job_id)
+    if not job:
+        abort(404)
+    return render_template("job_data.html", job=job)
+
+
 @html.route("/jobs/<int:job_id>/retry", methods=["POST"])
 @loginrequired
 @adminrequired
 def job_retry(job_id):
-    import pickle
-
     job = db.session.get(Job, job_id)
     if not job:
         abort(404)
     if job.status != int(TaskStatus.FAILED):
         abort(400)
+    if job.version < Task.LATEST_VERSION:
+        flash(
+            "This task is an older version and cannot be retried. Please re-queue it instead.",
+            "danger",
+        )
+        return redirect(f"/jobs")
     try:
-        task = pickle.loads(job.pickledclass)
+        task = Task.get_task(job_id)
         task.requeue()
     except Exception:
         abort(500)
-    return redirect(f"/jobs/{job_id}/logs")
+    return redirect(f"/jobs")

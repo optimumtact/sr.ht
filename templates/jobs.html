@@ -14,6 +14,7 @@ large
         <tr>
             <th>ID</th>
             <th>Type</th>
+            <th>Version</th>
             <th>Status</th>
             <th>Priority</th>
             <th></th>
@@ -24,21 +25,29 @@ large
         <tr>
             <td>{{ job.id }}</td>
             <td>{{ TaskType(job.tasktype).name }}</td>
+            <td>{{ job.version }}</td>
             <td>{{ TaskStatus(job.status).name }}</td>
             <td>{{ job.priority }}</td>
             <td>
-                {% if job.status == TaskStatus.FAILED %}
+                <a href="/jobs/{{ job.id }}/data" title="View task data" aria-label="View task data" class="btn btn-link btn-xs">
+                    <span class="glyphicon glyphicon-file"></span>
+                </a>
+                {% if job.status == TaskStatus.FAILED  and job.version >= Task.LATEST_VERSION %}
                 <form method="post" action="/jobs/{{ job.id }}/retry" style="display:inline">
-                    <button type="submit" class="btn btn-warning btn-sm">Retry</button>
+                    <button type="submit" class="btn btn-link btn-xs" title="Retry task" aria-label="Retry task">
+                        <span class="glyphicon glyphicon-repeat"></span>
+                    </button>
                 </form>
                 {% endif %}
                 {% if job.status in (TaskStatus.COMPLETE, TaskStatus.FAILED) %}
-                <a href="/jobs/{{ job.id }}/logs">View Logs</a>
+                <a href="/jobs/{{ job.id }}/logs" title="View logs" aria-label="View logs" class="btn btn-link btn-xs">
+                    <span class="glyphicon glyphicon-list-alt"></span>
+                </a>
                 {% endif %}
             </td>
         </tr>
         {% else %}
-        <tr><td colspan="5" class="text-center">No jobs.</td></tr>
+        <tr><td colspan="6" class="text-center">No jobs.</td></tr>
         {% endfor %}
     </tbody>
 </table>

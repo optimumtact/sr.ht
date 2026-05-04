@@ -4,6 +4,7 @@ from datetime import datetime
 from pathlib import Path
 
 import bcrypt
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy import (
     Boolean,
     CheckConstraint,
@@ -63,9 +64,28 @@ class Job(db.Model):
     __tablename__ = "job"
     id = Column(Integer, primary_key=True)
     priority = Column(Integer, default=100)
+    version: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
     status: Mapped[int] = mapped_column(Integer, nullable=False)
     tasktype: Mapped[int] = mapped_column(Integer, nullable=False)
     pickledclass: Mapped[bytes] = mapped_column(LargeBinary, nullable=False)
+    taskmetadata: Mapped[dict | None] = mapped_column("metadata", JSONB, nullable=True)
+
+    def save_task_state(
+        self,
+        status: int,
+        tasktype: int,
+        task_data: dict | None = None,
+        version: int | None = None,
+    ):
+        self.status = status
+        self.tasktype = tasktype
+        if version is not None:
+            self.version = version
+        self.taskmetadata = task_data or {}
+        # Keep legacy column non-null while task persistence is JSON-based.
+        self.pickledclass = b""
+        db.session.add(self)
+        db.session.commit()
 
 
 class PendingJob(db.Model):
