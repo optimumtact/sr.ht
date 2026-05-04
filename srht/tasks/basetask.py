@@ -93,7 +93,9 @@ class Task:
         except Exception as e:
             self.failure_count += 1
             self.log_message(f"Task failure {self.failure_count}", log_level=logging.ERROR)
-            self.log_message(str(e), log_level=logging.ERROR)
+            self.log_message(
+                f"Exception: {e}, Stack trace: {e.__traceback__}", log_level=logging.ERROR
+            )
             if self.failure_count > 5:
                 self.log_message(
                     "Task failed too many times, marking as failed", log_level=logging.ERROR
