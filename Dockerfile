@@ -16,7 +16,8 @@ RUN curl https://github.com/DarthSim/hivemind/releases/download/v1.1.0/hivemind-
 WORKDIR /src
 # Copy the dependency files
 COPY pyproject.toml uv.lock ./
-RUN uv sync --frozen --no-dev --no-install-project && mv .venv /venv
+ENV UV_PROJECT_ENVIRONMENT=/venv
+RUN uv sync --frozen --no-dev --no-install-project
 
 # Now do the static images
 COPY _static /src/_static
@@ -24,7 +25,6 @@ COPY scripts /src/scripts
 COPY styles /src/styles
 COPY Makefile /src/Makefile
 RUN mkdir /src/static
-WORKDIR /src
 RUN make
 
 # Now the final image
