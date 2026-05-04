@@ -1,6 +1,6 @@
 [project]
 name = "filehouse"
-version = "1.0.0"
+version = "2.0.0"
 description = "A simple file hosting service"
 authors = [
     { name = "oranges", email = "email@oranges.net.nz" }
