@@ -1,9 +1,9 @@
+import argparse
 import logging
 import os
 import sys
 from datetime import datetime
 
-from docopt import docopt
 from sqlalchemy import text
 
 from srht.app import app, db
@@ -35,8 +35,72 @@ def get_manage_logger():
 logger = get_manage_logger()
 
 
-def do_task(arguments):
-    count = int(arguments["<count>"])
+def build_parser():
+    parser = argparse.ArgumentParser(description="Command line admin interface")
+    top_level = parser.add_subparsers(dest="command")
+
+    admin_parser = top_level.add_parser("admin")
+    admin_commands = admin_parser.add_subparsers(dest="admin_command")
+
+    admin_promote = admin_commands.add_parser("promote")
+    admin_promote.add_argument("name")
+    admin_promote.set_defaults(handler=make_admin)
+
+    admin_demote = admin_commands.add_parser("demote")
+    admin_demote.add_argument("name")
+    admin_demote.set_defaults(handler=remove_admin)
+
+    admin_list = admin_commands.add_parser("list")
+    admin_list.set_defaults(handler=list_admin)
+
+    user_parser = top_level.add_parser("user")
+    user_commands = user_parser.add_subparsers(dest="user_command")
+
+    user_approve = user_commands.add_parser("approve")
+    user_approve.add_argument("name")
+    user_approve.set_defaults(handler=approve_user)
+
+    user_create = user_commands.add_parser("create")
+    user_create.add_argument("name")
+    user_create.add_argument("password")
+    user_create.add_argument("email")
+    user_create.set_defaults(handler=create_user)
+
+    user_reset = user_commands.add_parser("reset_password")
+    user_reset.add_argument("name")
+    user_reset.add_argument("password")
+    user_reset.set_defaults(handler=reset_password)
+
+    database_parser = top_level.add_parser("database")
+    database_commands = database_parser.add_subparsers(dest="database_command")
+    database_migrate = database_commands.add_parser("migrate")
+    database_migrate.set_defaults(handler=apply_migrations)
+
+    task_parser = top_level.add_parser("task")
+    task_commands = task_parser.add_subparsers(dest="task_command")
+
+    task_run = task_commands.add_parser("run")
+    task_run.add_argument("count", type=int)
+    task_run.set_defaults(handler=do_task)
+
+    task_fix = task_commands.add_parser("fix")
+    task_fix_commands = task_fix.add_subparsers(dest="task_fix_command")
+    task_fix_stuck = task_fix_commands.add_parser("stuck")
+    task_fix_stuck.set_defaults(handler=stuckfix)
+
+    thumbnails_parser = top_level.add_parser("thumbnails")
+    thumbnails_commands = thumbnails_parser.add_subparsers(dest="thumbnails_command")
+    thumbnails_queue = thumbnails_commands.add_parser("queue")
+    thumbnails_queue.set_defaults(handler=queue_task_for_missing_thumbnails)
+
+    thumbnails_recreate = thumbnails_commands.add_parser("recreate")
+    thumbnails_recreate.add_argument("url")
+
+    return parser
+
+
+def do_task(args):
+    count = args.count
     start = 0
     while count > start:
         task = Task.get_next_task()
@@ -45,7 +109,7 @@ def do_task(arguments):
         start += 1
 
 
-def stuckfix(arguments):
+def stuckfix(args):
     """Re-queue QUEUED jobs that have no PendingJob entry."""
     pending_job_ids = {
         row.job_id for row in PendingJob.query.with_entities(PendingJob.job_id).all()
@@ -73,14 +137,14 @@ def stuckfix(arguments):
             db.session.rollback()
 
 
-def queue_task_for_missing_thumbnails(arguments):
+def queue_task_for_missing_thumbnails(args):
     uploads = Upload.query.filter(Upload.thumbnail == None).all()
     for upload in uploads:
         task = GenerateImageThumbnail(upload.id)
         task.queue()
 
 
-def apply_migrations(arguments):
+def apply_migrations(args):
     if _cfg("migrations"):
         folder_path = _cfg("migrations")
         if folder_path:
@@ -103,8 +167,8 @@ def apply_migrations(arguments):
                 logger.error(f"An error occurred: {e}")
 
 
-def remove_admin(arguments):
-    u = User.query.filter(User.username == arguments["<name>"]).first()
+def remove_admin(args):
+    u = User.query.filter(User.username == args.name).first()
     if u:
         u.admin = False  # remove admin
         db.session.commit()
@@ -112,8 +176,8 @@ def remove_admin(arguments):
         logger.error("Not a valid user")
 
 
-def make_admin(arguments):
-    u = User.query.filter(User.username == arguments["<name>"]).first()
+def make_admin(args):
+    u = User.query.filter(User.username == args.name).first()
     if u:
         u.admin = True  # make admin
         db.session.commit()
@@ -121,14 +185,14 @@ def make_admin(arguments):
         logger.error("Not a valid user")
 
 
-def list_admin(arguments):
+def list_admin(args):
     users = User.query.filter(User.admin)
     for u in users:
         logger.info(u.username)
 
 
-def approve_user(arguments):
-    u = User.query.filter(User.username == arguments["<name>"]).first()
+def approve_user(args):
+    u = User.query.filter(User.username == args.name).first()
     if u:
         u.approved = True  # approve user
         u.approvalDate = datetime.now()
@@ -137,8 +201,8 @@ def approve_user(arguments):
         logger.error("Not a valid user")
 
 
-def create_user(arguments):
-    u = User(arguments["<name>"], arguments["<email>"], arguments["<password>"])
+def create_user(args):
+    u = User(args.name, args.email, args.password)
     if u:
         u.approved = True  # approve user
         u.approvalDate = datetime.now()
@@ -149,10 +213,10 @@ def create_user(arguments):
         logger.error("Couldn't create the user")
 
 
-def reset_password(arguments):
-    u = User.query.filter(User.username == arguments["<name>"]).first()
+def reset_password(args):
+    u = User.query.filter(User.username == args.name).first()
     if u:
-        password = arguments["<password>"]
+        password = args.password
         if len(password) < 5 or len(password) > 256:
             logger.error("Password must be between 5 and 256 characters.")
             return
@@ -162,44 +226,12 @@ def reset_password(arguments):
         logger.error("Not a valid user")
 
 
-interface = """
-Command line admin interface
-Usage:
-    manage.py admin promote <name>
-    manage.py admin demote <name>
-    manage.py admin list
-    manage.py user approve <name>
-    manage.py user create <name> <password> <email>
-    manage.py user reset_password <name> <password>
-    manage.py database migrate
-    manage.py task run <count>
-    manage.py task fix stuck
-    manage.py thumbnails queue
-    manage.py thumbnails recreate <url> #TODO
-
-Options:
-    -h --help Show this screen.
-"""
 if __name__ == "__main__":
+    parser = build_parser()
+    args = parser.parse_args()
+
     with app.app_context():
-        arguments = docopt(interface, version="1")
-        if arguments["admin"] and arguments["promote"]:
-            make_admin(arguments)
-        elif arguments["admin"] and arguments["demote"]:
-            remove_admin(arguments)
-        elif arguments["admin"] and arguments["list"]:
-            list_admin(arguments)
-        elif arguments["user"] and arguments["approve"]:
-            approve_user(arguments)
-        elif arguments["user"] and arguments["create"]:
-            create_user(arguments)
-        elif arguments["user"] and arguments["reset_password"]:
-            reset_password(arguments)
-        elif arguments["database"] and arguments["migrate"]:
-            apply_migrations(arguments)
-        elif arguments["task"] and arguments["run"]:
-            do_task(arguments)
-        elif arguments["task"] and arguments["fix"] and arguments["stuck"]:
-            stuckfix(arguments)
-        elif arguments["thumbnails"] and arguments["queue"]:
-            queue_task_for_missing_thumbnails(arguments)
+        if hasattr(args, "handler"):
+            args.handler(args)
+        else:
+            parser.print_help()
