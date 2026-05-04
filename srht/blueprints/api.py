@@ -1,6 +1,5 @@
 import base64
 import hashlib
-import locale
 import os
 from datetime import datetime
 from pathlib import Path
@@ -14,7 +13,6 @@ from srht.email import send_invite, send_rejection
 from srht.objects import Upload, User
 from srht.tasks import GenerateImageThumbnail
 
-encoding = locale.getdefaultlocale()[1]
 api = Blueprint("api", __name__, template_folder="../../templates")
 
 
@@ -70,19 +68,19 @@ def upload():
     if not user:
         return {"error": "API key not recognized"}, 403
     filename = "".join(c for c in f.filename if c.isalnum() or c == ".")
-    upload = Upload()
-    upload.user = user
     hash = get_hash(f)
-    upload.hash = hash
     existing = Upload.query.filter(Upload.hash == hash).first()
     if existing:
-        db.session.rollback()  # file already exists, end this session
         return {
             "success": True,
             "hash": existing.hash,
             "shorthash": existing.shorthash,
             "url": file_link(existing.path),
         }
+    
+    upload = Upload()
+    upload.user = user
+    upload.hash = hash
     upload.path = os.path.join(upload.hash + extension(filename))
     upload.original_name = filename
 

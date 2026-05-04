@@ -23,7 +23,6 @@ import re
 import locale
 import bcrypt
 
-encoding = locale.getdefaultlocale()[1]
 html = Blueprint("html", __name__, template_folder="../../templates")
 
 
