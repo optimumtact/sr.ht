@@ -1,6 +1,7 @@
 import logging
 import time
 from pathlib import Path
+from xml.sax.saxutils import escape
 
 import magic
 from moviepy.video.io.VideoFileClip import VideoFileClip
@@ -102,18 +103,20 @@ class GenerateImageThumbnail(Task):
         if guessed_mimetype is not None:
             type, extension = guessed_mimetype.split("/")
             if type not in ["image", "video"]:
-                return self.generate_blank_thumbnail(
+                return self.generate_unknown_thumbnail(
                     uploaded_file_path,
-                    thumbnail_path.joinpath(uploaded_file_path.stem + ".png"),
-                    size,
+                    thumbnail_path.joinpath(uploaded_file_path.stem + ".svg"),
+                    extension=uploaded_file_path.suffix.lstrip("."),
+                    size=size,
                 )
 
             if not self.allowed_extension(extension):
                 # Fall back rather than feeding uncommon formats into Pillow/moviepy.
-                return self.generate_blank_thumbnail(
+                return self.generate_unknown_thumbnail(
                     uploaded_file_path,
-                    thumbnail_path.joinpath(uploaded_file_path.stem + ".png"),
-                    size,
+                    thumbnail_path.joinpath(uploaded_file_path.stem + ".svg"),
+                    extension=extension,
+                    size=size,
                 )
 
             # Use the extension from the mimetype. This is because some files may have the wrong extension, and we want to be able to handle that. We also want to be able to handle files with no extension.
@@ -130,19 +133,36 @@ class GenerateImageThumbnail(Task):
                 return self.generate_video_thumbnail(uploaded_file_path, thumbnail_file_path, size)
         # Not sure how you got here.
         self.log_message(
-            f"Could not determine file type for {uploaded_file_path}, generating blank thumbnail",
+            f"Could not determine file type for {uploaded_file_path}, generating file thumbnail",
             log_level=logging.WARNING,
         )
-        thumbnail_file_path = thumbnail_path.joinpath(uploaded_file_path.stem + ".png")
-        return self.generate_blank_thumbnail(uploaded_file_path, thumbnail_file_path, size)
+        thumbnail_file_path = thumbnail_path.joinpath(uploaded_file_path.stem + ".svg")
+        return self.generate_unknown_thumbnail(
+            uploaded_file_path,
+            thumbnail_file_path,
+            extension=uploaded_file_path.suffix.lstrip("."),
+            size=size,
+        )
 
-    def generate_blank_thumbnail(
-        self, uploaded_file_path: Path, thumbnail_file_path: Path, size=(128, 128)  #
+    def generate_unknown_thumbnail(
+        self,
+        uploaded_file_path: Path,
+        thumbnail_file_path: Path,
+        extension: str = "",
+        size=(128, 128),
     ) -> Path:
-        self.log_message(f"Generating blank thumbnail to {thumbnail_file_path}")
-        color = (255, 255, 255, 0)
-        image = Image.new("RGBA", (size[0], size[1]), color)
-        image.save(thumbnail_file_path)
+        self.log_message(f"Generating file thumbnail to {thumbnail_file_path}")
+        width, height = size
+        display_extension = (extension or uploaded_file_path.suffix.lstrip(".") or "file").upper()
+        display_extension = escape(display_extension[:8])
+        svg = f"""<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}" role="img" aria-label="{display_extension} file thumbnail">
+  <rect width="100%" height="100%" rx="18" fill="#f4f4f4"/>
+  <path d="M{width * 0.28:.2f} {height * 0.16:.2f}h{width * 0.28:.2f}l{width * 0.16:.2f} {height * 0.16:.2f}v{height * 0.48:.2f}a{width * 0.04:.2f} {height * 0.04:.2f} 0 0 1 -{width * 0.04:.2f} {height * 0.04:.2f}H{width * 0.32:.2f}a{width * 0.04:.2f} {height * 0.04:.2f} 0 0 1 -{width * 0.04:.2f} -{height * 0.04:.2f}V{height * 0.20:.2f}a{width * 0.04:.2f} {height * 0.04:.2f} 0 0 1 {width * 0.04:.2f} -{height * 0.04:.2f}z" fill="#ffffff" stroke="#bfc3c9" stroke-width="2"/>
+  <path d="M{width * 0.56:.2f} {height * 0.16:.2f}v{height * 0.16:.2f}h{width * 0.16:.2f}" fill="#e7eaf0" stroke="#bfc3c9" stroke-width="2"/>
+  <rect x="{width * 0.20:.2f}" y="{height * 0.66:.2f}" width="{width * 0.60:.2f}" height="{height * 0.16:.2f}" rx="10" fill="#2f6fed"/>
+  <text x="50%" y="{height * 0.77:.2f}" text-anchor="middle" font-family="Arial, sans-serif" font-size="{max(14, int(height * 0.12))}" font-weight="700" fill="#ffffff">{display_extension}</text>
+</svg>"""
+        thumbnail_file_path.write_text(svg, encoding="utf-8")
         return thumbnail_file_path
 
     def generate_video_thumbnail(
