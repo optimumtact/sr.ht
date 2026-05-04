@@ -52,3 +52,6 @@ watch:
 
 dev:
 	while true; do uv run python debug.py; done
+
+test:
+	uv run pytest tests/

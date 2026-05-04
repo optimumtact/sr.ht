@@ -135,8 +135,13 @@ def delete():
     file = Upload.query.filter_by(path=filename).first()
     if file and (user.admin or user == file.user):
         db.session.delete(file)
-        os.remove(os.path.join(_cfg("storage"), file.path))
-        os.remove(os.path.join(_cfg("storage"), file.thumbnail))
+        full_path = os.path.join(_cfg("storage"), file.path)
+        if os.path.exists(full_path):
+            os.remove(full_path)
+        if file.thumbnail:
+            thumb_path = os.path.join(_cfg("storage"), file.thumbnail)
+            if os.path.exists(thumb_path):
+                os.remove(thumb_path)
         db.session.commit()
         return {"success": True, "filename": filename}
 
