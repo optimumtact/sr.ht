@@ -1,11 +1,12 @@
 {% extends "layout.html" %}
-{% block body %} 
+{% block body %}
+<div class="mx-auto max-w-4xl">
 <div class="text-center">
-    <h1><a href="/">{{ domain }}</a></h1>
+  <h1 class="text-2xl font-bold text-slate-900"><a href="/">{{ domain }}</a></h1>
 </div>
-<hr />
-<p>Save this as sharex.sxcu and then import it into sharex</p>
-<pre>
+<hr class="my-4 border-slate-200" />
+<p class="text-sm text-slate-700">Save this as <code class="rounded bg-slate-100 px-1 py-0.5">sharex.sxcu</code> and then import it into ShareX.</p>
+<pre class="mt-2 overflow-x-auto rounded-md border border-slate-300 bg-slate-50 p-3 text-sm">
 {
 
   "Name": "{{ domain }}",
@@ -30,4 +31,5 @@
 
 }
 </pre>
+</div>
 {% endblock %}

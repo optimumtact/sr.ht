@@ -2,22 +2,19 @@
     This template is shown to users less than one day old, on the home page
 #}
 
-<div class="well">
-    <p>Welcome to {{ domain }}, {{ user.username }}. Here's everything you need to know.</p>
-    <ol>
+<div class="rounded-lg border border-sky-200 bg-sky-50 p-4 text-sm text-slate-700">
+    <p class="font-semibold text-slate-900">Welcome to {{ domain }}, {{ user.username }}. Here's everything you need to know.</p>
+    <ol class="ml-5 mt-2 list-decimal space-y-1">
         <li>For support, email <a href="mailto:{{ owner_email }}">{{ owner_email }}</a>.</li>
         <li>For support checkout {{support}}.</li>
         <li>All uploads are visible to the public. Only members may upload.</li>
         <li>Upload limit is {{ _cfg("maxupload") }}.</li>
         <li>Do not upload child porn or malware, you'll be banned without mercy.</li>
-        {% if _cfg("donation-page") == "yes" %}
-        <li>We request you <a href="/donate">donate</a> if you have the means.</li>
-        {% endif %}
         <li>The source code is <a href="{{ git_repo }}">here</a>, feel free to send pull requests or host your own version.</li>
         {% if _cfg("resources-page") == "yes" %}
         <li>Some extra stuff is provided for members, <a href="/resources">full list here</a>.</li>
         {% endif %}
     </ol>
-    <p>This message goes away tomorrow. Enjoy your stay and don't fuck this up.</p>
+    <p class="mt-3">This message goes away tomorrow. Enjoy your stay and don't fuck this up.</p>
 </div>
-<hr />
+<hr class="my-4 border-slate-200" />

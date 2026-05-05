@@ -1,33 +1,107 @@
 <!doctype html>
-<html>
-    <head>
-		<meta http-equiv="X-UA-Compatible" content="IE=edge">
-		<meta charset="UTF-8">
-		<meta name="author" content="{{ owner_name }}">
-		<meta name="description" content="Private file hosting">
-        {% block title %}
-        <title>{{ domain }}</title>
-        {% endblock %}
-        <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
-        <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootswatch/3.3.5/simplex/bootstrap.min.css">
-        <link rel="stylesheet" href="/static/main.css">
-    </head>
-    <body>
-        <div class="container {% block containersize %}{% endblock %}">
-            {% with messages = get_flashed_messages(with_categories=true) %}
+<html lang="en">
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta charset="UTF-8">
+    <meta name="author" content="{{ owner_name }}">
+    <meta name="description" content="Private file hosting">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}{{ domain }}{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ["Open Sans", "sans-serif"],
+                    },
+                    colors: {
+                        brand: {
+                            50: "#fff7f5",
+                            100: "#ffe5df",
+                            500: "#d9230f",
+                            600: "#bf1f0d",
+                        },
+                        slate: {
+                            25: "#fbfbfc",
+                        },
+                    },
+                },
+            },
+        };
+    </script>
+    <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+    <link rel="stylesheet" href="/static/main.css">
+</head>
+<body class="min-h-screen bg-gradient-to-br from-slate-25 via-white to-orange-50 text-slate-800">
+    <div class="mx-auto min-h-screen w-full max-w-6xl px-4 py-6 lg:px-8">
+        <header class="mb-4 rounded-xl border border-slate-200 bg-white/90 p-4 shadow-sm backdrop-blur-sm">
+            <div class="flex flex-wrap items-center justify-between gap-3">
+                <a href="/" class="text-2xl font-bold tracking-tight text-brand-500">{{ domain }}</a>
+                {% if user %}
+                    <nav class="flex flex-wrap items-center gap-2 text-sm">
+                        <a href="/" class="rounded-md border border-transparent px-3 py-2 font-semibold text-slate-700 hover:border-brand-200 hover:bg-brand-50 hover:text-brand-600">Home</a>
+                        <a href="/uploads" class="rounded-md border border-transparent px-3 py-2 font-semibold text-slate-700 hover:border-brand-200 hover:bg-brand-50 hover:text-brand-600">Uploads</a>
+                        {% if _cfg("resourcespage") == "yes" %}
+                            <a href="/resources" class="rounded-md border border-transparent px-3 py-2 font-semibold text-slate-700 hover:border-brand-200 hover:bg-brand-50 hover:text-brand-600">Resources</a>
+                        {% endif %}
+                        <a href="/change" class="rounded-md border border-transparent px-3 py-2 font-semibold text-slate-700 hover:border-brand-200 hover:bg-brand-50 hover:text-brand-600">Change password</a>
+                        <a href="/logout" class="rounded-md border border-transparent px-3 py-2 font-semibold text-slate-700 hover:border-brand-200 hover:bg-brand-50 hover:text-brand-600">Log out</a>
+                        {% if user.admin %}
+                            <a href="/admin/uploads" class="rounded-md border border-transparent px-3 py-2 font-semibold text-slate-700 hover:border-brand-200 hover:bg-brand-50 hover:text-brand-600">All uploads</a>
+                            <a href="/admin/jobs" class="rounded-md border border-transparent px-3 py-2 font-semibold text-slate-700 hover:border-brand-200 hover:bg-brand-50 hover:text-brand-600">Job logs</a>
+                            <a href="/admin/users" class="rounded-md border border-transparent px-3 py-2 font-semibold text-slate-700 hover:border-brand-200 hover:bg-brand-50 hover:text-brand-600">Users</a>
+                        {% endif %}
+                    </nav>
+                {% else %}
+                    <nav class="flex flex-wrap items-center gap-2 text-sm">
+                        <a href="/login" class="rounded-md border border-transparent px-3 py-2 font-semibold text-slate-700 hover:border-brand-200 hover:bg-brand-50 hover:text-brand-600">Log in</a>
+                        <a href="/forgot-password" class="rounded-md border border-transparent px-3 py-2 font-semibold text-slate-700 hover:border-brand-200 hover:bg-brand-50 hover:text-brand-600">Reset password</a>
+                    </nav>
+                {% endif %}
+            </div>
+        </header>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
-            {% for category, message in messages %}
-            <div class="alert alert-{{ category }}" role="alert">{{ message }}</div>
-            {% endfor %}
+                <section class="mb-4 grid gap-2">
+                    {% for category, message in messages %}
+                        <div class="rounded-md border px-3 py-2 text-sm {% if category == 'danger' %}border-red-200 bg-red-50 text-red-700{% elif category == 'success' %}border-emerald-200 bg-emerald-50 text-emerald-700{% else %}border-sky-200 bg-sky-50 text-sky-700{% endif %}" role="alert">{{ message }}</div>
+                    {% endfor %}
+                </section>
             {% endif %}
-            {% endwith %}
-            {% block body %}{% endblock %}
-        </div>
-        <img class="moe hidden-sm hidden-xs hidden-md" src="/static/1.png" alt="moe"/>
-        {% block modal %}{% endblock %}
-        <script src="//code.jquery.com/jquery-1.11.3.min.js" type="text/javascript"></script>
-        <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js" type="text/javascript"></script>
-        <script src="/static/qrcode.min.js" type="text/javascript"></script>
-        {% block scripts %}{% endblock %}
-    </body>
+        {% endwith %}
+
+        <main class="rounded-xl border border-slate-200 bg-white/95 p-4 shadow-sm md:p-6">
+            {% block body %}
+                {% set heading %}{% block page_heading %}{% endblock %}{% endset %}
+                {% set content_block %}{% block content %}{% endblock %}{% endset %}
+                {% set heading = heading|trim %}
+                {% set content_block = content_block|trim %}
+                {% if heading or content_block %}
+                    <div class="grid gap-4">
+                        {% if heading %}
+                            <section class="rounded-xl border border-slate-200 bg-white/90 p-4 shadow-sm">
+                                <h1 class="text-xl font-bold text-slate-900 md:text-2xl">{{ heading }}</h1>
+                            </section>
+                        {% endif %}
+                        {% if content_block %}
+                            <section class="rounded-xl border border-slate-200 bg-white/95 p-4 shadow-sm md:p-6">
+                                {{ content_block }}
+                            </section>
+                        {% endif %}
+                    </div>
+                {% endif %}
+            {% endblock %}
+        </main>
+    </div>
+
+    <img class="moe hidden xl:block" src="/static/1.png" alt="moe"/>
+    {% block modal %}{% endblock %}
+    <script src="/static/qrcode.min.js" type="text/javascript"></script>
+    {% block scripts %}{% endblock %}
+</body>
 </html>

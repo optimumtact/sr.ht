@@ -13,7 +13,7 @@ from srht.objects import Job, JobLog, Upload, User
 from srht.tasks import Task
 from srht.tasks.basetask import TaskStatus, TaskType
 
-htmx_admin = Blueprint("htmx_admin", __name__, template_folder="../../templates")
+admin = Blueprint("admin", __name__, template_folder="../../templates")
 
 
 def _is_htmx_request() -> bool:
@@ -76,7 +76,7 @@ def _validate_new_user(username: str, email: str, password: str):
     return errors
 
 
-@htmx_admin.route("/htmx/admin/users", methods=["GET"])
+@admin.route("/admin/users", methods=["GET"])
 @loginrequired
 @adminrequired
 def users_admin():
@@ -87,7 +87,7 @@ def users_admin():
     )
 
 
-@htmx_admin.route("/htmx/admin/users/create", methods=["POST"])
+@admin.route("/admin/users/create", methods=["POST"])
 @loginrequired
 @adminrequired
 def users_admin_create():
@@ -117,10 +117,10 @@ def users_admin_create():
     if _is_htmx_request():
         return _render_users_content()
 
-    return redirect("/htmx/admin/users")
+    return redirect("/admin/users")
 
 
-@htmx_admin.route("/htmx/admin/users/<int:user_id>/password", methods=["POST"])
+@admin.route("/admin/users/<int:user_id>/password", methods=["POST"])
 @loginrequired
 @adminrequired
 def users_admin_set_password(user_id):
@@ -140,10 +140,10 @@ def users_admin_set_password(user_id):
     if _is_htmx_request():
         return _render_users_content()
 
-    return redirect("/htmx/admin/users")
+    return redirect("/admin/users")
 
 
-@htmx_admin.route("/htmx/admin/users/<int:user_id>/make-admin", methods=["POST"])
+@admin.route("/admin/users/<int:user_id>/make-admin", methods=["POST"])
 @loginrequired
 @adminrequired
 def users_admin_make_admin(user_id):
@@ -157,10 +157,10 @@ def users_admin_make_admin(user_id):
     if _is_htmx_request():
         return _render_users_content()
 
-    return redirect("/htmx/admin/users")
+    return redirect("/admin/users")
 
 
-@htmx_admin.route("/htmx/admin/users/<int:user_id>/make-member", methods=["POST"])
+@admin.route("/admin/users/<int:user_id>/make-member", methods=["POST"])
 @loginrequired
 @adminrequired
 def users_admin_make_member(user_id):
@@ -180,10 +180,10 @@ def users_admin_make_member(user_id):
     if _is_htmx_request():
         return _render_users_content()
 
-    return redirect("/htmx/admin/users")
+    return redirect("/admin/users")
 
 
-@htmx_admin.route("/htmx/admin/users/<int:user_id>/delete", methods=["POST"])
+@admin.route("/admin/users/<int:user_id>/delete", methods=["POST"])
 @loginrequired
 @adminrequired
 def users_admin_delete(user_id):
@@ -209,10 +209,10 @@ def users_admin_delete(user_id):
     if _is_htmx_request():
         return _render_users_content()
 
-    return redirect("/htmx/admin/users")
+    return redirect("/admin/users")
 
 
-@htmx_admin.route("/htmx/admin/users/<int:user_id>/suspend", methods=["POST"])
+@admin.route("/admin/users/<int:user_id>/suspend", methods=["POST"])
 @loginrequired
 @adminrequired
 def users_admin_suspend(user_id):
@@ -233,10 +233,10 @@ def users_admin_suspend(user_id):
     if _is_htmx_request():
         return _render_users_content()
 
-    return redirect("/htmx/admin/users")
+    return redirect("/admin/users")
 
 
-@htmx_admin.route("/htmx/admin/users/<int:user_id>/unsuspend", methods=["POST"])
+@admin.route("/admin/users/<int:user_id>/unsuspend", methods=["POST"])
 @loginrequired
 @adminrequired
 def users_admin_unsuspend(user_id):
@@ -250,14 +250,15 @@ def users_admin_unsuspend(user_id):
     if _is_htmx_request():
         return _render_users_content()
 
-    return redirect("/htmx/admin/users")
+    return redirect("/admin/users")
 
 
-@htmx_admin.route("/htmx/admin/uploads", methods=["GET"], defaults={"page": 1})
-@htmx_admin.route("/htmx/admin/uploads/<int:page>", methods=["GET"])
+@admin.route("/admin/uploads", methods=["GET"], defaults={"page": 1})
+@admin.route("/admin/uploads/<int:page>", methods=["GET"])
 @loginrequired
 @adminrequired
 def uploads_admin(page):
+    original_name_raw = (request.args.get("original_name") or "").strip()
     uploader_id_raw = (request.args.get("uploader_id") or "").strip()
     uploaded_on = (request.args.get("uploaded_on") or "").strip()
     uploaded_from_raw = (request.args.get("uploaded_from") or uploaded_on).strip()
@@ -265,6 +266,9 @@ def uploads_admin(page):
     filter_errors = []
 
     stmt = db.select(Upload).order_by(desc(Upload.created))
+
+    if original_name_raw:
+        stmt = stmt.where(Upload.original_name.ilike(f"%{original_name_raw}%"))
 
     uploader_id = None
     if uploader_id_raw:
@@ -305,6 +309,8 @@ def uploads_admin(page):
 
     uploader_users = User.query.order_by(User.username).all()
     pagination_query_params = {}
+    if original_name_raw:
+        pagination_query_params["original_name"] = original_name_raw
     if uploader_id_raw:
         pagination_query_params["uploader_id"] = uploader_id_raw
     if uploaded_from_raw:
@@ -316,8 +322,9 @@ def uploads_admin(page):
         "htmx/admin/uploads.html",
         "htmx/admin/_uploads_content.html",
         pagination=pagination,
-        endpoint="htmx_admin.uploads_admin",
+        endpoint="admin.uploads_admin",
         uploader_users=uploader_users,
+        selected_original_name=original_name_raw,
         selected_uploader_id=uploader_id_raw,
         selected_uploaded_from=uploaded_from_raw,
         selected_uploaded_to=uploaded_to_raw,
@@ -326,7 +333,7 @@ def uploads_admin(page):
     )
 
 
-@htmx_admin.route("/htmx/admin/uploads/<int:upload_id>/delete", methods=["POST"])
+@admin.route("/admin/uploads/<int:upload_id>/delete", methods=["POST"])
 @loginrequired
 @adminrequired
 def uploads_admin_delete(upload_id):
@@ -349,11 +356,11 @@ def uploads_admin_delete(upload_id):
     if _is_htmx_request():
         return Response(status=204)
 
-    return redirect("/htmx/admin/uploads")
+    return redirect("/admin/uploads")
 
 
-@htmx_admin.route("/htmx/admin/jobs", methods=["GET"], defaults={"page": 1})
-@htmx_admin.route("/htmx/admin/jobs/<int:page>", methods=["GET"])
+@admin.route("/admin/jobs", methods=["GET"], defaults={"page": 1})
+@admin.route("/admin/jobs/<int:page>", methods=["GET"])
 @loginrequired
 @adminrequired
 def jobs(page):
@@ -447,7 +454,7 @@ def jobs(page):
         "htmx/admin/jobs.html",
         "htmx/admin/_jobs_content.html",
         pagination=pagination,
-        endpoint="htmx_admin.jobs",
+        endpoint="admin.jobs",
         TaskType=TaskType,
         TaskStatus=TaskStatus,
         Task=Task,
@@ -463,7 +470,7 @@ def jobs(page):
     )
 
 
-@htmx_admin.route("/htmx/admin/jobs/<int:job_id>/logs", methods=["GET"])
+@admin.route("/admin/jobs/<int:job_id>/logs", methods=["GET"])
 @loginrequired
 @adminrequired
 def job_logs(job_id):
@@ -479,7 +486,7 @@ def job_logs(job_id):
     )
 
 
-@htmx_admin.route("/htmx/admin/jobs/<int:job_id>/data", methods=["GET"])
+@admin.route("/admin/jobs/<int:job_id>/data", methods=["GET"])
 @loginrequired
 @adminrequired
 def job_data(job_id):
@@ -493,7 +500,7 @@ def job_data(job_id):
     )
 
 
-@htmx_admin.route("/htmx/admin/jobs/<int:job_id>/retry", methods=["POST"])
+@admin.route("/admin/jobs/<int:job_id>/retry", methods=["POST"])
 @loginrequired
 @adminrequired
 def job_retry(job_id):
@@ -512,4 +519,4 @@ def job_retry(job_id):
     if _is_htmx_request():
         return jobs(1)
 
-    return redirect("/htmx/admin/jobs")
+    return redirect("/admin/jobs")

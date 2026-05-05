@@ -1,36 +1,25 @@
 {% extends "layout.html" %}
 {% block body %}
+<div class="mx-auto max-w-xl">
 <div class="text-center">
-    <h1><a href="/">{{ domain }}</a></h1>
-    <h4>Reset password</h4>
+    <h1 class="text-2xl font-bold text-slate-900">Reset password</h1>
 </div>
-<hr />
+<hr class="my-4 border-slate-200" />
 {% if success %}
-<p>We've sent you an email with further instructions. It should arrive soon. <a href="mailto:{{ owner_email }}">Email us</a>
+<p class="rounded-md border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-700">We've sent you an email with further instructions. It should arrive soon. <a class="font-semibold" href="mailto:{{ owner_email }}">Email us</a>
 if you run into trouble.</p>
 {% else %}
-<div class="row">
-    <form class="form-horizontal col-md-6" role="form" action="/forgot-password" method="POST">
+    <form action="/forgot-password" method="POST" class="grid gap-4">
         {% if bad_email %}
-        <p>Double check your email address, we don't recognize you.</p>
+        <p class="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">Double check your email address, we don't recognize you.</p>
         {% endif %}
-        <div class="form-group">
-            <label for="email" class="col-sm-2 control-label">Email</label>
-            <div class="col-sm-10">
-                <input type="text" class="form-control" id="email" placeholder="Email" name="email" value="{{ email }}">
-            </div>
-        </div>
-        <div class="form-group">
-            <div class="col-sm-10 col-sm-offset-2">
-                <input type="submit" value="Submit" class="btn btn-primary">
-            </div>
-        </div>
+        <label for="email" class="grid gap-1 text-sm text-slate-700">
+            Email
+            <input type="text" id="email" placeholder="Email" name="email" value="{{ email }}" class="rounded-md border border-slate-300 px-3 py-2 text-slate-800 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200">
+        </label>
+        <input type="submit" value="Submit" class="rounded-md bg-brand-500 px-4 py-2 font-semibold text-white hover:bg-brand-600">
     </form>
-    <div class="col-md-6">
-        {% if errors %}
-        <p class="text-danger">{{ errors }}</p>
-        {% endif %}
-    </div>
-</div>
+    {% if errors %}<p class="mt-3 text-sm text-red-600">{{ errors }}</p>{% endif %}
 {% endif %}
+</div>
 {% endblock %}

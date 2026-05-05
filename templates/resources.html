@@ -1,22 +1,30 @@
 {% extends "layout.html" %}
-{% block body %} 
+{% block body %}
 <script>
 window.api_key = "{{ user.apiKey }}";
 window.root = "{{ root }}";
 </script>
-<div class="text-center">
-    <h1><a href="/">{{ domain }} services</a></h1>
-    <h4 class="text-muted">Extra services and resources for you</h4>
+<div class="mx-auto max-w-3xl text-center">
+    <h1 class="text-2xl font-bold text-slate-900"><a href="/">{{ domain }} services</a></h1>
+    <p class="mt-1 text-sm text-slate-500">Extra services and resources for you</p>
 </div>
-<hr />
-<div class="text-center">
-    <h3>Bash script</h3>
-    <p>You can upload to {{ domain }} with our <a href="/script">bash script</a>.</p>
-    <h3>ShareX</h3>
-    <p>You can upload to {{ domain }} with sharex via importing this <a href="/sharex">integration config</a>.</p>
-    <h3>Android app</h3>
-    <p>Ditto, there is an <a href="https://play.google.com/store/apps/details?id=io.github.wiiam.srhtandroid">Android app</a> (note it's originally for sr.ht but can be pointed here.)</p>
-    <h3>More stuff?</h3>
-    <p><a href="mailto:{{owner_email}}">Get in touch</a> if you have any more ideas worth hosting here.</p>
+<hr class="my-4 border-slate-200" />
+<div class="mx-auto grid max-w-3xl gap-4 text-center md:grid-cols-2">
+    <section class="rounded-lg border border-slate-200 bg-slate-50 p-4">
+        <h3 class="text-lg font-semibold text-slate-900">Bash script</h3>
+        <p class="mt-1 text-sm text-slate-600">You can upload to {{ domain }} with our <a class="font-semibold text-brand-600" href="/script">bash script</a>.</p>
+    </section>
+    <section class="rounded-lg border border-slate-200 bg-slate-50 p-4">
+        <h3 class="text-lg font-semibold text-slate-900">ShareX</h3>
+        <p class="mt-1 text-sm text-slate-600">You can upload to {{ domain }} with ShareX via importing this <a class="font-semibold text-brand-600" href="/sharex">integration config</a>.</p>
+    </section>
+    <section class="rounded-lg border border-slate-200 bg-slate-50 p-4">
+        <h3 class="text-lg font-semibold text-slate-900">Android app</h3>
+        <p class="mt-1 text-sm text-slate-600">There is an <a class="font-semibold text-brand-600" href="https://play.google.com/store/apps/details?id=io.github.wiiam.srhtandroid">Android app</a> (originally for sr.ht but configurable for this host).</p>
+    </section>
+    <section class="rounded-lg border border-slate-200 bg-slate-50 p-4">
+        <h3 class="text-lg font-semibold text-slate-900">More ideas</h3>
+        <p class="mt-1 text-sm text-slate-600"><a class="font-semibold text-brand-600" href="mailto:{{owner_email}}">Get in touch</a> if you have more ideas worth hosting here.</p>
+    </section>
 </div>
 {% endblock %}

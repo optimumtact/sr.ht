@@ -10,7 +10,7 @@ from jinja2 import ChoiceLoader, FileSystemLoader
 
 from srht.blueprints.api import api
 from srht.blueprints.html import html
-from srht.blueprints.htmx import htmx_admin
+from srht.blueprints.admin import admin
 from srht.common import (
     delete_link,
     disown_link,
@@ -63,7 +63,7 @@ login_manager.anonymous_user = lambda: None
 
 app.register_blueprint(html)
 app.register_blueprint(api)
-app.register_blueprint(htmx_admin)
+app.register_blueprint(admin)
 
 try:
     locale.setlocale(locale.LC_ALL, "en_US")
@@ -111,9 +111,5 @@ def inject():
         "owner_email": _cfg("owner_email"),
         "git_repo": _cfg("git_repo"),
         "support": _cfg("support"),
-        "donate_link": _cfg("donate_link"),
-        "donate_button_image": _cfg("donate_button_image"),
-        "site_cost": _cfg("site_cost"),
-        "current_financial_status": _cfg("current_financial_status"),
         "_cfg": _cfg,
     }

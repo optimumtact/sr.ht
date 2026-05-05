@@ -1,41 +1,33 @@
 {% extends "layout.html" %}
 {% block body %}
-<hr />
-<h4 class="text-center">Initial Setup</h4>
-<p>Create the first account for this instance.</p>
+<div class="mx-auto max-w-xl">
+<h1 class="text-center text-2xl font-bold text-slate-900">Initial Setup</h1>
+<p class="mt-2 text-center text-sm text-slate-600">Create the first account for this instance.</p>
 
 {% if errors %}
-<div class="alert alert-danger">
-    {% for error in errors %}
-    <p>{{ error }}</p>
-    {% endfor %}
+<div class="mt-4 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+    {% for error in errors %}<p>{{ error }}</p>{% endfor %}
 </div>
 {% endif %}
 
-<form action="/setup" method="POST">
-    <div class="form-group">
-        <label for="username">Username</label>
-        <input id="username" name="username" class="form-control"
-            value="{% if username %}{{ username }}{% endif %}" />
-    </div>
-    <div class="form-group">
-        <label for="email">Email Address</label>
-        <input id="email" name="email" class="form-control"
-            value="{% if email %}{{ email }}{% endif %}" />
-    </div>
-    <div class="form-group">
-        <label for="password">Password</label>
-        <input id="password" name="password" type="password" class="form-control" />
-    </div>
-    <div class="form-group">
-        <label for="app_key">App Key</label>
-        <input id="app_key" name="app_key" type="password" class="form-control" />
-    </div>
-    <div class="row">
-        <div class="col-md-3">
-            <input type="submit" class="btn btn-primary" value="Create Account" />
-        </div>
-    </div>
+<form action="/setup" method="POST" class="mt-4 grid gap-4">
+    <label class="grid gap-1 text-sm text-slate-700">
+        Username
+        <input id="username" name="username" value="{% if username %}{{ username }}{% endif %}" class="rounded-md border border-slate-300 px-3 py-2 text-slate-800 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200" />
+    </label>
+    <label class="grid gap-1 text-sm text-slate-700">
+        Email Address
+        <input id="email" name="email" value="{% if email %}{{ email }}{% endif %}" class="rounded-md border border-slate-300 px-3 py-2 text-slate-800 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200" />
+    </label>
+    <label class="grid gap-1 text-sm text-slate-700">
+        Password
+        <input id="password" name="password" type="password" class="rounded-md border border-slate-300 px-3 py-2 text-slate-800 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200" />
+    </label>
+    <label class="grid gap-1 text-sm text-slate-700">
+        App Key
+        <input id="app_key" name="app_key" type="password" class="rounded-md border border-slate-300 px-3 py-2 text-slate-800 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200" />
+    </label>
+    <input type="submit" class="rounded-md bg-brand-500 px-4 py-2 font-semibold text-white hover:bg-brand-600" value="Create Account" />
 </form>
-<hr />
+</div>
 {% endblock %}

@@ -1,28 +1,23 @@
 {% extends "layout.html" %}
 {% block body %}
-<div class="text-center">
-    <h1><a href="/">{{ domain }}</a></h1>
-    <h4>Change password</h4>
-</div>
-<hr />
-<div class="row">
-    <form role="form" action="/change" method="POST">
-        <div class="form-group">
-            <label for="password">New Password</label>
-            <input type="password" class="form-control" id="password" placeholder="Password" name="password">
-        </div>
-        <div class="form-group">
-            <label for="password2">New Password (again)</label>
-            <input type="password" class="form-control" id="password2" placeholder="...again" name="password2">
-        </div>
-        <div class="form-group">
-            <input type="submit" value="Submit" class="btn btn-primary">
-        </div>
-    </form>
-    <div class="col-md-6">
-        {% if errors %}
-        <p class="text-danger">{{ errors }}</p>
-        {% endif %}
+<div class="mx-auto max-w-xl">
+    <div class="text-center">
+        <h1 class="text-2xl font-bold text-slate-900">Change password</h1>
     </div>
+    <hr class="my-4 border-slate-200" />
+    <form action="/change" method="POST" class="grid gap-4">
+        <label for="password" class="grid gap-1 text-sm text-slate-700">
+            New Password
+            <input type="password" id="password" placeholder="Password" name="password" class="rounded-md border border-slate-300 px-3 py-2 text-slate-800 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200">
+        </label>
+        <label for="password2" class="grid gap-1 text-sm text-slate-700">
+            New Password (again)
+            <input type="password" id="password2" placeholder="...again" name="password2" class="rounded-md border border-slate-300 px-3 py-2 text-slate-800 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200">
+        </label>
+        <input type="submit" value="Submit" class="rounded-md bg-brand-500 px-4 py-2 font-semibold text-white hover:bg-brand-600">
+    </form>
+    {% if errors %}
+        <p class="mt-3 text-sm text-red-600">{{ errors }}</p>
+    {% endif %}
 </div>
 {% endblock %}

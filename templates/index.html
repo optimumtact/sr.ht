@@ -1,7 +1,9 @@
 {% extends "layout.html" %}
-{% block body %} 
+{% block body %}
 {% include "index-about.html" %}
-<hr />
-<p>Account self-registration is disabled. Contact {{ owner_email }} if you need access.</p>
-<p>You can run {{ domain }} on your own servers if you cannot get an account. Get the source here: <a href="{{ git_repo }}">{{ git_repo }}</a>.</p>
+<hr class="my-4 border-slate-200" />
+<div class="mx-auto max-w-2xl text-center text-sm text-slate-600">
+	<p>This is private file hosting, Contact {{ owner_email }} if you need access.</p>
+	<p class="mt-2">You can run {{ domain }} on your own servers if you cannot get an account. Get the source here: <a class="font-semibold text-brand-600" href="{{ git_repo }}">{{ git_repo }}</a>.</p>
+</div>
 {% endblock %}

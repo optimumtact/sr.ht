@@ -1,11 +1,12 @@
 {% extends "layout.html" %}
-{% block body %} 
+{% block body %}
+<div class="mx-auto max-w-4xl">
 <div class="text-center">
-    <h1><a href="/">{{ domain }}</a></h1>
+    <h1 class="text-2xl font-bold text-slate-900"><a href="/">{{ domain }}</a></h1>
 </div>
-<hr />
-<p>Write this into <code>~/.config/fsingulo</code>:</p>
-<pre>
+<hr class="my-4 border-slate-200" />
+<p class="text-sm text-slate-700">Write this into <code class="rounded bg-slate-100 px-1 py-0.5">~/.config/fsingulo</code>:</p>
+<pre class="mt-2 overflow-x-auto rounded-md border border-slate-300 bg-slate-50 p-3 text-sm">
 #!/bin/bash
 
 # DO NOT SHARE YOUR KEY 
@@ -21,7 +22,8 @@ notify=true
 # Open URL in browser
 browser=true
 </pre>
-<p>Write this to <code>/usr/local/bin/fsingulo</code> (<a href="/script.plain">plaintext version</a>).
+<p class="mt-3 text-sm text-slate-700">Write this to <code class="rounded bg-slate-100 px-1 py-0.5">/usr/local/bin/fsingulo</code> (<a class="font-semibold text-brand-600" href="/script.plain">plaintext version</a>).
 It depends on slop and maim.</p>
-<pre>{% include "pstepw" %}</pre>
+<pre class="mt-2 overflow-x-auto rounded-md border border-slate-300 bg-slate-50 p-3 text-sm">{% include "pstepw" %}</pre>
+</div>
 {% endblock %}

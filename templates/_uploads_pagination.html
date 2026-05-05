@@ -1,0 +1,23 @@
+{% if pagination.pages > 1 %}
+<nav class="mb-4 flex flex-wrap items-center justify-center gap-2" aria-label="pagination">
+    {% set pagination_query_params = pagination_query_params|default({}) %}
+    {% if pagination.has_prev %}
+        {% set prev_url = url_for(endpoint, page=pagination.prev_num, **pagination_query_params) %}
+        <a class="rounded-md border border-slate-300 px-3 py-1.5 text-sm font-semibold text-slate-700 hover:border-brand-500 hover:text-brand-600" href="{{ prev_url }}" hx-get="{{ prev_url }}" hx-target="#uploads-content" hx-select="#uploads-content" hx-swap="outerHTML" hx-push-url="true">Prev</a>
+    {% endif %}
+
+    {% for number in pagination.iter_pages() %}
+        {% if number %}
+            {% set page_url = url_for(endpoint, page=number, **pagination_query_params) %}
+            <a class="rounded-md border px-3 py-1.5 text-sm font-semibold {% if pagination.page == number %}border-brand-500 bg-brand-500 text-white{% else %}border-slate-300 text-slate-700 hover:border-brand-500 hover:text-brand-600{% endif %}" href="{{ page_url }}" hx-get="{{ page_url }}" hx-target="#uploads-content" hx-select="#uploads-content" hx-swap="outerHTML" hx-push-url="true">{{ number }}</a>
+        {% else %}
+            <span class="px-2 text-slate-400">...</span>
+        {% endif %}
+    {% endfor %}
+
+    {% if pagination.has_next %}
+        {% set next_url = url_for(endpoint, page=pagination.next_num, **pagination_query_params) %}
+        <a class="rounded-md border border-slate-300 px-3 py-1.5 text-sm font-semibold text-slate-700 hover:border-brand-500 hover:text-brand-600" href="{{ next_url }}" hx-get="{{ next_url }}" hx-target="#uploads-content" hx-select="#uploads-content" hx-swap="outerHTML" hx-push-url="true">Next</a>
+    {% endif %}
+</nav>
+{% endif %}

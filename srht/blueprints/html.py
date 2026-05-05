@@ -26,6 +26,16 @@ import bcrypt
 html = Blueprint("html", __name__, template_folder="../../templates")
 
 
+def _is_htmx_request() -> bool:
+    return request.headers.get("HX-Request", "").lower() == "true"
+
+
+def _render_htmx(full_template: str, partial_template: str, **context):
+    if _is_htmx_request():
+        return render_template(partial_template, **context)
+    return render_template(full_template, **context)
+
+
 @html.route("/setup", methods=["GET", "POST"])
 def setup():
     if User.query.count() != 0:
@@ -165,12 +175,6 @@ def logout():
     return redirect("%s://%s/" % (_cfg("protocol"), _cfg("domain")))
 
 
-@html.route("/donate")
-@loginrequired
-def donate():
-    return render_template("donate.html")
-
-
 @html.route("/resources")
 @loginrequired
 def resources():
@@ -282,15 +286,116 @@ def reset_password(username, confirmation):
 @loginrequired
 def uploads(page):
     page = int(page)
-    uploads = db.paginate(
+    original_name_raw = (request.args.get("original_name") or "").strip()
+    uploaded_from_raw = (request.args.get("uploaded_from") or "").strip()
+    uploaded_to_raw = (request.args.get("uploaded_to") or "").strip()
+    filter_errors = []
+
+    stmt = (
         db.select(Upload)
         .filter_by(user_id=current_user.id)
         .filter_by(hidden=False)
-        .order_by(desc(Upload.created)),
+        .order_by(desc(Upload.created))
+    )
+
+    if original_name_raw:
+        stmt = stmt.where(Upload.original_name.ilike(f"%{original_name_raw}%"))
+
+    uploaded_from = None
+    uploaded_to = None
+
+    if uploaded_from_raw:
+        try:
+            uploaded_from = datetime.strptime(uploaded_from_raw, "%Y-%m-%d")
+        except ValueError:
+            filter_errors.append("Uploaded from date must be in YYYY-MM-DD format.")
+
+    if uploaded_to_raw:
+        try:
+            uploaded_to = datetime.strptime(uploaded_to_raw, "%Y-%m-%d")
+        except ValueError:
+            filter_errors.append("Uploaded to date must be in YYYY-MM-DD format.")
+
+    if uploaded_from and uploaded_to and uploaded_from > uploaded_to:
+        filter_errors.append("Upload date range is invalid.")
+
+    if uploaded_from:
+        stmt = stmt.where(Upload.created >= uploaded_from)
+    if uploaded_to:
+        stmt = stmt.where(Upload.created < uploaded_to + timedelta(days=1))
+
+    uploads = db.paginate(
+        stmt,
         page=page,
         per_page=_cfgi("perpage"),
     )
-    return render_template("uploads.html", pagination=uploads, endpoint="html.uploads")
+
+    pagination_query_params = {}
+    if original_name_raw:
+        pagination_query_params["original_name"] = original_name_raw
+    if uploaded_from_raw:
+        pagination_query_params["uploaded_from"] = uploaded_from_raw
+    if uploaded_to_raw:
+        pagination_query_params["uploaded_to"] = uploaded_to_raw
+
+    context = {
+        "pagination": uploads,
+        "endpoint": "html.uploads",
+        "selected_original_name": original_name_raw,
+        "selected_uploaded_from": uploaded_from_raw,
+        "selected_uploaded_to": uploaded_to_raw,
+        "filter_errors": filter_errors,
+        "pagination_query_params": pagination_query_params,
+    }
+
+    if request.headers.get("HX-Request", "").lower() == "true":
+        return render_template("_uploads_content.html", **context)
+
+    return render_template("uploads.html", **context)
+
+
+@html.route("/uploads/<int:upload_id>/disown", methods=["POST"])
+@loginrequired
+def uploads_disown(upload_id):
+    upload = Upload.query.filter_by(id=upload_id, user_id=current_user.id).first()
+    if not upload:
+        abort(404)
+
+    upload.hidden = True
+    db.session.commit()
+
+    if request.headers.get("HX-Request", "").lower() == "true":
+        return Response("", status=200)
+
+    return redirect("/uploads")
+
+
+@html.route("/uploads/<int:upload_id>/delete", methods=["POST"])
+@loginrequired
+def uploads_delete(upload_id):
+    upload = Upload.query.filter_by(id=upload_id).first()
+    if not upload:
+        abort(404)
+
+    if not (current_user.admin or upload.user_id == current_user.id):
+        abort(404)
+
+    full_path = os.path.join(_cfg("storage"), upload.path)
+    if os.path.exists(full_path):
+        os.remove(full_path)
+
+    if upload.thumbnail:
+        thumb_path = os.path.join(_cfg("storage"), upload.thumbnail)
+        if os.path.exists(thumb_path):
+            os.remove(thumb_path)
+
+    db.session.delete(upload)
+    db.session.commit()
+
+    if request.headers.get("HX-Request", "").lower() == "true":
+        return Response("", status=200)
+
+    return redirect("/uploads")
 
 
 @html.route("/<path:filename>", methods=["GET"])

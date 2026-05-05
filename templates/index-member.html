@@ -5,95 +5,9 @@ window.api_key = "{{ user.apiKey }}";
 window.root = "{{ root }}";
 </script>
 
-<div class="small">
-<div class="text-center">
-    <p>Logged in as {{ user.username  }}</p>
-    <div class="inline-menu">
-        <a href="/uploads">Your Uploads</a>
-        {% if user.admin %}
-        &mdash;
-        <a href="/htmx/admin/uploads">All uploads</a>
-        &mdash;
-        <a href="/htmx/admin/jobs">Job logs</a>
-        &mdash;
-        <a href="/htmx/admin/users">Users</a>
-        {% endif %}
-        {% if _cfg("donation-page") == "yes" %}
-        &mdash;
-        <a href="/donate">Donate</a>
-        {% endif %}
-        {% if _cfg("resourcespage") == "yes" %}
-        &mdash;
-        <a href="/resources">Resources</a>
-        {% endif %}
-        &mdash;
-        <a href="/change">Change password</a>
-        &mdash;
-        <a href="/logout">Log Out</a>
-    </div>
-</div>
-<hr />
-{% include "notice.html" %}
-{% if new %}
-{% include "new-member.html" %}
-{% endif %}
-<div class="upload">
-    <a class="target" href="#">Drag and drop or click to upload files</a>
-    <input type="file" class="hidden" id="browse" multiple />
-</div>
-<textarea id="paste" placeholder="Or paste text here" class="form-control input-block-level" rows=8></textarea>
-<button id="paste-btn" class="btn btn-block btn-success" style="margin-top: 10px; display: none">Upload Paste</button>
-<table class="table">
-    <thead>
-        <td style="width: 30%"></td>
-        <td style="width: 70%"></td>
-    </thead>
-    <tbody id="files"></tbody>
-</table>
-<button type="button" class="btn btn-block btn-primary" data-toggle="modal" data-target="#api-modal">
-    API Info
-</button>
-<hr />
-<div class="text-center">
-    <p class="text-muted">
-    Get support at {{ support }}<br />
-        {{ "{:,}".format(total) }} uploads to date<br />
-        {{ "{:.1f}".format(used_space / 1024 / 1024 / 1024) }} GB
-        of
-        {{ "{:.1f}".format(total_space / 1024 / 1024 / 1024) }} GB
-        in use
-    </p>
-</div>
+{% include "_index_member_content.html" %}
 {% endblock %}
-{% block modal %}
-<div class="modal fade" id="api-modal">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal"
-                    aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                <h4 class="modal-title">API</h4>
-            </div>
-            <div class="modal-body">
-                <p>Your API key is:</p>
-                <pre class="apikey">{{ user.apiKey }}</pre>
-                <p>This key allows anyone to upload to {{ domain }} as you. Do not lose it. Upload like so:</p>
-                <pre id="syntaxKey">curl \
-    -F key={{user.apiKey}} \
-    -F file=@example.png \
-    {{root}}/api/upload</pre>
-                <div id="qrcode"></div>
-                <p>If your key is compromised, press "Reset Key" below.</p>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-danger" id="reset-key">Reset Key</button>
-                <button type="button" class="btn btn-default" data-dismiss="modal">Dismiss</button>
-            </div>
-        </div>
-    </div>
-</div>
-{% endblock %}
+
 {% block scripts %}
 <script src="/static/index.js"></script>
 {% endblock %}
-</div>
