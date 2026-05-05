@@ -1,0 +1,8 @@
+{% extends "htmx/layout.html" %}
+
+{% block title %}{{ domain }} | Job {{ job.id }} Logs{% endblock %}
+{% block page_heading %}Job #{{ job.id }} logs{% endblock %}
+
+{% block content %}
+    {% include "htmx/admin/_job_logs_content.html" %}
+{% endblock %}

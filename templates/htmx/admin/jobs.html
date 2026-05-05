@@ -1,0 +1,8 @@
+{% extends "htmx/layout.html" %}
+
+{% block title %}{{ domain }} | HTMX Admin Jobs{% endblock %}
+{% block page_heading %}Jobs queue{% endblock %}
+
+{% block content %}
+    {% include "htmx/admin/_jobs_content.html" %}
+{% endblock %}

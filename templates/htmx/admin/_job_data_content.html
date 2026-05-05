@@ -1,0 +1,9 @@
+<div id="admin-content" class="grid gap-4">
+    <div>
+        <a href="/htmx/admin/jobs" hx-get="/htmx/admin/jobs" hx-target="#admin-content" hx-select="#admin-content" hx-swap="outerHTML" hx-push-url="true" class="text-sm font-semibold text-brand-500 hover:text-brand-600">Back to jobs</a>
+    </div>
+
+    <div class="overflow-hidden rounded-lg border border-slate-200 bg-slate-50">
+        <pre class="max-h-[70vh] overflow-auto p-4 text-xs text-slate-800">{{ (job.taskmetadata or {}) | tojson(indent=2) }}</pre>
+    </div>
+</div>

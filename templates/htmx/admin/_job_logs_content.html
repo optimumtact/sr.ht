@@ -1,0 +1,30 @@
+<div id="admin-content" class="grid gap-4">
+    <div>
+        <a href="/htmx/admin/jobs" hx-get="/htmx/admin/jobs" hx-target="#admin-content" hx-select="#admin-content" hx-swap="outerHTML" hx-push-url="true" class="text-sm font-semibold text-brand-500 hover:text-brand-600">Back to jobs</a>
+    </div>
+
+    {% if logs %}
+        <div class="overflow-x-auto rounded-lg border border-slate-200">
+            <table class="min-w-full divide-y divide-slate-200 text-sm">
+                <thead class="bg-slate-50 text-left text-xs font-bold uppercase tracking-wide text-slate-500">
+                    <tr>
+                        <th class="px-3 py-3">Timestamp</th>
+                        <th class="px-3 py-3">Level</th>
+                        <th class="px-3 py-3">Message</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 bg-white">
+                    {% for entry in logs %}
+                        <tr>
+                            <td class="whitespace-nowrap px-3 py-3">{{ entry.created.strftime("%Y-%m-%d %H:%M:%S") }}</td>
+                            <td class="whitespace-nowrap px-3 py-3">{{ entry.level }}</td>
+                            <td class="px-3 py-3"><pre class="whitespace-pre-wrap break-words font-sans text-xs text-slate-700">{{ entry.message }}</pre></td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <p class="rounded-lg border border-dashed border-slate-300 bg-white p-6 text-center text-slate-500">No log entries recorded for this job.</p>
+    {% endif %}
+</div>

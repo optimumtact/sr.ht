@@ -5,27 +5,31 @@ import pytest
 
 # Set environment variables before importing app
 os.environ["DATABASE_URL"] = "sqlite:///:memory:"
-os.environ["storage"] = tempfile.mkdtemp() # dummy for import time
+os.environ["storage"] = tempfile.mkdtemp()  # dummy for import time
 os.environ["protocol"] = "http"
 os.environ["domain"] = "localhost"
 os.environ["secret_key"] = "test_secret"
+os.environ["perpage"] = "20"
 
 from srht.app import app as flask_app
 from srht.database import db as _db
 from srht.objects import User
 
+
 @pytest.fixture
 def app():
     # Setup temporary storage
     temp_dir = tempfile.mkdtemp()
-    
+
     # Configure app for testing
-    flask_app.config.update({
-        "TESTING": True,
-        "SQLALCHEMY_DATABASE_URI": "sqlite:///:memory:",
-        "SQLALCHEMY_TRACK_MODIFICATIONS": False,
-    })
-    
+    flask_app.config.update(
+        {
+            "TESTING": True,
+            "SQLALCHEMY_DATABASE_URI": "sqlite:///:memory:",
+            "SQLALCHEMY_TRACK_MODIFICATIONS": False,
+        }
+    )
+
     # Update environment variables that the app uses via _cfg
     os.environ["storage"] = temp_dir
     os.makedirs(os.path.join(temp_dir, "thumbnails"), exist_ok=True)
@@ -35,13 +39,15 @@ def app():
         yield flask_app
         _db.session.remove()
         _db.drop_all()
-    
+
     # Cleanup temporary storage
     shutil.rmtree(temp_dir)
+
 
 @pytest.fixture
 def client(app):
     return app.test_client()
+
 
 @pytest.fixture
 def test_user(app):

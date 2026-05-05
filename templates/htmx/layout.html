@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta charset="UTF-8">
+    <meta name="author" content="{{ owner_name }}">
+    <meta name="description" content="Private file hosting admin interface">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}{{ domain }} | Admin{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ["Open Sans", "sans-serif"],
+                    },
+                    colors: {
+                        brand: {
+                            50: "#fff7f5",
+                            100: "#ffe5df",
+                            500: "#d9230f",
+                            600: "#bf1f0d",
+                        },
+                        slate: {
+                            25: "#fbfbfc",
+                        },
+                    },
+                },
+            },
+        };
+    </script>
+    <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+    <style>
+        body.sidebar-collapsed #admin-sidebar {
+            display: none;
+        }
+
+        body.sidebar-collapsed #admin-shell {
+            grid-template-columns: minmax(0, 1fr) !important;
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-slate-25 via-white to-orange-50 text-slate-800">
+    <div id="admin-shell" class="mx-auto grid min-h-screen w-full max-w-7xl grid-cols-1 gap-6 px-4 py-6 lg:grid-cols-[240px_minmax(0,1fr)] lg:px-8">
+        <aside id="admin-sidebar" class="rounded-xl border border-slate-200 bg-white/85 p-4 shadow-sm backdrop-blur-sm">
+            <a href="/" class="block text-2xl font-bold tracking-tight text-brand-500">{{ domain }}</a>
+            <p class="mt-1 text-xs uppercase tracking-wide text-slate-500">HTMX admin</p>
+            <nav class="mt-6 grid gap-2 text-sm">
+                <a href="/htmx/admin/users" class="rounded-md px-3 py-2 font-semibold text-slate-700 hover:bg-brand-50 hover:text-brand-600">Users</a>
+                <a href="/htmx/admin/uploads" class="rounded-md px-3 py-2 font-semibold text-slate-700 hover:bg-brand-50 hover:text-brand-600">Uploads</a>
+                <a href="/htmx/admin/jobs" class="rounded-md px-3 py-2 font-semibold text-slate-700 hover:bg-brand-50 hover:text-brand-600">Jobs</a>
+            </nav>
+        </aside>
+        <main class="grid grid-rows-[auto_1fr] gap-4">
+            <header class="rounded-xl border border-slate-200 bg-white/90 p-4 shadow-sm">
+                <div class="flex flex-wrap items-center justify-between gap-3">
+                    <h1 class="text-xl font-bold text-slate-900 md:text-2xl">{% block page_heading %}Admin dashboard{% endblock %}</h1>
+                    <button id="sidebar-toggle" type="button" aria-controls="admin-sidebar" aria-expanded="true" class="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-slate-700 hover:border-brand-500 hover:text-brand-600">
+                        Hide menu
+                    </button>
+                </div>
+            </header>
+            <section class="rounded-xl border border-slate-200 bg-white/95 p-4 shadow-sm md:p-6">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        <div class="mb-4 grid gap-2">
+                            {% for category, message in messages %}
+                                <div class="rounded-md border px-3 py-2 text-sm {% if category == 'danger' %}border-red-200 bg-red-50 text-red-700{% elif category == 'success' %}border-emerald-200 bg-emerald-50 text-emerald-700{% else %}border-sky-200 bg-sky-50 text-sky-700{% endif %}">{{ message }}</div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                {% endwith %}
+                {% block content %}{% endblock %}
+            </section>
+        </main>
+    </div>
+    <script>
+        (function () {
+            var storageKey = "htmx-admin-sidebar-collapsed";
+            var toggle = document.getElementById("sidebar-toggle");
+            if (!toggle) {
+                return;
+            }
+
+            function apply(collapsed) {
+                document.body.classList.toggle("sidebar-collapsed", collapsed);
+                toggle.setAttribute("aria-expanded", collapsed ? "false" : "true");
+                toggle.textContent = collapsed ? "Show menu" : "Hide menu";
+            }
+
+            var initialCollapsed = false;
+            try {
+                initialCollapsed = window.localStorage.getItem(storageKey) === "1";
+            } catch (e) {
+                initialCollapsed = false;
+            }
+            apply(initialCollapsed);
+
+            toggle.addEventListener("click", function () {
+                var collapsed = !document.body.classList.contains("sidebar-collapsed");
+                apply(collapsed);
+                try {
+                    window.localStorage.setItem(storageKey, collapsed ? "1" : "0");
+                } catch (e) {
+                    // Ignore storage errors and keep runtime behavior.
+                }
+            });
+        })();
+    </script>
+</body>
+</html>

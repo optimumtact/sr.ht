@@ -10,6 +10,7 @@ from jinja2 import ChoiceLoader, FileSystemLoader
 
 from srht.blueprints.api import api
 from srht.blueprints.html import html
+from srht.blueprints.htmx import htmx_admin
 from srht.common import (
     admin_delete_link,
     delete_link,
@@ -63,6 +64,7 @@ login_manager.anonymous_user = lambda: None
 
 app.register_blueprint(html)
 app.register_blueprint(api)
+app.register_blueprint(htmx_admin)
 
 try:
     locale.setlocale(locale.LC_ALL, "en_US")

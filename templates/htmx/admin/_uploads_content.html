@@ -1,0 +1,29 @@
+<div id="admin-content" class="grid gap-4">
+    <div class="flex flex-wrap items-center justify-between gap-2">
+        <p class="text-sm text-slate-600">Showing {{ pagination.first }} to {{ pagination.last }} of {{ pagination.total }} uploads.</p>
+    </div>
+
+    {% include "htmx/admin/_pagination.html" %}
+
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        {% for upload in pagination.items %}
+            <article class="grid gap-2 rounded-lg border border-slate-200 bg-slate-50 p-3 shadow-sm">
+                <a href="{{ file_link(upload.path) }}" class="block overflow-hidden rounded-md border border-slate-200 bg-white">
+                    <img class="h-52 w-full object-cover" src="{{ thumbnail_link(upload.thumbnail) }}" alt="{{ upload.original_name }}">
+                </a>
+                <div class="text-sm font-semibold text-slate-900" title="{{ upload.original_name }}">{{ upload.original_name }}</div>
+                {% if upload.created %}
+                    <p class="text-xs text-slate-500">Uploaded: {{ upload.created.strftime("%Y-%m-%d") }}</p>
+                {% endif %}
+                <p class="text-xs text-slate-500">Owner: {{ upload.user.username }}</p>
+                <form method="post" action="/htmx/admin/uploads/{{ upload.id }}/delete" hx-post="/htmx/admin/uploads/{{ upload.id }}/delete" hx-target="closest article" hx-swap="delete" class="pt-2">
+                    <button type="submit" class="w-full rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white hover:bg-red-700">Delete</button>
+                </form>
+            </article>
+        {% else %}
+            <p class="col-span-full rounded-lg border border-dashed border-slate-300 bg-white p-6 text-center text-slate-500">No uploads available.</p>
+        {% endfor %}
+    </div>
+
+    {% include "htmx/admin/_pagination.html" %}
+</div>

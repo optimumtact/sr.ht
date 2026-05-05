@@ -9,6 +9,7 @@ license = { text = "MIT License" }
 dependencies = [
     "bcrypt",
     "Flask",
+    "flask-htmx",
     "gunicorn",
     "Flask-SQLAlchemy",
     "flask-login",

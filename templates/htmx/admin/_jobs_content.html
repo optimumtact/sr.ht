@@ -1,0 +1,54 @@
+<div id="admin-content" class="grid gap-4">
+    <div class="flex flex-wrap items-center justify-between gap-2">
+        <p class="text-sm text-slate-600">Showing {{ pagination.first }} to {{ pagination.last }} of {{ pagination.total }} jobs.</p>
+    </div>
+
+    {% include "htmx/admin/_pagination.html" %}
+
+    <div class="overflow-x-auto rounded-lg border border-slate-200">
+        <table class="min-w-full divide-y divide-slate-200 text-sm">
+            <thead class="bg-slate-50 text-left text-xs font-bold uppercase tracking-wide text-slate-500">
+                <tr>
+                    <th class="px-3 py-3">ID</th>
+                    <th class="px-3 py-3">Type</th>
+                    <th class="px-3 py-3">Version</th>
+                    <th class="px-3 py-3">Status</th>
+                    <th class="px-3 py-3">Priority</th>
+                    <th class="px-3 py-3 text-right">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 bg-white">
+                {% for job in pagination.items %}
+                    <tr>
+                        <td class="whitespace-nowrap px-3 py-3 font-semibold text-slate-800">{{ job.id }}</td>
+                        <td class="whitespace-nowrap px-3 py-3">{{ TaskType(job.tasktype).name }}</td>
+                        <td class="whitespace-nowrap px-3 py-3">{{ job.version }}</td>
+                        <td class="whitespace-nowrap px-3 py-3">{{ TaskStatus(job.status).name }}</td>
+                        <td class="whitespace-nowrap px-3 py-3">{{ job.priority }}</td>
+                        <td class="px-3 py-3">
+                            <div class="flex items-center justify-end gap-2">
+                                {% set data_url = '/htmx/admin/jobs/' ~ job.id ~ '/data' %}
+                                {% set logs_url = '/htmx/admin/jobs/' ~ job.id ~ '/logs' %}
+                                <a href="{{ data_url }}" hx-get="{{ data_url }}" hx-target="#admin-content" hx-select="#admin-content" hx-swap="outerHTML" hx-push-url="true" class="rounded-md border border-slate-300 px-2 py-1 text-xs font-semibold text-slate-700 hover:border-brand-500 hover:text-brand-600">Data</a>
+                                {% if job.status in (TaskStatus.COMPLETE, TaskStatus.FAILED) %}
+                                    <a href="{{ logs_url }}" hx-get="{{ logs_url }}" hx-target="#admin-content" hx-select="#admin-content" hx-swap="outerHTML" hx-push-url="true" class="rounded-md border border-slate-300 px-2 py-1 text-xs font-semibold text-slate-700 hover:border-brand-500 hover:text-brand-600">Logs</a>
+                                {% endif %}
+                                {% if job.status == TaskStatus.FAILED and job.version >= Task.LATEST_VERSION %}
+                                    <form method="post" action="/htmx/admin/jobs/{{ job.id }}/retry" hx-post="/htmx/admin/jobs/{{ job.id }}/retry" hx-target="#admin-content" hx-select="#admin-content" hx-swap="outerHTML" class="inline">
+                                        <button type="submit" class="rounded-md bg-brand-500 px-2 py-1 text-xs font-semibold text-white hover:bg-brand-600">Retry</button>
+                                    </form>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="6" class="px-3 py-8 text-center text-slate-500">No jobs.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% include "htmx/admin/_pagination.html" %}
+</div>

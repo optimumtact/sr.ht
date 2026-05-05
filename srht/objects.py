@@ -9,6 +9,7 @@ from sqlalchemy import (
     Boolean,
     CheckConstraint,
     Column,
+    JSON,
     Text,
     DateTime,
     ForeignKey,
@@ -68,7 +69,11 @@ class Job(db.Model):
     status: Mapped[int] = mapped_column(Integer, nullable=False)
     tasktype: Mapped[int] = mapped_column(Integer, nullable=False)
     pickledclass: Mapped[bytes] = mapped_column(LargeBinary, nullable=False)
-    taskmetadata: Mapped[dict | None] = mapped_column("metadata", JSONB, nullable=True)
+    taskmetadata: Mapped[dict | None] = mapped_column(
+        "metadata",
+        JSON().with_variant(JSONB, "postgresql"),
+        nullable=True,
+    )
 
     def save_task_state(
         self,

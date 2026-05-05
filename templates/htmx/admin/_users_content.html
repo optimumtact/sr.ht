@@ -1,0 +1,169 @@
+<div id="admin-content" class="grid gap-6">
+    {% if form_errors %}
+        <div class="grid gap-2 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+            {% for err in form_errors %}
+                <p>{{ err }}</p>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <div class="grid gap-4 rounded-lg border border-slate-200 bg-slate-50 p-4">
+        <h2 class="text-base font-bold text-slate-900">Add user</h2>
+        <form method="post" action="/htmx/admin/users/create" hx-post="/htmx/admin/users/create" hx-target="#admin-content" hx-select="#admin-content" hx-swap="outerHTML" class="grid gap-3 md:grid-cols-2">
+            <label class="grid gap-1 text-sm">
+                <span class="font-semibold text-slate-700">Username</span>
+                <input name="username" value="{{ (form_values or {}).get('username', '') }}" required class="rounded-md border border-slate-300 bg-white px-3 py-2 text-slate-900 focus:border-brand-500 focus:outline-none">
+            </label>
+            <label class="grid gap-1 text-sm">
+                <span class="font-semibold text-slate-700">Email</span>
+                <input name="email" type="email" value="{{ (form_values or {}).get('email', '') }}" required class="rounded-md border border-slate-300 bg-white px-3 py-2 text-slate-900 focus:border-brand-500 focus:outline-none">
+            </label>
+            <label class="grid gap-1 text-sm md:col-span-2">
+                <span class="font-semibold text-slate-700">Password</span>
+                <input name="password" type="password" required class="rounded-md border border-slate-300 bg-white px-3 py-2 text-slate-900 focus:border-brand-500 focus:outline-none">
+            </label>
+            <label class="inline-flex items-center gap-2 text-sm text-slate-700 md:col-span-2">
+                <input name="admin" type="checkbox" {% if (form_values or {}).get('admin') %}checked{% endif %} class="h-4 w-4 rounded border-slate-300 text-brand-500 focus:ring-brand-500">
+                <span>Grant admin access</span>
+            </label>
+            <div class="md:col-span-2">
+                <button type="submit" class="rounded-md bg-brand-500 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-600">Create user</button>
+            </div>
+        </form>
+    </div>
+
+    <div class="grid gap-4 xl:grid-cols-2">
+        <section class="grid gap-3 rounded-lg border border-slate-200 bg-white p-4">
+            <h2 class="text-base font-bold text-slate-900">Pending approvals</h2>
+            {% if pending_users %}
+                <div class="overflow-x-auto rounded-md border border-slate-200">
+                    <table class="min-w-full divide-y divide-slate-200 text-sm">
+                        <thead class="bg-slate-50 text-left text-xs font-bold uppercase tracking-wide text-slate-500">
+                            <tr>
+                                <th class="px-3 py-2">Username</th>
+                                <th class="px-3 py-2">Email</th>
+                                <th class="px-3 py-2">Comments</th>
+                                <th class="px-3 py-2 text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100 bg-white">
+                            {% for user in pending_users %}
+                                <tr>
+                                    <td class="px-3 py-2 font-semibold text-slate-800">{{ user.username }}</td>
+                                    <td class="px-3 py-2"><a href="mailto:{{ user.email }}" class="text-brand-500 hover:text-brand-600">{{ user.email }}</a></td>
+                                    <td class="px-3 py-2" title="{{ user.comments }}">{{ user.comments }}</td>
+                                    <td class="px-3 py-2">
+                                        <div class="flex justify-end gap-2">
+                                            <form method="post" action="/htmx/admin/users/{{ user.id }}/approve" hx-post="/htmx/admin/users/{{ user.id }}/approve" hx-target="#admin-content" hx-select="#admin-content" hx-swap="outerHTML" class="inline">
+                                                <button type="submit" class="rounded-md bg-emerald-600 px-2 py-1 text-xs font-semibold text-white hover:bg-emerald-700">Approve</button>
+                                            </form>
+                                            <form method="post" action="/htmx/admin/users/{{ user.id }}/reject" hx-post="/htmx/admin/users/{{ user.id }}/reject" hx-target="#admin-content" hx-select="#admin-content" hx-swap="outerHTML" class="inline">
+                                                <button type="submit" class="rounded-md bg-red-600 px-2 py-1 text-xs font-semibold text-white hover:bg-red-700">Reject</button>
+                                            </form>
+                                            <form method="post" action="/htmx/admin/users/{{ user.id }}/delete" hx-post="/htmx/admin/users/{{ user.id }}/delete" hx-target="#admin-content" hx-select="#admin-content" hx-swap="outerHTML" class="inline">
+                                                <button type="submit" class="rounded-md border border-slate-300 px-2 py-1 text-xs font-semibold text-slate-700 hover:border-slate-500">Delete</button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <p class="rounded-md border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-500">No pending approvals.</p>
+            {% endif %}
+        </section>
+
+        <section class="grid gap-3 rounded-lg border border-slate-200 bg-white p-4">
+            <h2 class="text-base font-bold text-slate-900">Approved users</h2>
+            {% if approved_users %}
+                <div class="overflow-x-auto rounded-md border border-slate-200">
+                    <table class="min-w-full divide-y divide-slate-200 text-sm">
+                        <thead class="bg-slate-50 text-left text-xs font-bold uppercase tracking-wide text-slate-500">
+                            <tr>
+                                <th class="px-3 py-2">Username</th>
+                                <th class="px-3 py-2">Email</th>
+                                <th class="px-3 py-2">Role</th>
+                                <th class="px-3 py-2">Password</th>
+                                <th class="px-3 py-2 text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100 bg-white">
+                            {% for user in approved_users %}
+                                <tr>
+                                    <td class="px-3 py-2 font-semibold text-slate-800">{{ user.username }}</td>
+                                    <td class="px-3 py-2"><a href="mailto:{{ user.email }}" class="text-brand-500 hover:text-brand-600">{{ user.email }}</a></td>
+                                    <td class="px-3 py-2">{% if user.admin %}Admin{% else %}Member{% endif %}</td>
+                                    <td class="px-3 py-2">
+                                        <form method="post" action="/htmx/admin/users/{{ user.id }}/password" hx-post="/htmx/admin/users/{{ user.id }}/password" hx-target="#admin-content" hx-select="#admin-content" hx-swap="outerHTML" class="flex min-w-[220px] items-center gap-2">
+                                            <input name="password" type="password" placeholder="New password" required class="w-full rounded-md border border-slate-300 px-2 py-1.5 text-xs focus:border-brand-500 focus:outline-none">
+                                            <button type="submit" class="rounded-md bg-slate-800 px-2 py-1.5 text-xs font-semibold text-white hover:bg-slate-900">Update</button>
+                                        </form>
+                                    </td>
+                                    <td class="px-3 py-2">
+                                        <div class="flex justify-end gap-2">
+                                            {% if user.admin %}
+                                                <form method="post" action="/htmx/admin/users/{{ user.id }}/make-member" hx-post="/htmx/admin/users/{{ user.id }}/make-member" hx-target="#admin-content" hx-select="#admin-content" hx-swap="outerHTML" class="inline">
+                                                    <button type="submit" class="rounded-md border border-amber-300 bg-amber-50 px-2 py-1 text-xs font-semibold text-amber-700 hover:bg-amber-100">Make member</button>
+                                                </form>
+                                            {% else %}
+                                                <form method="post" action="/htmx/admin/users/{{ user.id }}/make-admin" hx-post="/htmx/admin/users/{{ user.id }}/make-admin" hx-target="#admin-content" hx-select="#admin-content" hx-swap="outerHTML" class="inline">
+                                                    <button type="submit" class="rounded-md border border-indigo-300 bg-indigo-50 px-2 py-1 text-xs font-semibold text-indigo-700 hover:bg-indigo-100">Make admin</button>
+                                                </form>
+                                            {% endif %}
+                                            <form method="post" action="/htmx/admin/users/{{ user.id }}/disable" hx-post="/htmx/admin/users/{{ user.id }}/disable" hx-target="#admin-content" hx-select="#admin-content" hx-swap="outerHTML" class="inline">
+                                                <button type="submit" class="rounded-md border border-red-300 bg-red-50 px-2 py-1 text-xs font-semibold text-red-700 hover:bg-red-100">Disable</button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <p class="rounded-md border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-500">No approved users.</p>
+            {% endif %}
+        </section>
+    </div>
+
+    <section class="grid gap-3 rounded-lg border border-slate-200 bg-white p-4">
+        <h2 class="text-base font-bold text-slate-900">Disabled users</h2>
+        {% if disabled_users %}
+            <div class="overflow-x-auto rounded-md border border-slate-200">
+                <table class="min-w-full divide-y divide-slate-200 text-sm">
+                    <thead class="bg-slate-50 text-left text-xs font-bold uppercase tracking-wide text-slate-500">
+                        <tr>
+                            <th class="px-3 py-2">Username</th>
+                            <th class="px-3 py-2">Email</th>
+                            <th class="px-3 py-2">Role</th>
+                            <th class="px-3 py-2 text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100 bg-white">
+                        {% for user in disabled_users %}
+                            <tr>
+                                <td class="px-3 py-2 font-semibold text-slate-800">{{ user.username }}</td>
+                                <td class="px-3 py-2"><a href="mailto:{{ user.email }}" class="text-brand-500 hover:text-brand-600">{{ user.email }}</a></td>
+                                <td class="px-3 py-2">{% if user.admin %}Admin{% else %}Member{% endif %}</td>
+                                <td class="px-3 py-2">
+                                    <div class="flex justify-end gap-2">
+                                        <form method="post" action="/htmx/admin/users/{{ user.id }}/enable" hx-post="/htmx/admin/users/{{ user.id }}/enable" hx-target="#admin-content" hx-select="#admin-content" hx-swap="outerHTML" class="inline">
+                                            <button type="submit" class="rounded-md bg-emerald-600 px-2 py-1 text-xs font-semibold text-white hover:bg-emerald-700">Enable</button>
+                                        </form>
+                                        <form method="post" action="/htmx/admin/users/{{ user.id }}/delete" hx-post="/htmx/admin/users/{{ user.id }}/delete" hx-target="#admin-content" hx-select="#admin-content" hx-swap="outerHTML" class="inline">
+                                            <button type="submit" class="rounded-md border border-slate-300 px-2 py-1 text-xs font-semibold text-slate-700 hover:border-slate-500">Delete</button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p class="rounded-md border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-500">No disabled users.</p>
+        {% endif %}
+    </section>
+</div>
