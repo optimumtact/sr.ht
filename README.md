@@ -4,15 +4,7 @@ Private file hosting with python/nginx
 
 ## Differences from upstream
 
-* Fixed a few instances where page redirects would take you to the local IP of the sr.ht instance, which obviously isn't connectable from outside.
-* Removed most hardcoded branding and moved it to config strings.
-* Switched to simplex bootstrap theme
-* Some minor style fixes
-* Improvements to administration with some cli scripting
-* Removed the anime branding and replaced with a more sfw icon
-* Being able to delete files from the web interface
-* View of uploaded files, thumbnails
-* Task processing and admin logging for tasks (such as thumbnailing)
+* At this point it's pretty much a rewrite of everything, tailwind + htmx used across the board
 
 ## Running the site
 
