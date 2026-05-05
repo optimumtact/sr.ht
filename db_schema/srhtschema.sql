@@ -46,7 +46,8 @@ CREATE TABLE public.job (
     tasktype integer NOT NULL,
     pickledclass bytea NOT NULL,
     metadata jsonb,
-    version integer DEFAULT 1 NOT NULL
+    version integer DEFAULT 1 NOT NULL,
+    created timestamp without time zone
 );
 
 
@@ -180,13 +181,13 @@ CREATE TABLE public."user" (
     username character varying(128) NOT NULL,
     email character varying(256) NOT NULL,
     admin boolean,
-    suspended boolean DEFAULT false NOT NULL,
     password character varying,
     created timestamp without time zone,
     "passwordReset" character varying(128),
     "passwordResetExpiry" timestamp without time zone,
     "apiKey" character varying(128),
-    comments character varying(512)
+    comments character varying(512),
+    suspended boolean DEFAULT false NOT NULL
 );
 
 
@@ -283,6 +284,13 @@ ALTER TABLE ONLY public.upload
 
 ALTER TABLE ONLY public."user"
     ADD CONSTRAINT user_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: ix_job_created; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX ix_job_created ON public.job USING btree (created);
 
 
 --

@@ -1,6 +1,6 @@
 [project]
 name = "filehouse"
-version = "2.0.0"
+version = "3.0.0"
 description = "A simple file hosting service"
 authors = [
     { name = "oranges", email = "email@oranges.net.nz" }
@@ -21,6 +21,7 @@ dependencies = [
     "python-magic",
     "docopt",
     "black",
+    "typer>=0.25.1",
 ]
 requires-python = ">=3.13"
 

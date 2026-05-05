@@ -1,14 +1,24 @@
-import argparse
 import logging
 import os
 import sys
+from typing import Annotated
+
+import typer
 from sqlalchemy import text
 
-from srht.app import app, db
-from srht.config import _cfg
-from srht.objects import Job, PendingJob, Upload, User
-from srht.tasks import GenerateImageThumbnail, Task
-from srht.tasks.basetask import TaskStatus
+
+cli = typer.Typer(help="Command line admin interface")
+admin_cli = typer.Typer(help="Admin user management commands")
+user_cli = typer.Typer(help="User management commands")
+database_cli = typer.Typer(help="Database maintenance commands")
+task_cli = typer.Typer(help="Background task commands")
+thumbnails_cli = typer.Typer(help="Thumbnail maintenance commands")
+
+cli.add_typer(admin_cli, name="admin")
+cli.add_typer(user_cli, name="user")
+cli.add_typer(database_cli, name="database")
+cli.add_typer(task_cli, name="task")
+cli.add_typer(thumbnails_cli, name="thumbnails")
 
 
 def get_manage_logger():
@@ -33,68 +43,21 @@ def get_manage_logger():
 logger = get_manage_logger()
 
 
-def build_parser():
-    parser = argparse.ArgumentParser(description="Command line admin interface")
-    top_level = parser.add_subparsers(dest="command")
+def get_app_context():
+    from srht.app import app
 
-    admin_parser = top_level.add_parser("admin")
-    admin_commands = admin_parser.add_subparsers(dest="admin_command")
-
-    admin_promote = admin_commands.add_parser("promote")
-    admin_promote.add_argument("name")
-    admin_promote.set_defaults(handler=make_admin)
-
-    admin_demote = admin_commands.add_parser("demote")
-    admin_demote.add_argument("name")
-    admin_demote.set_defaults(handler=remove_admin)
-
-    admin_list = admin_commands.add_parser("list")
-    admin_list.set_defaults(handler=list_admin)
-
-    user_parser = top_level.add_parser("user")
-    user_commands = user_parser.add_subparsers(dest="user_command")
-
-    user_create = user_commands.add_parser("create")
-    user_create.add_argument("name")
-    user_create.add_argument("password")
-    user_create.add_argument("email")
-    user_create.set_defaults(handler=create_user)
-
-    user_reset = user_commands.add_parser("reset_password")
-    user_reset.add_argument("name")
-    user_reset.add_argument("password")
-    user_reset.set_defaults(handler=reset_password)
-
-    database_parser = top_level.add_parser("database")
-    database_commands = database_parser.add_subparsers(dest="database_command")
-    database_migrate = database_commands.add_parser("migrate")
-    database_migrate.set_defaults(handler=apply_migrations)
-
-    task_parser = top_level.add_parser("task")
-    task_commands = task_parser.add_subparsers(dest="task_command")
-
-    task_run = task_commands.add_parser("run")
-    task_run.add_argument("count", type=int)
-    task_run.set_defaults(handler=do_task)
-
-    task_fix = task_commands.add_parser("fix")
-    task_fix_commands = task_fix.add_subparsers(dest="task_fix_command")
-    task_fix_stuck = task_fix_commands.add_parser("stuck")
-    task_fix_stuck.set_defaults(handler=stuckfix)
-
-    thumbnails_parser = top_level.add_parser("thumbnails")
-    thumbnails_commands = thumbnails_parser.add_subparsers(dest="thumbnails_command")
-    thumbnails_queue = thumbnails_commands.add_parser("queue")
-    thumbnails_queue.set_defaults(handler=queue_task_for_missing_thumbnails)
-
-    thumbnails_recreate = thumbnails_commands.add_parser("recreate")
-    thumbnails_recreate.add_argument("url")
-
-    return parser
+    return app.app_context()
 
 
-def do_task(args):
-    count = args.count
+def get_db():
+    from srht.app import db
+
+    return db
+
+
+def do_task(count: int):
+    from srht.tasks import Task
+
     start = 0
     while count > start:
         task = Task.get_next_task()
@@ -103,8 +66,11 @@ def do_task(args):
         start += 1
 
 
-def stuckfix(args):
-    """Re-queue QUEUED jobs that have no PendingJob entry."""
+def stuckfix():
+    from srht.objects import Job, PendingJob
+    from srht.tasks import Task
+    from srht.tasks.basetask import TaskStatus
+
     pending_job_ids = {
         row.job_id for row in PendingJob.query.with_entities(PendingJob.job_id).all()
     }
@@ -126,95 +92,164 @@ def stuckfix(args):
             task = Task.get_task(job.id)
             task.queue()
             logger.info(f"Re-queued job {job.id}")
-        except Exception as e:
-            logger.error(f"Failed to re-queue job {job.id}: {e}")
-            db.session.rollback()
+        except Exception as exc:
+            logger.error(f"Failed to re-queue job {job.id}: {exc}")
+            get_db().session.rollback()
 
 
-def queue_task_for_missing_thumbnails(args):
+def queue_task_for_missing_thumbnails():
+    from srht.objects import Upload
+    from srht.tasks import GenerateImageThumbnail
+
     uploads = Upload.query.filter(Upload.thumbnail == None).all()
     for upload in uploads:
         task = GenerateImageThumbnail(upload.id)
         task.queue()
 
 
-def apply_migrations(args):
+def apply_migrations():
+    from srht.config import _cfg
+
+    db = get_db()
     if _cfg("migrations"):
         folder_path = _cfg("migrations")
         if folder_path:
             try:
-                # Loop through all files in the folder
                 for filename in os.listdir(folder_path):
                     if filename.endswith(".sql"):
                         file_path = os.path.join(folder_path, filename)
 
-                        # Read the SQL script
                         with open(file_path, "r") as file:
                             sql_script = file.read()
-                            # Execute the SQL script
                             db.session.execute(text(sql_script))
                             db.session.commit()
                             logger.info(f"Executed {filename}")
 
-            except Exception as e:
+            except Exception as exc:
                 db.session.rollback()
-                logger.error(f"An error occurred: {e}")
+                logger.error(f"An error occurred: {exc}")
 
 
-def remove_admin(args):
-    u = User.query.filter(User.username == args.name).first()
-    if u:
-        u.admin = False  # remove admin
+def remove_admin(name: str):
+    from srht.objects import User
+
+    db = get_db()
+    user = User.query.filter(User.username == name).first()
+    if user:
+        user.admin = False
         db.session.commit()
     else:
         logger.error("Not a valid user")
 
 
-def make_admin(args):
-    u = User.query.filter(User.username == args.name).first()
-    if u:
-        u.admin = True  # make admin
+def make_admin(name: str):
+    from srht.objects import User
+
+    db = get_db()
+    user = User.query.filter(User.username == name).first()
+    if user:
+        user.admin = True
         db.session.commit()
     else:
         logger.error("Not a valid user")
 
 
-def list_admin(args):
-    users = User.query.filter(User.admin)
-    for u in users:
-        logger.info(u.username)
+def create_user(name: str, password: str, email: str):
+    from srht.objects import User
 
-
-def create_user(args):
-    u = User(args.name, args.email, args.password)
-    if u:
-        u.suspended = False
-        db.session.add(u)
+    db = get_db()
+    user = User(name, email, password)
+    if user:
+        user.suspended = False
+        db.session.add(user)
         db.session.commit()
         logger.info("User created")
     else:
         logger.error("Couldn't create the user")
 
 
-def reset_password(args):
-    u = User.query.filter(User.username == args.name).first()
-    if u:
-        password = args.password
+def reset_password(name: str, password: str):
+    from srht.objects import User
+
+    db = get_db()
+    user = User.query.filter(User.username == name).first()
+    if user:
         if len(password) < 5 or len(password) > 256:
             logger.error("Password must be between 5 and 256 characters.")
-            return
-        u.set_password(password)
+            raise typer.Exit(code=1)
+        user.set_password(password)
         db.session.commit()
     else:
         logger.error("Not a valid user")
+        raise typer.Exit(code=1)
+
+
+def list_admin():
+    from srht.objects import User
+
+    users = User.query.filter(User.admin)
+    for user in users:
+        logger.info(user.username)
+
+
+@admin_cli.command("promote")
+def admin_promote(name: str):
+    with get_app_context():
+        make_admin(name)
+
+
+@admin_cli.command("demote")
+def admin_demote(name: str):
+    with get_app_context():
+        remove_admin(name)
+
+
+@admin_cli.command("list")
+def admin_list():
+    with get_app_context():
+        list_admin()
+
+
+@user_cli.command("create")
+def user_create(name: str, password: str, email: str):
+    with get_app_context():
+        create_user(name, password, email)
+
+
+@user_cli.command("reset-password")
+def user_reset_password(name: str, password: str):
+    with get_app_context():
+        reset_password(name, password)
+
+
+@database_cli.command("migrate")
+def database_migrate():
+    with get_app_context():
+        apply_migrations()
+
+
+@task_cli.command("run")
+def task_run(
+    count: Annotated[
+        int,
+        typer.Option("--count", "-c", min=1, help="Maximum number of queued jobs to run."),
+    ] = 1,
+):
+    with get_app_context():
+        do_task(count)
+
+
+@task_cli.command("fix-stuck")
+def task_fix_stuck():
+    with get_app_context():
+        stuckfix()
+
+
+@thumbnails_cli.command("queue")
+def thumbnails_queue_missing():
+    with get_app_context():
+        queue_task_for_missing_thumbnails()
 
 
 if __name__ == "__main__":
-    parser = build_parser()
-    args = parser.parse_args()
-
-    with app.app_context():
-        if hasattr(args, "handler"):
-            args.handler(args)
-        else:
-            parser.print_help()
+    cli()

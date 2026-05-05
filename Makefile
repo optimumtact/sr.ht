@@ -61,6 +61,8 @@ build:
 dev:
 	UID=$$(id -u) GID=$$(id -g) docker compose -f docker-compose-dev.yml up
 
+task:
+	docker compose -f docker-compose-dev.yml exec web /venv/bin/python /app/manage.py task run -c 300
 manage:
 	docker compose -f docker-compose-dev.yml exec -it web /venv/bin/python /app/manage.py $(MANAGE_ARGS)
 
