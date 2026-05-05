@@ -6,7 +6,6 @@ from typing import Annotated
 import typer
 from sqlalchemy import text
 
-
 cli = typer.Typer(help="Command line admin interface")
 admin_cli = typer.Typer(help="Admin user management commands")
 user_cli = typer.Typer(help="User management commands")

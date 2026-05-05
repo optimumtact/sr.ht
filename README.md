@@ -52,6 +52,32 @@ make dev
 ```
 to spin the project up mounted into a dev container for easy editing.
 
+## Frontend assets
+
+Styles are compiled with the Tailwind CLI during the static build.
+
+- Source stylesheet: `styles/main.css`
+- Tailwind config: `tailwind.config.js`
+- Output file: `static/main.css`
+
+For local development, build static assets with:
+
+```bash
+make
+```
+
+The Makefile automatically downloads the Tailwind standalone binary to
+`bin/tailwindcss` (if it is not already present) and then compiles CSS.
+
+To force a clean rebuild:
+
+```bash
+make clean && make
+```
+
+For container builds, the Docker builder stage also installs Tailwind CLI and
+runs the static build as part of image creation.
+
 
 
 ** About the production deployment **

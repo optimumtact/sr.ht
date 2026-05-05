@@ -7,7 +7,7 @@ RUN mkdir /install
 RUN mkdir /app
 ENV PATH="/root/.local/bin:${PATH}"
 RUN export DEBIAN_FRONTEND=noninteractive && apt update 
-RUN export DEBIAN_FRONTEND=noninteractive && apt-get -yq install gcc python3-dev sassc make curl g++ ffmpeg
+RUN export DEBIAN_FRONTEND=noninteractive && apt-get -yq install gcc python3-dev make curl g++ ffmpeg
 RUN curl -LsSf https://astral.sh/uv/install.sh | sh
 ENV PATH="/root/.local/bin:${PATH}"
 RUN curl https://github.com/DarthSim/hivemind/releases/download/v1.1.0/hivemind-v1.1.0-linux-amd64.gz -fsL -o hivemind-v1.1.0-linux-amd64.gz && gunzip hivemind-v1.1.0-linux-amd64.gz && chmod u+x hivemind-v1.1.0-linux-amd64
@@ -24,8 +24,9 @@ COPY _static /src/_static
 COPY scripts /src/scripts
 COPY styles /src/styles
 COPY Makefile /src/Makefile
+COPY tailwind.config.js /src/tailwind.config.js
 RUN mkdir /src/static
-RUN make
+RUN make install-tailwind && make
 
 # Now the final image
 FROM base

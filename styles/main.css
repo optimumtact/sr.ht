@@ -1,0 +1,162 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url(https://fonts.googleapis.com/css?family=Open+Sans:400,400italic,700);
+
+body {
+  background: white;
+  font-family: "Open Sans", sans-serif;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p,
+div {
+  font-family: "Open Sans", sans-serif;
+}
+
+.inline-menu {
+  display: inline;
+}
+
+.moe {
+  max-width: 350px;
+  position: fixed;
+  bottom: 0;
+  right: 20px;
+}
+
+.container {
+  margin-top: 5px;
+  max-width: 600px;
+  z-index: 1;
+}
+
+.container.large {
+  max-width: 1200px;
+}
+
+.modal-backdrop {
+  z-index: 10;
+}
+
+.modal {
+  z-index: 11;
+}
+
+.table {
+  table-layout: fixed;
+}
+
+.table td {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.upload {
+  margin-bottom: 20px;
+  margin-top: 20px;
+}
+
+.upload .target {
+  background: rgba(202, 230, 190, 0.75);
+  border: 1px solid #b7d1a0;
+  border-radius: 4px;
+  display: inline-block;
+  width: 100%;
+  text-align: center;
+  color: #468847;
+  cursor: pointer;
+  font-size: 24px;
+  padding: 28px 48px;
+  text-shadow: 0 1px rgba(255, 255, 255, 0.5);
+  transition: background-color 0.25s, width 0.5s, height 0.5s;
+}
+
+.upload .target:hover,
+.upload .target:active,
+.upload .target:focus,
+.upload .target {
+  background-color: rgb(188, 228, 170);
+  text-decoration: none;
+}
+
+#qrcode {
+  text-align: center;
+  margin: 5px 0;
+}
+
+#qrcode img {
+  display: inline !important;
+}
+
+.gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 10px;
+  padding: 10px;
+  max-width: 1200px;
+}
+
+.gallery img {
+  width: 100%;
+  height: 250px;
+  object-fit: cover;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.gallery img.missing {
+  object-fit: fill;
+}
+
+.gallery .imageattribute {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  list-style-type: none;
+  padding: 0;
+  margin-top: 10px;
+}
+
+.pagination a {
+  text-decoration: none;
+  color: #007bff;
+  padding: 10px 15px;
+  margin: 0 5px;
+  border-radius: 5px;
+  border: 1px solid #007bff;
+  transition: background-color 0.3s, color 0.3s;
+}
+
+.pagination a.pagination-active {
+  background-color: #007bff;
+  color: white;
+  border-color: #007bff;
+}
+
+.pagination a:hover {
+  background-color: #007bff;
+  color: white;
+}
+
+.pagination-prev,
+.pagination-next {
+  font-weight: bold;
+}
+
+.pagination-item {
+  border-color: transparent;
+}

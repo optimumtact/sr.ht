@@ -1,23 +1,51 @@
 # Builds static assets
 # Depends on:
-# - scss
+# - tailwindcss CLI
 # - coffeescript
 # - inotify-tools
 # Run `make` to compile static assets
 # Run `make watch` to recompile whenever a change is made
 
-.PHONY: all static watch clean manage
+.PHONY: all static watch clean manage install-tailwind
+.DEFAULT_GOAL := all
 
 ifeq (manage,$(firstword $(MAKECMDGOALS)))
   MANAGE_ARGS := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
   $(eval $(MANAGE_ARGS):;@:)
 endif
 
-STYLES:=$(patsubst styles/%.scss,static/%.css,$(wildcard styles/*.scss))
-STYLES+=$(patsubst styles/%.css,static/%.css,$(wildcard styles/*.css))
+TAILWIND_VERSION:=v3.4.17
+TAILWIND_BIN:=bin/tailwindcss
+UNAME_S:=$(shell uname -s)
+UNAME_M:=$(shell uname -m)
+
+ifeq ($(UNAME_S),Linux)
+	ifeq ($(UNAME_M),x86_64)
+		TAILWIND_RELEASE:=tailwindcss-linux-x64
+	else ifeq ($(UNAME_M),aarch64)
+		TAILWIND_RELEASE:=tailwindcss-linux-arm64
+	else
+		$(error Unsupported Linux architecture for tailwindcss: $(UNAME_M))
+	endif
+else ifeq ($(UNAME_S),Darwin)
+	ifeq ($(UNAME_M),x86_64)
+		TAILWIND_RELEASE:=tailwindcss-macos-x64
+	else ifeq ($(UNAME_M),arm64)
+		TAILWIND_RELEASE:=tailwindcss-macos-arm64
+	else
+		$(error Unsupported macOS architecture for tailwindcss: $(UNAME_M))
+	endif
+else
+	$(error Unsupported OS for tailwindcss: $(UNAME_S))
+endif
+
+STYLES:=$(filter-out static/main.css,$(patsubst styles/%.css,static/%.css,$(wildcard styles/*.css)))
+STYLES+=static/main.css
 SCRIPTS:=$(patsubst scripts/%.coffee,static/%.js,$(wildcard scripts/*.coffee))
 SCRIPTS+=$(patsubst scripts/%.js,static/%.js,$(wildcard scripts/*.js))
 _STATIC:=$(patsubst _static/%,static/%,$(wildcard _static/*))
+
+TAILWIND_CONTENT:=$(shell find templates -type f -name '*.html')
 
 static/%: _static/%
 	@mkdir -p static/
@@ -27,9 +55,14 @@ static/%.css: styles/%.css
 	@mkdir -p static/
 	cp $< $@
 
-static/%.css: styles/%.scss
+$(TAILWIND_BIN):
+	@mkdir -p bin
+	curl -fsSL https://github.com/tailwindlabs/tailwindcss/releases/download/$(TAILWIND_VERSION)/$(TAILWIND_RELEASE) -o $(TAILWIND_BIN)
+	chmod +x $(TAILWIND_BIN)
+
+static/main.css: styles/main.css tailwind.config.js $(TAILWIND_CONTENT) $(TAILWIND_BIN)
 	@mkdir -p static/
-	sassc -I styles/ $< $@
+	$(TAILWIND_BIN) -i styles/main.css -o static/main.css --minify
 
 static/%.js: scripts/%.js
 	@mkdir -p static/
@@ -40,6 +73,8 @@ static/%.js: scripts/%.coffee
 	coffee -m -o static/ -c $<
 
 static: $(STYLES) $(SCRIPTS) $(_STATIC)
+
+install-tailwind: $(TAILWIND_BIN)
 
 all: static
 	echo $(STYLES)
