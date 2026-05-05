@@ -23,6 +23,7 @@ RUN uv sync --frozen --no-dev --no-install-project
 COPY _static /src/_static
 COPY scripts /src/scripts
 COPY styles /src/styles
+COPY templates /src/templates
 COPY Makefile /src/Makefile
 COPY tailwind.config.js /src/tailwind.config.js
 RUN mkdir /src/static
