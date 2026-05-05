@@ -1,5 +1,6 @@
 import os
 import re
+from datetime import datetime, timedelta
 
 from flask import Blueprint, Response, abort, redirect, render_template, request
 from flask_login import current_user
@@ -257,16 +258,71 @@ def users_admin_unsuspend(user_id):
 @loginrequired
 @adminrequired
 def uploads_admin(page):
+    uploader_id_raw = (request.args.get("uploader_id") or "").strip()
+    uploaded_on = (request.args.get("uploaded_on") or "").strip()
+    uploaded_from_raw = (request.args.get("uploaded_from") or uploaded_on).strip()
+    uploaded_to_raw = (request.args.get("uploaded_to") or uploaded_on).strip()
+    filter_errors = []
+
+    stmt = db.select(Upload).order_by(desc(Upload.created))
+
+    uploader_id = None
+    if uploader_id_raw:
+        try:
+            uploader_id = int(uploader_id_raw)
+            stmt = stmt.where(Upload.user_id == uploader_id)
+        except ValueError:
+            filter_errors.append("Uploader filter is invalid.")
+
+    uploaded_from = None
+    uploaded_to = None
+
+    if uploaded_from_raw:
+        try:
+            uploaded_from = datetime.strptime(uploaded_from_raw, "%Y-%m-%d")
+        except ValueError:
+            filter_errors.append("Upload from date must be in YYYY-MM-DD format.")
+
+    if uploaded_to_raw:
+        try:
+            uploaded_to = datetime.strptime(uploaded_to_raw, "%Y-%m-%d")
+        except ValueError:
+            filter_errors.append("Upload to date must be in YYYY-MM-DD format.")
+
+    if uploaded_from and uploaded_to and uploaded_from > uploaded_to:
+        filter_errors.append("Upload date range is invalid.")
+
+    if uploaded_from:
+        stmt = stmt.where(Upload.created >= uploaded_from)
+    if uploaded_to:
+        stmt = stmt.where(Upload.created < uploaded_to + timedelta(days=1))
+
     pagination = db.paginate(
-        db.select(Upload).order_by(desc(Upload.created)),
+        stmt,
         page=page,
         per_page=_cfgi("perpage"),
     )
+
+    uploader_users = User.query.order_by(User.username).all()
+    pagination_query_params = {}
+    if uploader_id_raw:
+        pagination_query_params["uploader_id"] = uploader_id_raw
+    if uploaded_from_raw:
+        pagination_query_params["uploaded_from"] = uploaded_from_raw
+    if uploaded_to_raw:
+        pagination_query_params["uploaded_to"] = uploaded_to_raw
+
     return _render_htmx(
         "htmx/admin/uploads.html",
         "htmx/admin/_uploads_content.html",
         pagination=pagination,
         endpoint="htmx_admin.uploads_admin",
+        uploader_users=uploader_users,
+        selected_uploader_id=uploader_id_raw,
+        selected_uploaded_from=uploaded_from_raw,
+        selected_uploaded_to=uploaded_to_raw,
+        filter_errors=filter_errors,
+        pagination_query_params=pagination_query_params,
     )
 
 
@@ -301,11 +357,92 @@ def uploads_admin_delete(upload_id):
 @loginrequired
 @adminrequired
 def jobs(page):
+    job_type_raw = (request.args.get("job_type") or "").strip()
+    job_status_raw = (request.args.get("job_status") or "").strip()
+    job_version_raw = (request.args.get("job_version") or "").strip()
+    created_from_raw = (request.args.get("created_from") or "").strip()
+    created_to_raw = (request.args.get("created_to") or "").strip()
+    filter_errors = []
+
+    stmt = db.select(Job).order_by(desc(Job.id))
+
+    if job_type_raw:
+        parsed_job_type = None
+        enum_key = job_type_raw.upper()
+        if enum_key in TaskType.__members__:
+            parsed_job_type = int(TaskType[enum_key])
+        else:
+            try:
+                parsed_job_type = int(job_type_raw)
+                TaskType(parsed_job_type)
+            except (ValueError, KeyError):
+                filter_errors.append("Job type filter is invalid.")
+        if parsed_job_type is not None:
+            stmt = stmt.where(Job.tasktype == parsed_job_type)
+
+    if job_status_raw:
+        parsed_job_status = None
+        enum_key = job_status_raw.upper()
+        if enum_key in TaskStatus.__members__:
+            parsed_job_status = int(TaskStatus[enum_key])
+        else:
+            try:
+                parsed_job_status = int(job_status_raw)
+                TaskStatus(parsed_job_status)
+            except (ValueError, KeyError):
+                filter_errors.append("Job status filter is invalid.")
+        if parsed_job_status is not None:
+            stmt = stmt.where(Job.status == parsed_job_status)
+
+    if job_version_raw:
+        try:
+            parsed_version = int(job_version_raw)
+            if parsed_version < 0:
+                raise ValueError
+            stmt = stmt.where(Job.version == parsed_version)
+        except ValueError:
+            filter_errors.append("Job version filter is invalid.")
+
+    created_from = None
+    created_to = None
+    if created_from_raw:
+        try:
+            created_from = datetime.strptime(created_from_raw, "%Y-%m-%d")
+        except ValueError:
+            filter_errors.append("Created from date must be in YYYY-MM-DD format.")
+
+    if created_to_raw:
+        try:
+            created_to = datetime.strptime(created_to_raw, "%Y-%m-%d")
+        except ValueError:
+            filter_errors.append("Created to date must be in YYYY-MM-DD format.")
+
+    if created_from and created_to and created_from > created_to:
+        filter_errors.append("Created date range is invalid.")
+
+    if created_from:
+        stmt = stmt.where(Job.created >= created_from)
+    if created_to:
+        stmt = stmt.where(Job.created < created_to + timedelta(days=1))
+
     pagination = db.paginate(
-        db.select(Job).order_by(desc(Job.id)),
+        stmt,
         page=page,
         per_page=_cfgi("perpage"),
     )
+
+    pagination_query_params = {}
+    if job_type_raw:
+        pagination_query_params["job_type"] = job_type_raw
+    if job_status_raw:
+        pagination_query_params["job_status"] = job_status_raw
+    if job_version_raw:
+        pagination_query_params["job_version"] = job_version_raw
+    if created_from_raw:
+        pagination_query_params["created_from"] = created_from_raw
+    if created_to_raw:
+        pagination_query_params["created_to"] = created_to_raw
+
     return _render_htmx(
         "htmx/admin/jobs.html",
         "htmx/admin/_jobs_content.html",
@@ -314,6 +451,15 @@ def jobs(page):
         TaskType=TaskType,
         TaskStatus=TaskStatus,
         Task=Task,
+        job_type_options=[t for t in TaskType],
+        job_status_options=[s for s in TaskStatus],
+        selected_job_type=job_type_raw,
+        selected_job_status=job_status_raw,
+        selected_job_version=job_version_raw,
+        selected_created_from=created_from_raw,
+        selected_created_to=created_to_raw,
+        filter_errors=filter_errors,
+        pagination_query_params=pagination_query_params,
     )
 
 

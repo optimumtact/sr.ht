@@ -12,9 +12,11 @@ window.root = "{{ root }}";
         <a href="/uploads">Your Uploads</a>
         {% if user.admin %}
         &mdash;
-        <a href="/admin_uploads">All uploads</a>
+        <a href="/htmx/admin/uploads">All uploads</a>
         &mdash;
-        <a href="/jobs">Job logs</a>
+        <a href="/htmx/admin/jobs">Job logs</a>
+        &mdash;
+        <a href="/htmx/admin/users">Users</a>
         {% endif %}
         {% if _cfg("donation-page") == "yes" %}
         &mdash;

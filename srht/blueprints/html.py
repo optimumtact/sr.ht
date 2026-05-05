@@ -7,17 +7,14 @@ from flask import (
     Response,
     send_from_directory,
     current_app,
-    flash,
 )
 from flask_login import current_user, login_user, logout_user
 from sqlalchemy import desc
-from srht.objects import User, Upload, Job, JobLog
+from srht.objects import User, Upload
 from srht.config import _cfg, _cfgi
-from srht.common import loginrequired, with_session, adminrequired
+from srht.common import loginrequired, with_session
 from srht.email import send_reset
 from srht.database import db
-from srht.tasks.basetask import TaskStatus, TaskType
-from srht.tasks import Task
 from datetime import datetime, timedelta
 import binascii
 import os
@@ -200,14 +197,6 @@ def script_plain():
     return Response(resp, mimetype="text/plain")
 
 
-@html.route("/users")
-@loginrequired
-@adminrequired
-def users():
-    users = User.query.order_by(User.created).all()
-    return render_template("users.html", users=users)
-
-
 @html.route("/forgot-password", methods=["GET", "POST"])
 @with_session
 def forgot_password():
@@ -304,87 +293,7 @@ def uploads(page):
     return render_template("uploads.html", pagination=uploads, endpoint="html.uploads")
 
 
-@html.route("/admin_uploads", methods=["GET"], defaults={"page": 1})
-@html.route("/admin_uploads/<page>", methods=["GET"])
-@adminrequired
-@loginrequired
-def uploads_admin(page):
-    page = int(page)
-    uploads = db.paginate(
-        db.select(Upload).order_by(desc(Upload.created)),
-        page=page,
-        per_page=_cfgi("perpage"),
-    )
-    return render_template("admin_uploads.html", pagination=uploads, endpoint="html.uploads_admin")
-
-
 @html.route("/<path:filename>", methods=["GET"])
 def serve_file(filename):
     print(_cfg("storage"), filename)
     return send_from_directory(_cfg("storage"), filename)
-
-
-@html.route("/jobs", methods=["GET"], defaults={"page": 1})
-@html.route("/jobs/<int:page>", methods=["GET"])
-@loginrequired
-@adminrequired
-def jobs(page):
-    from srht.tasks.basetask import TaskStatus, TaskType
-
-    pagination = db.paginate(
-        db.select(Job).order_by(desc(Job.id)),
-        page=page,
-        per_page=_cfgi("perpage"),
-    )
-    return render_template(
-        "jobs.html",
-        pagination=pagination,
-        endpoint="html.jobs",
-        TaskType=TaskType,
-        TaskStatus=TaskStatus,
-        Task=Task,
-    )
-
-
-@html.route("/jobs/<int:job_id>/logs", methods=["GET"])
-@loginrequired
-@adminrequired
-def job_logs(job_id):
-    job = db.session.get(Job, job_id)
-    if not job:
-        abort(404)
-    logs = JobLog.query.filter(JobLog.job_id == job_id).order_by(JobLog.created).all()
-    return render_template("job_logs.html", job=job, logs=logs)
-
-
-@html.route("/jobs/<int:job_id>/data", methods=["GET"])
-@loginrequired
-@adminrequired
-def job_data(job_id):
-    job = db.session.get(Job, job_id)
-    if not job:
-        abort(404)
-    return render_template("job_data.html", job=job)
-
-
-@html.route("/jobs/<int:job_id>/retry", methods=["POST"])
-@loginrequired
-@adminrequired
-def job_retry(job_id):
-    job = db.session.get(Job, job_id)
-    if not job:
-        abort(404)
-    if job.status != int(TaskStatus.FAILED):
-        abort(400)
-    if job.version < Task.LATEST_VERSION:
-        flash(
-            "This task is an older version and cannot be retried. Please re-queue it instead.",
-            "danger",
-        )
-        return redirect(f"/jobs")
-    try:
-        task = Task.get_task(job_id)
-        task.requeue()
-    except Exception:
-        abort(500)
-    return redirect(f"/jobs")

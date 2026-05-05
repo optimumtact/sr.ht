@@ -1,5 +1,7 @@
+from datetime import datetime
+
 from srht.database import db
-from srht.objects import Job, User
+from srht.objects import Job, Upload, User
 from srht.tasks.basetask import TaskStatus, TaskType
 
 
@@ -35,6 +37,57 @@ def test_htmx_admin_uploads_renders_for_admin(client, app):
     assert b"All uploads" in response.data
 
 
+def test_htmx_admin_uploads_filters_by_uploader_and_date(client, app):
+    _create_admin(app)
+    _login_admin(client)
+
+    with app.app_context():
+        alice = User("alice", "alice@example.com", "password123")
+        alice.suspended = False
+        bob = User("bob", "bob@example.com", "password123")
+        bob.suspended = False
+        db.session.add_all([alice, bob])
+        db.session.flush()
+
+        upload_alice = Upload()
+        upload_alice.user_id = alice.id
+        upload_alice.hash = "hash-alice"
+        upload_alice.path = "alice-upload.png"
+        upload_alice.thumbnail = None
+        upload_alice.original_name = "alice-upload.png"
+        upload_alice.created = datetime(2026, 1, 12, 9, 30, 0)
+
+        upload_bob = Upload()
+        upload_bob.user_id = bob.id
+        upload_bob.hash = "hash-bob"
+        upload_bob.path = "bob-upload.png"
+        upload_bob.thumbnail = None
+        upload_bob.original_name = "bob-upload.png"
+        upload_bob.created = datetime(2026, 1, 13, 10, 45, 0)
+
+        db.session.add_all([upload_alice, upload_bob])
+        db.session.commit()
+        alice_id = alice.id
+
+    response = client.get(
+        f"/htmx/admin/uploads?uploader_id={alice_id}&uploaded_from=2026-01-12&uploaded_to=2026-01-12"
+    )
+    assert response.status_code == 200
+    assert b"alice-upload.png" in response.data
+    assert b"bob-upload.png" not in response.data
+    assert b'name="uploaded_from" value="2026-01-12"' in response.data
+    assert b'name="uploaded_to" value="2026-01-12"' in response.data
+
+
+def test_htmx_admin_uploads_invalid_date_filter_shows_error(client, app):
+    _create_admin(app)
+    _login_admin(client)
+
+    response = client.get("/htmx/admin/uploads?uploaded_from=2026-99-99")
+    assert response.status_code == 200
+    assert b"Upload from date must be in YYYY-MM-DD format." in response.data
+
+
 def test_htmx_admin_jobs_renders_for_admin(client, app):
     _create_admin(app)
     _login_admin(client)
@@ -42,6 +95,53 @@ def test_htmx_admin_jobs_renders_for_admin(client, app):
     response = client.get("/htmx/admin/jobs")
     assert response.status_code == 200
     assert b"Jobs queue" in response.data
+
+
+def test_htmx_admin_jobs_filters_by_type_status_version_and_created_range(client, app):
+    _create_admin(app)
+    _login_admin(client)
+
+    with app.app_context():
+        matching_job = Job(
+            status=int(TaskStatus.FAILED),
+            tasktype=int(TaskType.THUMBNAIL),
+            priority=10,
+            version=2,
+            pickledclass=b"",
+            taskmetadata={"example": True},
+        )
+        matching_job.created = datetime(2026, 2, 10, 9, 0, 0)
+
+        non_matching_job = Job(
+            status=int(TaskStatus.COMPLETE),
+            tasktype=int(TaskType.THUMBNAIL),
+            priority=20,
+            version=1,
+            pickledclass=b"",
+            taskmetadata={"example": False},
+        )
+        non_matching_job.created = datetime(2026, 3, 10, 9, 0, 0)
+
+        db.session.add_all([matching_job, non_matching_job])
+        db.session.commit()
+        matching_job_id = matching_job.id
+        non_matching_job_id = non_matching_job.id
+
+    response = client.get(
+        "/htmx/admin/jobs?job_type=THUMBNAIL&job_status=FAILED&job_version=2&created_from=2026-02-01&created_to=2026-02-28"
+    )
+    assert response.status_code == 200
+    assert f"/htmx/admin/jobs/{matching_job_id}/data".encode("utf-8") in response.data
+    assert f"/htmx/admin/jobs/{non_matching_job_id}/data".encode("utf-8") not in response.data
+
+
+def test_htmx_admin_jobs_invalid_created_range_shows_error(client, app):
+    _create_admin(app)
+    _login_admin(client)
+
+    response = client.get("/htmx/admin/jobs?created_from=2026-99-99")
+    assert response.status_code == 200
+    assert b"Created from date must be in YYYY-MM-DD format." in response.data
 
 
 def test_htmx_admin_jobs_partial_for_hx_request(client, app):

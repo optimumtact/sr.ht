@@ -38,8 +38,10 @@ class Upload(db.Model):
     original_name = Column(Unicode(512))
     hidden = Column(Boolean())
 
-    def __init__(self):
-        self.created = datetime.now()
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        if self.created is None:
+            self.created = datetime.now()
         self.hidden = False
 
     def get_storage_path(self):
@@ -64,6 +66,7 @@ class Upload(db.Model):
 class Job(db.Model):
     __tablename__ = "job"
     id = Column(Integer, primary_key=True)
+    created = Column(DateTime)
     priority = Column(Integer, default=100)
     version: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
     status: Mapped[int] = mapped_column(Integer, nullable=False)
@@ -74,6 +77,12 @@ class Job(db.Model):
         JSON().with_variant(JSONB, "postgresql"),
         nullable=True,
     )
+
+    def __init__(self, **kwargs):
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+        if self.created is None:
+            self.created = datetime.now()
 
     def save_task_state(
         self,

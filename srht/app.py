@@ -12,7 +12,6 @@ from srht.blueprints.api import api
 from srht.blueprints.html import html
 from srht.blueprints.htmx import htmx_admin
 from srht.common import (
-    admin_delete_link,
     delete_link,
     disown_link,
     file_link,
@@ -105,7 +104,6 @@ def inject():
         "thumbnail_class": thumbnail_class,
         "disown_link": disown_link,
         "delete_link": delete_link,
-        "admin_delete_link": admin_delete_link,
         "user": current_user,
         "random": random,
         "owner": _cfg("owner"),

@@ -1,11 +1,43 @@
 <div id="admin-content" class="grid gap-4">
+    <form method="get" action="{{ url_for(endpoint) }}" hx-get="{{ url_for(endpoint) }}" hx-target="#admin-content" hx-select="#admin-content" hx-swap="outerHTML" hx-push-url="true" class="grid gap-3 rounded-lg border border-slate-200 bg-white p-4 sm:grid-cols-2 lg:grid-cols-4">
+        <label class="grid gap-1 text-sm text-slate-700 sm:col-span-1 lg:col-span-1">
+            Uploader
+            <select name="uploader_id" class="rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-800 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200">
+                <option value="">All users</option>
+                {% for user in uploader_users %}
+                    <option value="{{ user.id }}" {% if selected_uploader_id == user.id|string %}selected{% endif %}>{{ user.username }}</option>
+                {% endfor %}
+            </select>
+        </label>
+        <label class="grid gap-1 text-sm text-slate-700 sm:col-span-1 lg:col-span-1">
+            Uploaded from
+            <input type="date" name="uploaded_from" value="{{ selected_uploaded_from }}" class="rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-800 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200" />
+        </label>
+        <label class="grid gap-1 text-sm text-slate-700 sm:col-span-1 lg:col-span-1">
+            Uploaded to
+            <input type="date" name="uploaded_to" value="{{ selected_uploaded_to }}" class="rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-800 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200" />
+        </label>
+        <div class="flex items-end gap-2 sm:col-span-2 lg:col-span-4">
+            <button type="submit" class="rounded-md bg-brand-500 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-600">Apply filters</button>
+            <a href="{{ url_for(endpoint) }}" hx-get="{{ url_for(endpoint) }}" hx-target="#admin-content" hx-select="#admin-content" hx-swap="outerHTML" hx-push-url="true" class="rounded-md border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:border-brand-500 hover:text-brand-600">Clear</a>
+        </div>
+    </form>
+
+    {% if filter_errors %}
+        <div class="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+            {% for error in filter_errors %}
+                <p>{{ error }}</p>
+            {% endfor %}
+        </div>
+    {% endif %}
+
     <div class="flex flex-wrap items-center justify-between gap-2">
         <p class="text-sm text-slate-600">Showing {{ pagination.first }} to {{ pagination.last }} of {{ pagination.total }} uploads.</p>
     </div>
 
     {% include "htmx/admin/_pagination.html" %}
 
-    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {% for upload in pagination.items %}
             <article class="min-w-0 grid gap-2 rounded-lg border border-slate-200 bg-slate-50 p-3 shadow-sm">
                 <a href="{{ file_link(upload.path) }}" class="block overflow-hidden rounded-md border border-slate-200 bg-white">

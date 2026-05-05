@@ -147,16 +147,3 @@ def delete_link(path):
         + "&return_to="
         + returnto
     )
-
-
-def admin_delete_link(path):
-    returnto = urllib.parse.quote_plus(_cfg("protocol") + "://" + _cfg("domain") + "/admin_uploads")
-    return (
-        _cfg("protocol")
-        + "://"
-        + _cfg("domain")
-        + "/delete?filename="
-        + path
-        + "&return_to="
-        + returnto
-    )

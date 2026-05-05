@@ -1,4 +1,54 @@
 <div id="admin-content" class="grid gap-4">
+    <form method="get" action="{{ url_for(endpoint) }}" hx-get="{{ url_for(endpoint) }}" hx-target="#admin-content" hx-select="#admin-content" hx-swap="outerHTML" hx-push-url="true" class="grid gap-3 rounded-lg border border-slate-200 bg-white p-4 sm:grid-cols-2 lg:grid-cols-6">
+        <label class="grid gap-1 text-sm text-slate-700 sm:col-span-1 lg:col-span-2">
+            Job type
+            <select name="job_type" class="rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-800 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200">
+                <option value="">All types</option>
+                {% for type in job_type_options %}
+                    <option value="{{ type.name }}" {% if selected_job_type|upper == type.name %}selected{% endif %}>{{ type.name }}</option>
+                {% endfor %}
+            </select>
+        </label>
+
+        <label class="grid gap-1 text-sm text-slate-700 sm:col-span-1 lg:col-span-2">
+            Job status
+            <select name="job_status" class="rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-800 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200">
+                <option value="">All statuses</option>
+                {% for status in job_status_options %}
+                    <option value="{{ status.name }}" {% if selected_job_status|upper == status.name %}selected{% endif %}>{{ status.name }}</option>
+                {% endfor %}
+            </select>
+        </label>
+
+        <label class="grid gap-1 text-sm text-slate-700 sm:col-span-1 lg:col-span-2">
+            Version
+            <input type="number" min="0" name="job_version" value="{{ selected_job_version }}" class="rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-800 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200" />
+        </label>
+
+        <label class="grid gap-1 text-sm text-slate-700 sm:col-span-1 lg:col-span-2">
+            Created from
+            <input type="date" name="created_from" value="{{ selected_created_from }}" class="rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-800 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200" />
+        </label>
+
+        <label class="grid gap-1 text-sm text-slate-700 sm:col-span-1 lg:col-span-2">
+            Created to
+            <input type="date" name="created_to" value="{{ selected_created_to }}" class="rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-800 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200" />
+        </label>
+
+        <div class="flex items-end gap-2 sm:col-span-2 lg:col-span-2">
+            <button type="submit" class="rounded-md bg-brand-500 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-600">Apply filters</button>
+            <a href="{{ url_for(endpoint) }}" hx-get="{{ url_for(endpoint) }}" hx-target="#admin-content" hx-select="#admin-content" hx-swap="outerHTML" hx-push-url="true" class="rounded-md border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:border-brand-500 hover:text-brand-600">Clear</a>
+        </div>
+    </form>
+
+    {% if filter_errors %}
+        <div class="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+            {% for error in filter_errors %}
+                <p>{{ error }}</p>
+            {% endfor %}
+        </div>
+    {% endif %}
+
     <div class="flex flex-wrap items-center justify-between gap-2">
         <p class="text-sm text-slate-600">Showing {{ pagination.first }} to {{ pagination.last }} of {{ pagination.total }} jobs.</p>
     </div>
@@ -13,6 +63,7 @@
                     <th class="px-3 py-3">Type</th>
                     <th class="px-3 py-3">Version</th>
                     <th class="px-3 py-3">Status</th>
+                    <th class="px-3 py-3">Created</th>
                     <th class="px-3 py-3">Priority</th>
                     <th class="px-3 py-3 text-right">Actions</th>
                 </tr>
@@ -24,6 +75,7 @@
                         <td class="whitespace-nowrap px-3 py-3">{{ TaskType(job.tasktype).name }}</td>
                         <td class="whitespace-nowrap px-3 py-3">{{ job.version }}</td>
                         <td class="whitespace-nowrap px-3 py-3">{{ TaskStatus(job.status).name }}</td>
+                        <td class="whitespace-nowrap px-3 py-3">{% if job.created %}{{ job.created.strftime("%Y-%m-%d") }}{% else %}-{% endif %}</td>
                         <td class="whitespace-nowrap px-3 py-3">{{ job.priority }}</td>
                         <td class="px-3 py-3">
                             <div class="flex items-center justify-end gap-2">
@@ -43,7 +95,7 @@
                     </tr>
                 {% else %}
                     <tr>
-                        <td colspan="6" class="px-3 py-8 text-center text-slate-500">No jobs.</td>
+                        <td colspan="7" class="px-3 py-8 text-center text-slate-500">No jobs.</td>
                     </tr>
                 {% endfor %}
             </tbody>
