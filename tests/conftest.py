@@ -53,7 +53,7 @@ def client(app):
 def test_user(app):
     with app.app_context():
         user = User("testuser", "test@example.com", "password123")
-        user.approved = True
+        user.suspended = False
         _db.session.add(user)
         _db.session.commit()
         # Get apiKey while still in session

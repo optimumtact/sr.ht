@@ -180,15 +180,13 @@ CREATE TABLE public."user" (
     username character varying(128) NOT NULL,
     email character varying(256) NOT NULL,
     admin boolean,
+    suspended boolean DEFAULT false NOT NULL,
     password character varying,
     created timestamp without time zone,
-    "approvalDate" timestamp without time zone,
     "passwordReset" character varying(128),
     "passwordResetExpiry" timestamp without time zone,
     "apiKey" character varying(128),
-    comments character varying(512),
-    approved boolean,
-    rejected boolean
+    comments character varying(512)
 );
 
 

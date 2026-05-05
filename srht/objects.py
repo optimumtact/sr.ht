@@ -113,15 +113,13 @@ class User(db.Model):
     username = Column(String(128), nullable=False, index=True)
     email = Column(String(256), nullable=False, index=True)
     admin = Column(Boolean())
+    suspended = Column(Boolean(), nullable=False, default=False)
     password = Column(String)
     created = Column(DateTime)
-    approvalDate = Column(DateTime)
     passwordReset = Column(String(128))
     passwordResetExpiry = Column(DateTime)
     apiKey = Column(String(128))
     comments = Column(Unicode(512))
-    approved = Column(Boolean())
-    rejected = Column(Boolean())
 
     def set_password(self, password):
         self.password = bcrypt.hashpw(password.encode("UTF-8"), bcrypt.gensalt()).decode("UTF-8")
@@ -134,8 +132,7 @@ class User(db.Model):
         self.email = email
         self.username = username
         self.admin = False
-        self.approved = False
-        self.rejected = False
+        self.suspended = False
         self.created = datetime.now()
         self.generate_api_key()
         self.set_password(password)

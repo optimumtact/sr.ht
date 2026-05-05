@@ -14,7 +14,7 @@ from sqlalchemy import desc
 from srht.objects import User, Upload, Job, JobLog
 from srht.config import _cfg, _cfgi
 from srht.common import loginrequired, with_session, adminrequired
-from srht.email import send_reset, send_request_notification
+from srht.email import send_reset
 from srht.database import db
 from srht.tasks.basetask import TaskStatus, TaskType
 from srht.tasks import Task
@@ -81,9 +81,8 @@ def setup():
         )
 
     user = User(username, email, password)
-    user.approved = True
+    user.suspended = False
     user.admin = True
-    user.approvalDate = datetime.now()
     db.session.add(user)
     db.session.commit()
 
@@ -94,14 +93,13 @@ def setup():
 def index():
     if User.query.count() == 0:
         return redirect("%s://%s/setup" % (_cfg("protocol"), _cfg("domain")))
-    if current_user and current_user.approved:
-        new = datetime.now() - timedelta(hours=24) < current_user.approvalDate
+    if current_user and not current_user.suspended:
+        new = datetime.now() - timedelta(hours=24) < current_user.created
         total = Upload.query.count()
         st = os.statvfs("/")
         free_space = st.f_bavail * st.f_frsize
         total_space = st.f_blocks * st.f_frsize
         used_space = (st.f_blocks - st.f_bfree) * st.f_frsize
-        approvals = User.query.filter(User.approved is False).filter(User.rejected is False).count()
         return render_template(
             "index-member.html",
             new=new,
@@ -109,62 +107,8 @@ def index():
             used_space=used_space,
             free_space=free_space,
             total_space=total_space,
-            approvals=approvals,
         )
-    registration = False
-    if _cfg("registration") and _cfg("registration") == "True":
-        registration = True
-    return render_template("index.html", registration=registration)
-
-
-@html.route("/register", methods=["POST"])
-def register():
-    errors = list()
-    registration = True
-    if _cfg("registration") and _cfg("registration") != "True":
-        registration = False
-        errors.append("Registration is currently disabled")
-
-    email = request.form.get("email")
-    username = request.form.get("username")
-    password = request.form.get("password")
-    comments = request.form.get("comments")
-    if not email:
-        errors.append("Email is required.")
-    else:
-        if not re.match(r"^[^@]+@[^@]+\.[^@]+$", email):
-            errors.append("Please use a valid email address.")
-        if User.query.filter(User.username.ilike(username)).first():
-            errors.append("This username is already in use.")
-    if not username:
-        errors.append("Username is required.")
-    else:
-        if not re.match(r"^[A-Za-z0-9_]+$", username):
-            errors.append("Usernames are letters, numbers, underscores only.")
-        if len(username) < 3 or len(username) > 24:
-            errors.append("Username must be between 3 and 24 characters.")
-        if User.query.filter(User.username.ilike(username)).first():
-            errors.append("This username is already in use.")
-    if not password:
-        errors.append("Password is required.")
-    else:
-        if len(password) < 5 or len(password) > 256:
-            errors.append("Password must be between 5 and 256 characters.")
-    if len(errors) != 0:
-        return render_template(
-            "index.html",
-            username=username,
-            email=email,
-            errors=errors,
-            registration=registration,
-        )
-    # All good, create an account for them
-    user = User(username, email, password)
-    user.comments = comments
-    db.session.add(user)
-    db.session.commit()
-    send_request_notification(user)
-    return render_template("index.html", registered=True, registration=registration)
+    return render_template("index.html")
 
 
 @html.route("/login", methods=["GET", "POST"])
@@ -203,8 +147,14 @@ def login():
                     "errors": "Your username or password is incorrect.",
                 },
             )
-        if not user.approved:
-            return redirect("%s://%s/pending" % (_cfg("protocol"), _cfg("domain")))
+        if user.suspended:
+            return render_template(
+                "login.html",
+                **{
+                    "username": username,
+                    "errors": "Your account is suspended. Please contact the site owner.",
+                },
+            )
         login_user(user, remember=remember)
         if "return_to" in request.form and request.form["return_to"]:
             return redirect(urllib.parse.unquote(request.form.get("return_to")))
@@ -216,11 +166,6 @@ def login():
 def logout():
     logout_user()
     return redirect("%s://%s/" % (_cfg("protocol"), _cfg("domain")))
-
-
-@html.route("/pending")
-def pending():
-    return render_template("pending.html")
 
 
 @html.route("/donate")
@@ -255,23 +200,11 @@ def script_plain():
     return Response(resp, mimetype="text/plain")
 
 
-@html.route("/approvals")
-@loginrequired
-@adminrequired
-def approvals():
-    users = (
-        User.query.filter(User.approved is False)
-        .filter(User.rejected is False)
-        .order_by(User.created)
-    )
-    return render_template("approvals.html", users=users)
-
-
 @html.route("/users")
 @loginrequired
 @adminrequired
 def users():
-    users = User.query.filter(User.approved).order_by(User.created).all()
+    users = User.query.order_by(User.created).all()
     return render_template("users.html", users=users)
 
 

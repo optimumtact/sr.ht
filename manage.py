@@ -2,8 +2,6 @@ import argparse
 import logging
 import os
 import sys
-from datetime import datetime
-
 from sqlalchemy import text
 
 from srht.app import app, db
@@ -55,10 +53,6 @@ def build_parser():
 
     user_parser = top_level.add_parser("user")
     user_commands = user_parser.add_subparsers(dest="user_command")
-
-    user_approve = user_commands.add_parser("approve")
-    user_approve.add_argument("name")
-    user_approve.set_defaults(handler=approve_user)
 
     user_create = user_commands.add_parser("create")
     user_create.add_argument("name")
@@ -191,21 +185,10 @@ def list_admin(args):
         logger.info(u.username)
 
 
-def approve_user(args):
-    u = User.query.filter(User.username == args.name).first()
-    if u:
-        u.approved = True  # approve user
-        u.approvalDate = datetime.now()
-        db.session.commit()
-    else:
-        logger.error("Not a valid user")
-
-
 def create_user(args):
     u = User(args.name, args.email, args.password)
     if u:
-        u.approved = True  # approve user
-        u.approvalDate = datetime.now()
+        u.suspended = False
         db.session.add(u)
         db.session.commit()
         logger.info("User created")

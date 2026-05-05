@@ -53,11 +53,6 @@ window.root = "{{ root }}";
 </button>
 <hr />
 <div class="text-center">
-    {% if user.admin and approvals != 0 %}
-    <p class="text-muted">
-    {{ approvals }} account{%if approvals != 1%}s{%endif%} <a href="/approvals">pending approval</a>.
-    </p>
-    {% endif %}
     <p class="text-muted">
     Get support at {{ support }}<br />
         {{ "{:,}".format(total) }} uploads to date<br />

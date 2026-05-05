@@ -8,7 +8,6 @@ from sqlalchemy import desc
 from srht.common import adminrequired, loginrequired
 from srht.config import _cfg, _cfgi
 from srht.database import db
-from srht.email import send_invite, send_rejection
 from srht.objects import Job, JobLog, Upload, User
 from srht.tasks import Task
 from srht.tasks.basetask import TaskStatus, TaskType
@@ -27,18 +26,9 @@ def _render_htmx(full_template: str, partial_template: str, **context):
 
 
 def _users_context():
-    approved_users = User.query.filter(User.approved).order_by(User.created).all()
-    pending_users = (
-        User.query.filter(User.approved is False)
-        .filter(User.rejected is False)
-        .order_by(User.created)
-        .all()
-    )
-    disabled_users = User.query.filter(User.rejected is True).order_by(User.created).all()
+    users = User.query.order_by(User.created).all()
     return {
-        "approved_users": approved_users,
-        "pending_users": pending_users,
-        "disabled_users": disabled_users,
+        "users": users,
     }
 
 
@@ -51,8 +41,8 @@ def _render_users_content(form_errors=None, form_values=None):
     )
 
 
-def _approved_admin_count() -> int:
-    return User.query.filter(User.approved).filter(User.admin).count()
+def _admin_count() -> int:
+    return User.query.filter(User.admin).count()
 
 
 def _validate_new_user(username: str, email: str, password: str):
@@ -118,62 +108,10 @@ def users_admin_create():
         )
 
     user = User(username, email, password)
-    user.approved = True
-    user.rejected = False
+    user.suspended = False
     user.admin = admin
     db.session.add(user)
     db.session.commit()
-
-    try:
-        send_invite(user)
-    except Exception:
-        pass
-
-    if _is_htmx_request():
-        return _render_users_content()
-
-    return redirect("/htmx/admin/users")
-
-
-@htmx_admin.route("/htmx/admin/users/<int:user_id>/approve", methods=["POST"])
-@loginrequired
-@adminrequired
-def users_admin_approve(user_id):
-    user = db.session.get(User, user_id)
-    if not user:
-        abort(404)
-
-    user.approved = True
-    user.rejected = False
-    db.session.commit()
-
-    try:
-        send_invite(user)
-    except Exception:
-        pass
-
-    if _is_htmx_request():
-        return _render_users_content()
-
-    return redirect("/htmx/admin/users")
-
-
-@htmx_admin.route("/htmx/admin/users/<int:user_id>/reject", methods=["POST"])
-@loginrequired
-@adminrequired
-def users_admin_reject(user_id):
-    user = db.session.get(User, user_id)
-    if not user:
-        abort(404)
-
-    user.rejected = True
-    user.approved = False
-    db.session.commit()
-
-    try:
-        send_rejection(user)
-    except Exception:
-        pass
 
     if _is_htmx_request():
         return _render_users_content()
@@ -213,9 +151,6 @@ def users_admin_make_admin(user_id):
         abort(404)
 
     user.admin = True
-    if not user.approved:
-        user.approved = True
-        user.rejected = False
     db.session.commit()
 
     if _is_htmx_request():
@@ -235,53 +170,10 @@ def users_admin_make_member(user_id):
     if user.id == current_user.id:
         return _render_users_content(form_errors=["You cannot remove your own admin role."])
 
-    if user.admin and _approved_admin_count() <= 1:
-        return _render_users_content(form_errors=["At least one approved admin is required."])
+    if user.admin and _admin_count() <= 1:
+        return _render_users_content(form_errors=["At least one admin is required."])
 
     user.admin = False
-    db.session.commit()
-
-    if _is_htmx_request():
-        return _render_users_content()
-
-    return redirect("/htmx/admin/users")
-
-
-@htmx_admin.route("/htmx/admin/users/<int:user_id>/disable", methods=["POST"])
-@loginrequired
-@adminrequired
-def users_admin_disable(user_id):
-    user = db.session.get(User, user_id)
-    if not user:
-        abort(404)
-
-    if user.id == current_user.id:
-        return _render_users_content(form_errors=["You cannot disable your own account."])
-
-    if user.admin and user.approved and _approved_admin_count() <= 1:
-        return _render_users_content(form_errors=["At least one approved admin is required."])
-
-    user.approved = False
-    user.rejected = True
-    user.admin = False
-    db.session.commit()
-
-    if _is_htmx_request():
-        return _render_users_content()
-
-    return redirect("/htmx/admin/users")
-
-
-@htmx_admin.route("/htmx/admin/users/<int:user_id>/enable", methods=["POST"])
-@loginrequired
-@adminrequired
-def users_admin_enable(user_id):
-    user = db.session.get(User, user_id)
-    if not user:
-        abort(404)
-
-    user.approved = True
-    user.rejected = False
     db.session.commit()
 
     if _is_htmx_request():
@@ -301,18 +193,57 @@ def users_admin_delete(user_id):
     if user.id == current_user.id:
         return _render_users_content(form_errors=["You cannot delete your own account."])
 
-    if user.admin and user.approved and _approved_admin_count() <= 1:
-        return _render_users_content(form_errors=["At least one approved admin is required."])
+    if user.admin and _admin_count() <= 1:
+        return _render_users_content(form_errors=["At least one admin is required."])
 
     upload_count = Upload.query.filter(Upload.user_id == user.id).count()
     if upload_count > 0:
         return _render_users_content(
-            form_errors=[
-                "Cannot delete a user that still owns uploads. Disable the account instead."
-            ],
+            form_errors=["Cannot delete a user that still owns uploads."],
         )
 
     db.session.delete(user)
+    db.session.commit()
+
+    if _is_htmx_request():
+        return _render_users_content()
+
+    return redirect("/htmx/admin/users")
+
+
+@htmx_admin.route("/htmx/admin/users/<int:user_id>/suspend", methods=["POST"])
+@loginrequired
+@adminrequired
+def users_admin_suspend(user_id):
+    user = db.session.get(User, user_id)
+    if not user:
+        abort(404)
+
+    if user.id == current_user.id:
+        return _render_users_content(form_errors=["You cannot suspend your own account."])
+
+    if user.admin and _admin_count() <= 1:
+        return _render_users_content(form_errors=["At least one admin is required."])
+
+    user.suspended = True
+    user.admin = False
+    db.session.commit()
+
+    if _is_htmx_request():
+        return _render_users_content()
+
+    return redirect("/htmx/admin/users")
+
+
+@htmx_admin.route("/htmx/admin/users/<int:user_id>/unsuspend", methods=["POST"])
+@loginrequired
+@adminrequired
+def users_admin_unsuspend(user_id):
+    user = db.session.get(User, user_id)
+    if not user:
+        abort(404)
+
+    user.suspended = False
     db.session.commit()
 
     if _is_htmx_request():

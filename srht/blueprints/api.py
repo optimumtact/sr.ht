@@ -1,7 +1,6 @@
 import base64
 import hashlib
 import os
-from datetime import datetime
 from pathlib import Path
 
 from flask import Blueprint, request
@@ -9,36 +8,10 @@ from flask import Blueprint, request
 from srht.common import adminrequired, file_link, json_output, with_session
 from srht.config import _cfg
 from srht.database import db
-from srht.email import send_invite, send_rejection
 from srht.objects import Upload, User
 from srht.tasks import GenerateImageThumbnail
 
 api = Blueprint("api", __name__, template_folder="../../templates")
-
-
-@api.route("/api/approve/<id>", methods=["POST"])
-@adminrequired
-@with_session
-@json_output
-def approve(id):
-    u = User.query.filter(User.id == id).first()
-    u.approved = True
-    u.approvalDate = datetime.now()
-    db.session.commit()
-    send_invite(u)
-    return {"success": True}
-
-
-@api.route("/api/reject/<id>", methods=["POST"])
-@adminrequired
-@with_session
-@json_output
-def reject(id):
-    u = User.query.filter(User.id == id).first()
-    u.rejected = True
-    db.session.commit()
-    send_rejection(u)
-    return {"success": True}
 
 
 @api.route("/api/resetkey", methods=["POST"])
@@ -77,7 +50,7 @@ def upload():
             "shorthash": existing.shorthash,
             "url": file_link(existing.path),
         }
-    
+
     upload = Upload()
     upload.user = user
     upload.hash = hash

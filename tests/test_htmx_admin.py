@@ -6,7 +6,7 @@ from srht.tasks.basetask import TaskStatus, TaskType
 def _create_admin(app):
     with app.app_context():
         user = User("admin", "admin@example.com", "password123")
-        user.approved = True
+        user.suspended = False
         user.admin = True
         db.session.add(user)
         db.session.commit()
@@ -89,7 +89,7 @@ def test_htmx_admin_users_renders_for_admin(client, app):
 
     response = client.get("/htmx/admin/users")
     assert response.status_code == 200
-    assert b"Users and approvals" in response.data
+    assert b"User management" in response.data
 
 
 def test_htmx_admin_users_create(client, app):
@@ -111,41 +111,8 @@ def test_htmx_admin_users_create(client, app):
     with app.app_context():
         user = User.query.filter(User.username == "newmember").first()
         assert user is not None
-        assert user.approved is True
+        assert user.suspended is False
         assert user.admin is True
-
-
-def test_htmx_admin_users_approve_and_reject(client, app):
-    _create_admin(app)
-    _login_admin(client)
-
-    with app.app_context():
-        user = User("pending1", "pending1@example.com", "password123")
-        db.session.add(user)
-        db.session.commit()
-        user_id = user.id
-
-    approve_response = client.post(
-        f"/htmx/admin/users/{user_id}/approve",
-        headers={"HX-Request": "true"},
-    )
-    assert approve_response.status_code == 200
-
-    with app.app_context():
-        approved_user = db.session.get(User, user_id)
-        assert approved_user.approved is True
-        assert approved_user.rejected is False
-
-    reject_response = client.post(
-        f"/htmx/admin/users/{user_id}/reject",
-        headers={"HX-Request": "true"},
-    )
-    assert reject_response.status_code == 200
-
-    with app.app_context():
-        rejected_user = db.session.get(User, user_id)
-        assert rejected_user.approved is False
-        assert rejected_user.rejected is True
 
 
 def test_htmx_admin_users_password_update(client, app):
@@ -154,7 +121,7 @@ def test_htmx_admin_users_password_update(client, app):
 
     with app.app_context():
         user = User("member1", "member1@example.com", "password123")
-        user.approved = True
+        user.suspended = False
         db.session.add(user)
         db.session.commit()
         user_id = user.id
@@ -178,7 +145,7 @@ def test_htmx_admin_users_role_toggle(client, app):
 
     with app.app_context():
         user = User("member2", "member2@example.com", "password123")
-        user.approved = True
+        user.suspended = False
         user.admin = False
         db.session.add(user)
         db.session.commit()
@@ -205,47 +172,13 @@ def test_htmx_admin_users_role_toggle(client, app):
         assert demoted.admin is False
 
 
-def test_htmx_admin_users_disable_enable(client, app):
-    _create_admin(app)
-    _login_admin(client)
-
-    with app.app_context():
-        user = User("member3", "member3@example.com", "password123")
-        user.approved = True
-        db.session.add(user)
-        db.session.commit()
-        user_id = user.id
-
-    disable = client.post(
-        f"/htmx/admin/users/{user_id}/disable",
-        headers={"HX-Request": "true"},
-    )
-    assert disable.status_code == 200
-
-    with app.app_context():
-        disabled = db.session.get(User, user_id)
-        assert disabled.approved is False
-        assert disabled.rejected is True
-
-    enable = client.post(
-        f"/htmx/admin/users/{user_id}/enable",
-        headers={"HX-Request": "true"},
-    )
-    assert enable.status_code == 200
-
-    with app.app_context():
-        enabled = db.session.get(User, user_id)
-        assert enabled.approved is True
-        assert enabled.rejected is False
-
-
 def test_htmx_admin_users_delete(client, app):
     _create_admin(app)
     _login_admin(client)
 
     with app.app_context():
         user = User("member4", "member4@example.com", "password123")
-        user.approved = True
+        user.suspended = False
         db.session.add(user)
         db.session.commit()
         user_id = user.id
@@ -277,17 +210,34 @@ def test_htmx_admin_users_cannot_demote_self(client, app):
     assert b"cannot remove your own admin role" in response.data.lower()
 
 
-def test_htmx_admin_users_cannot_disable_self(client, app):
+def test_htmx_admin_users_suspend_and_unsuspend(client, app):
     _create_admin(app)
     _login_admin(client)
 
     with app.app_context():
-        admin = User.query.filter(User.username == "admin").first()
-        admin_id = admin.id
+        user = User("member5", "member5@example.com", "password123")
+        user.suspended = False
+        db.session.add(user)
+        db.session.commit()
+        user_id = user.id
 
-    response = client.post(
-        f"/htmx/admin/users/{admin_id}/disable",
+    suspend_response = client.post(
+        f"/htmx/admin/users/{user_id}/suspend",
         headers={"HX-Request": "true"},
     )
-    assert response.status_code == 200
-    assert b"cannot disable your own account" in response.data.lower()
+    assert suspend_response.status_code == 200
+
+    with app.app_context():
+        suspended_user = db.session.get(User, user_id)
+        assert suspended_user.suspended is True
+        assert suspended_user.admin is False
+
+    unsuspend_response = client.post(
+        f"/htmx/admin/users/{user_id}/unsuspend",
+        headers={"HX-Request": "true"},
+    )
+    assert unsuspend_response.status_code == 200
+
+    with app.app_context():
+        unsuspended_user = db.session.get(User, user_id)
+        assert unsuspended_user.suspended is False

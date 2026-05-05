@@ -1,57 +1,7 @@
 {% extends "layout.html" %}
 {% block body %} 
 {% include "index-about.html" %}
-{% if registration %}
 <hr />
-<h4 class="text-center">Request Account</h4>
-{% if registered %}
-<p>Your request has been submitted. You will be notified via email when the
-decision is made.</p>
-{% else %}
-{% if errors %}
-<div class="alert alert-danger">
-    {% for error in errors %}
-    <p>{{ error }}</p>
-    {% endfor %}
-</div>
-{% endif %}
-<form action="/register" method="POST">
-    <div class="form-group">
-        <label for="username">Username</label>
-        <input id="username" name="username" class="form-control"
-            value="{% if username %}{{ username }}{% endif %}" />
-    </div>
-    <div class="form-group">
-        <label for="email">Email Address</label>
-        <input id="email" name="email" class="form-control"
-            value="{% if email %}{{ email }}{% endif %}" />
-    </div>
-    <div class="form-group">
-        <label for="password">Password</label>
-        <input id="password" name="password" type="password" class="form-control" />
-    </div>
-    <div class="form-group">
-        <label for="comments">Comments</label>
-        <input id="comments" name="comments" class="form-control" />
-    </div>
-    <div class="row">
-        <div class="col-md-3">
-            <input type="submit" class="btn btn-primary" value="Request Account" />
-        </div>
-    </div>
-</form>
-<hr />
-<p>You can run {{ domain }} on your own servers if you can't get an account. Get the source here: <a href="{{ git_repo }}">{{ git_repo }}</a>.</p>
-{% endif %}
-{% else %}
-<hr />
-{% if errors %}
-<div class="alert alert-danger">
-    {% for error in errors %}
-    <p>{{ error }}</p>
-    {% endfor %}
-</div>
-{% endif %}
-<p>Self registration is not currently allowed, contact the server owner for an account</p>
-{% endif %}
+<p>Account self-registration is disabled. Contact {{ owner_email }} if you need access.</p>
+<p>You can run {{ domain }} on your own servers if you cannot get an account. Get the source here: <a href="{{ git_repo }}">{{ git_repo }}</a>.</p>
 {% endblock %}
