@@ -25,7 +25,7 @@ from srht.objects import User
 
 app = Flask(__name__)
 app.secret_key = _cfg("secret_key")
-app.config.update(SESSION_COOKIE_SAMESITE="Strict")
+app.config.update(SESSION_COOKIE_SAMESITE="Lax")
 if _cfg("securecookie") and _cfg("securecookie") == "True":
     app.config.update(SESSION_COOKIE_SECURE=True)
 app.jinja_env.cache = None
