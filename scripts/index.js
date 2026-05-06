@@ -110,3 +110,24 @@ function uploadFile(file, progress) {
 }
 
 new QRCode(document.getElementById("qrcode"), "srht:" + window.location.hostname + ":" + window.api_key);
+
+var apiModal = document.getElementById("api-modal");
+
+document.getElementById("open-api-modal").addEventListener("click", function () {
+    apiModal.classList.remove("hidden");
+    apiModal.classList.add("flex");
+});
+
+document.querySelectorAll("[data-close-api-modal]").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+        apiModal.classList.add("hidden");
+        apiModal.classList.remove("flex");
+    });
+});
+
+apiModal.addEventListener("click", function (e) {
+    if (e.target === apiModal) {
+        apiModal.classList.add("hidden");
+        apiModal.classList.remove("flex");
+    }
+});
