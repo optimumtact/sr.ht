@@ -45,7 +45,7 @@
 
     {% include "_uploads_pagination.html" %}
 
-    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
         {% for upload in pagination.items %}
             <article class="min-w-0 rounded-lg border border-slate-200 bg-slate-50 p-3 shadow-sm">
                 <a href="{{ file_link(upload.path) }}" class="block overflow-hidden rounded-md border border-slate-200 bg-white">

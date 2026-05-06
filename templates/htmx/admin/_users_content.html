@@ -10,6 +10,7 @@
     <div class="grid gap-4 rounded-lg border border-slate-200 bg-slate-50 p-4">
         <h2 class="text-base font-bold text-slate-900">Add user</h2>
         <form method="post" action="/admin/users/create" hx-post="/admin/users/create" hx-target="#admin-content" hx-select="#admin-content" hx-swap="outerHTML" class="grid gap-3 md:grid-cols-2">
+            {{ new_user_form.hidden_tag() }}
             <label class="grid gap-1 text-sm">
                 <span class="font-semibold text-slate-700">Username</span>
                 <input name="username" value="{{ (form_values or {}).get('username', '') }}" required class="rounded-md border border-slate-300 bg-white px-3 py-2 text-slate-900 focus:border-brand-500 focus:outline-none">

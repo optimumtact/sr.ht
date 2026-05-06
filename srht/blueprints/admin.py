@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 
 from flask import Blueprint, Response, abort, redirect, render_template, request
 from flask_login import current_user
+from flask_wtf import FlaskForm
 from sqlalchemy import desc
 
 from srht.common import adminrequired, loginrequired
@@ -14,6 +15,12 @@ from srht.tasks import Task
 from srht.tasks.basetask import TaskStatus, TaskType
 
 admin = Blueprint("admin", __name__, template_folder="../../templates")
+
+
+class NewUserForm(FlaskForm):
+    """Form used solely for CSRF protection on the user creation endpoint."""
+
+    pass
 
 
 def _is_htmx_request() -> bool:
@@ -38,6 +45,7 @@ def _render_users_content(form_errors=None, form_values=None):
         "htmx/admin/_users_content.html",
         form_errors=form_errors,
         form_values=form_values,
+        new_user_form=NewUserForm(),
         **_users_context(),
     )
 
@@ -83,6 +91,7 @@ def users_admin():
     return _render_htmx(
         "htmx/admin/users.html",
         "htmx/admin/_users_content.html",
+        new_user_form=NewUserForm(),
         **_users_context(),
     )
 
@@ -91,6 +100,10 @@ def users_admin():
 @loginrequired
 @adminrequired
 def users_admin_create():
+    form = NewUserForm()
+    if not form.validate():
+        abort(400)
+
     username = (request.form.get("username") or "").strip()
     email = (request.form.get("email") or "").strip()
     password = request.form.get("password") or ""
