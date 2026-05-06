@@ -28,9 +28,6 @@
   }
 
   document.addEventListener("DOMContentLoaded", applyFiltersPanelState);
-  document.body.addEventListener("htmx:afterSwap", function (event) {
-    if (event.target && event.target.id === "uploads-content") {
-      applyFiltersPanelState();
-    }
-  });
+  document.body.addEventListener("htmx:afterSwap", applyFiltersPanelState);
+  document.body.addEventListener("htmx:load", applyFiltersPanelState);
 })();

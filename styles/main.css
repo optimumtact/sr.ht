@@ -9,6 +9,95 @@ body {
   font-family: "Open Sans", sans-serif;
 }
 
+html[data-theme="dark"] body {
+  background-image: linear-gradient(to bottom right, #020617, #0f172a, #1e293b);
+  color: #e2e8f0;
+}
+
+html[data-theme="dark"] .bg-white {
+  background-color: rgb(15 23 42 / var(--tw-bg-opacity, 1));
+}
+
+html[data-theme="dark"] .bg-white\/90 {
+  background-color: rgb(15 23 42 / 0.9);
+}
+
+html[data-theme="dark"] .bg-white\/95 {
+  background-color: rgb(15 23 42 / 0.95);
+}
+
+html[data-theme="dark"] .bg-slate-50 {
+  background-color: rgb(15 23 42 / var(--tw-bg-opacity, 1));
+}
+
+html[data-theme="dark"] .bg-slate-100 {
+  background-color: rgb(30 41 59 / var(--tw-bg-opacity, 1));
+}
+
+html[data-theme="dark"] .border-slate-200 {
+  border-color: rgb(51 65 85 / var(--tw-border-opacity, 1));
+}
+
+html[data-theme="dark"] .border-slate-300 {
+  border-color: rgb(71 85 105 / var(--tw-border-opacity, 1));
+}
+
+html[data-theme="dark"] .divide-slate-100 > :not([hidden]) ~ :not([hidden]) {
+  border-color: rgb(51 65 85 / var(--tw-divide-opacity, 1));
+}
+
+html[data-theme="dark"] .divide-slate-200 > :not([hidden]) ~ :not([hidden]) {
+  border-color: rgb(71 85 105 / var(--tw-divide-opacity, 1));
+}
+
+html[data-theme="dark"] .text-slate-900 {
+  color: rgb(241 245 249 / var(--tw-text-opacity, 1));
+}
+
+html[data-theme="dark"] .text-slate-800 {
+  color: rgb(226 232 240 / var(--tw-text-opacity, 1));
+}
+
+html[data-theme="dark"] .text-slate-700 {
+  color: rgb(203 213 225 / var(--tw-text-opacity, 1));
+}
+
+html[data-theme="dark"] .text-slate-600 {
+  color: rgb(148 163 184 / var(--tw-text-opacity, 1));
+}
+
+html[data-theme="dark"] .text-slate-500 {
+  color: rgb(148 163 184 / var(--tw-text-opacity, 1));
+}
+
+html[data-theme="dark"] .text-slate-400 {
+  color: rgb(100 116 139 / var(--tw-text-opacity, 1));
+}
+
+html[data-theme="dark"] .hover\:bg-brand-50:hover {
+  background-color: rgb(69 10 10 / var(--tw-bg-opacity, 1));
+}
+
+html[data-theme="dark"] .hover\:text-brand-600:hover {
+  color: rgb(248 113 113 / var(--tw-text-opacity, 1));
+}
+
+html[data-theme="dark"] .hover\:border-brand-500:hover {
+  border-color: rgb(239 68 68 / var(--tw-border-opacity, 1));
+}
+
+html[data-theme="dark"] input::placeholder,
+html[data-theme="dark"] textarea::placeholder {
+  color: #94a3b8;
+  opacity: 1;
+}
+
+html[data-theme="dark"] .shadow-sm,
+html[data-theme="dark"] .shadow-xl {
+  --tw-shadow: 0 8px 30px rgba(2, 6, 23, 0.55);
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+}
+
 h1,
 h2,
 h3,

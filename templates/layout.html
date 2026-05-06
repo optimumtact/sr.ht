@@ -11,6 +11,22 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
     <script src="/static/htmx.min.js"></script>
+    <script>
+        (function () {
+            try {
+                var storageKey = "srht.theme";
+                var storedTheme = window.localStorage.getItem(storageKey);
+                var theme = storedTheme === "dark" || storedTheme === "light"
+                    ? storedTheme
+                    : (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+                document.documentElement.setAttribute("data-theme", theme);
+                document.documentElement.style.colorScheme = theme;
+            } catch (error) {
+                document.documentElement.setAttribute("data-theme", "light");
+                document.documentElement.style.colorScheme = "light";
+            }
+        })();
+    </script>
     <link rel="stylesheet" href="/static/main.css">
 </head>
 <body class="min-h-screen bg-gradient-to-br from-slate-25 via-white to-orange-50 text-slate-800">
@@ -32,11 +48,21 @@
                             <a href="/admin/jobs" class="rounded-md border border-transparent px-3 py-2 font-semibold text-slate-700 hover:border-brand-200 hover:bg-brand-50 hover:text-brand-600">Job logs</a>
                             <a href="/admin/users" class="rounded-md border border-transparent px-3 py-2 font-semibold text-slate-700 hover:border-brand-200 hover:bg-brand-50 hover:text-brand-600">Users</a>
                         {% endif %}
+                        <button id="theme-toggle" data-theme-toggle type="button" class="rounded-md border border-slate-300 px-3 py-2 font-semibold text-slate-700 hover:border-brand-200 hover:bg-brand-50 hover:text-brand-600" aria-label="Switch to dark mode" title="Toggle theme" aria-pressed="false">
+                            <svg aria-hidden="true" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                            </svg>
+                        </button>
                     </nav>
                 {% else %}
                     <nav class="flex flex-wrap items-center gap-2 text-sm">
                         <a href="/login" class="rounded-md border border-transparent px-3 py-2 font-semibold text-slate-700 hover:border-brand-200 hover:bg-brand-50 hover:text-brand-600">Log in</a>
                         <a href="/forgot-password" class="rounded-md border border-transparent px-3 py-2 font-semibold text-slate-700 hover:border-brand-200 hover:bg-brand-50 hover:text-brand-600">Reset password</a>
+                        <button id="theme-toggle" data-theme-toggle type="button" class="rounded-md border border-slate-300 px-3 py-2 font-semibold text-slate-700 hover:border-brand-200 hover:bg-brand-50 hover:text-brand-600" aria-label="Switch to dark mode" title="Toggle theme" aria-pressed="false">
+                            <svg aria-hidden="true" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                            </svg>
+                        </button>
                     </nav>
                 {% endif %}
             </div>
@@ -79,6 +105,7 @@
     <img class="moe hidden xl:block" src="/static/1.png" alt="moe"/>
     {% block modal %}{% endblock %}
     <script src="/static/qrcode.min.js" type="text/javascript"></script>
+    <script src="/static/theme.js"></script>
     {% block scripts %}{% endblock %}
 </body>
 </html>
