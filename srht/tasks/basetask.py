@@ -1,11 +1,12 @@
 import logging
+import os
 from enum import IntEnum
 import traceback
 
 from sqlalchemy import text
 
 from srht.database import db
-from srht.objects import Job, JobLog, PendingJob
+from srht.objects import Job, JobLog
 
 
 class TaskStatus(IntEnum):
@@ -13,6 +14,7 @@ class TaskStatus(IntEnum):
     FAILED = 2
     COMPLETE = 3
     QUEUED = 4
+    CLAIMED = 5
 
 
 class TaskType(IntEnum):
@@ -65,17 +67,11 @@ class Task:
     def queue(self):
         self.status = TaskStatus.QUEUED
         self.save_to_db()
-        pending = PendingJob(self.job)
-        db.session.add(pending)
-        db.session.commit()
 
     def requeue(self):
         self.failure_count = 0
         self.status = TaskStatus.QUEUED
         self.save_to_db()
-        pending = PendingJob(self.job)
-        db.session.add(pending)
-        db.session.commit()
 
     def save_to_db(self):
         self.job.save_task_state(
@@ -137,19 +133,57 @@ class Task:
 
     @staticmethod
     def get_next_task() -> "Task | None":
-        sql = text("""DELETE FROM pending_job 
-        WHERE id = (
-        SELECT id
-        FROM pending_job
-        ORDER BY created ASC 
-        FOR UPDATE SKIP LOCKED
-        LIMIT 1
-        )
-        RETURNING *;
-        """)
-        result = db.session.execute(sql).fetchall()
+        dialect_name = db.session.bind.dialect.name if db.session.bind else ""
+        if dialect_name == "postgresql":
+            sql = text(
+                """
+                WITH next_job AS (
+                    SELECT id
+                    FROM job
+                    WHERE status = :queued_status
+                    ORDER BY priority ASC, created ASC, id ASC
+                    FOR UPDATE SKIP LOCKED
+                    LIMIT 1
+                )
+                UPDATE job
+                SET status = :claimed_status,
+                    processid = :process_id,
+                    timeclaimed = NOW()
+                FROM next_job
+                WHERE job.id = next_job.id
+                RETURNING job.id;
+                """
+            )
+        else:
+            # SQLite does not support FOR UPDATE SKIP LOCKED.
+            sql = text(
+                """
+                UPDATE job
+                SET status = :claimed_status,
+                    processid = :process_id,
+                    timeclaimed = CURRENT_TIMESTAMP
+                WHERE id = (
+                    SELECT id
+                    FROM job
+                    WHERE status = :queued_status
+                    ORDER BY priority ASC, created ASC, id ASC
+                    LIMIT 1
+                )
+                AND status = :queued_status
+                RETURNING id;
+                """
+            )
+
+        result = db.session.execute(
+            sql,
+            {
+                "queued_status": int(TaskStatus.QUEUED),
+                "claimed_status": int(TaskStatus.CLAIMED),
+                "process_id": os.getpid(),
+            },
+        ).fetchone()
         if result:
-            jobid = int(result[0][1])
+            jobid = int(result[0])
             task = Task.get_task(jobid)
             db.session.commit()
             return task

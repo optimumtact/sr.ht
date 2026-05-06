@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta charset="UTF-8">
+    <meta name="author" content="{{ owner_name }}">
+    <meta name="description" content="Service maintenance">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Service Under Maintenance — {{ domain }}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+    <script>
+        (function () {
+            try {
+                var storageKey = "srht.theme";
+                var storedTheme = window.localStorage.getItem(storageKey);
+                var theme = storedTheme === "dark" || storedTheme === "light"
+                    ? storedTheme
+                    : (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+                document.documentElement.setAttribute("data-theme", theme);
+                document.documentElement.style.colorScheme = theme;
+            } catch (error) {
+                document.documentElement.setAttribute("data-theme", "light");
+                document.documentElement.style.colorScheme = "light";
+            }
+        })();
+    </script>
+    <link rel="stylesheet" href="/static/main.css">
+</head>
+<body class="min-h-screen bg-gradient-to-br from-slate-25 via-white to-orange-50 text-slate-800">
+    <div class="mx-auto min-h-screen w-full max-w-7xl px-4 py-6 lg:px-8 flex flex-col items-center justify-center">
+        <div class="rounded-xl border border-slate-200 bg-white/90 p-8 shadow-lg backdrop-blur-sm max-w-md text-center">
+            <div class="mb-6">
+                <svg class="mx-auto h-16 w-16 text-slate-400 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                </svg>
+            </div>
+            <h1 class="text-3xl font-bold text-slate-900 mb-2">Service Under Maintenance</h1>
+            <p class="text-slate-600 mb-6">We're performing important system updates. Please check back shortly.</p>
+            <p class="text-sm text-slate-500">If this message persists, please contact support.</p>
+        </div>
+    </div>
+</body>
+</html>

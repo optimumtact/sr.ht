@@ -228,6 +228,18 @@ def test_htmx_admin_users_create(client, app):
     _create_admin(app)
     _login_admin(client)
 
+    # Get the form to extract CSRF token
+    form_response = client.get("/admin/users")
+    assert form_response.status_code == 200
+
+    # Extract CSRF token from form
+    import re
+
+    csrf_match = re.search(
+        r'name="csrf_token" type="hidden" value="([^"]+)"', form_response.get_data(as_text=True)
+    )
+    csrf_token = csrf_match.group(1) if csrf_match else ""
+
     response = client.post(
         "/admin/users/create",
         data={
@@ -235,6 +247,7 @@ def test_htmx_admin_users_create(client, app):
             "email": "newmember@example.com",
             "password": "password123",
             "admin": "on",
+            "csrf_token": csrf_token,
         },
         headers={"HX-Request": "true"},
     )

@@ -67,6 +67,8 @@ class Job(db.Model):
     __tablename__ = "job"
     id = Column(Integer, primary_key=True)
     created = Column(DateTime)
+    timeclaimed = Column(DateTime)
+    processid = Column(Integer)
     priority = Column(Integer, default=100)
     version: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
     status: Mapped[int] = mapped_column(Integer, nullable=False)
@@ -96,6 +98,8 @@ class Job(db.Model):
         if version is not None:
             self.version = version
         self.taskmetadata = task_data or {}
+        self.timeclaimed = None
+        self.processid = None
         # Keep legacy column non-null while task persistence is JSON-based.
         self.pickledclass = b""
         db.session.add(self)

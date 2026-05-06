@@ -64,6 +64,8 @@
                     <th class="px-3 py-3">Version</th>
                     <th class="px-3 py-3">Status</th>
                     <th class="px-3 py-3">Created</th>
+                    <th class="px-3 py-3">Claimed at</th>
+                    <th class="px-3 py-3">Process ID</th>
                     <th class="px-3 py-3">Priority</th>
                     <th class="px-3 py-3 text-right">Actions</th>
                 </tr>
@@ -75,7 +77,9 @@
                         <td class="whitespace-nowrap px-3 py-3">{{ TaskType(job.tasktype).name }}</td>
                         <td class="whitespace-nowrap px-3 py-3">{{ job.version }}</td>
                         <td class="whitespace-nowrap px-3 py-3">{{ TaskStatus(job.status).name }}</td>
-                        <td class="whitespace-nowrap px-3 py-3">{% if job.created %}{{ job.created.strftime("%Y-%m-%d") }}{% else %}-{% endif %}</td>
+                        <td class="whitespace-nowrap px-3 py-3">{% if job.created %}{{ job.created.strftime("%Y-%m-%d %H:%M:%S") }}{% else %}-{% endif %}</td>
+                        <td class="whitespace-nowrap px-3 py-3">{% if job.timeclaimed %}{{ job.timeclaimed.strftime("%Y-%m-%d %H:%M:%S") }}{% else %}-{% endif %}</td>
+                        <td class="whitespace-nowrap px-3 py-3">{% if job.processid is not none %}{{ job.processid }}{% else %}-{% endif %}</td>
                         <td class="whitespace-nowrap px-3 py-3">{{ job.priority }}</td>
                         <td class="px-3 py-3">
                             <div class="flex items-center justify-end gap-2">
@@ -95,7 +99,7 @@
                     </tr>
                 {% else %}
                     <tr>
-                        <td colspan="7" class="px-3 py-8 text-center text-slate-500">No jobs.</td>
+                        <td colspan="9" class="px-3 py-8 text-center text-slate-500">No jobs.</td>
                     </tr>
                 {% endfor %}
             </tbody>

@@ -66,21 +66,15 @@ def do_task(count: int):
 
 
 def stuckfix():
-    from srht.objects import Job, PendingJob
+    from srht.objects import Job
     from srht.tasks import Task
     from srht.tasks.basetask import TaskStatus
 
-    pending_job_ids = {
-        row.job_id for row in PendingJob.query.with_entities(PendingJob.job_id).all()
-    }
-    stuck = Job.query.filter(
-        Job.status == int(TaskStatus.QUEUED),
-        Job.id.notin_(pending_job_ids),
-    ).all()
+    stuck = Job.query.filter(Job.status == int(TaskStatus.CLAIMED)).all()
     if not stuck:
-        logger.info("No stuck jobs found.")
+        logger.info("No claimed jobs found.")
         return
-    logger.info(f"Found {len(stuck)} stuck job(s). Re-queuing...")
+    logger.info(f"Found {len(stuck)} claimed job(s). Re-queuing...")
     for job in stuck:
         try:
             if job.version < Task.LATEST_VERSION:

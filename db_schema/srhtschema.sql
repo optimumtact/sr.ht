@@ -47,7 +47,9 @@ CREATE TABLE public.job (
     pickledclass bytea NOT NULL,
     metadata jsonb,
     version integer DEFAULT 1 NOT NULL,
-    created timestamp without time zone
+    created timestamp without time zone,
+    timeclaimed timestamp without time zone,
+    processid integer
 );
 
 
@@ -294,6 +296,12 @@ CREATE INDEX ix_job_created ON public.job USING btree (created);
 
 
 --
+-- Name: ix_job_status; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX ix_job_status ON public.job USING btree (status);
+
+
 -- Name: ix_job_log_created; Type: INDEX; Schema: public; Owner: -
 --
 
