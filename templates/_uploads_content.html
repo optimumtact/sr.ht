@@ -20,11 +20,27 @@
         </label>
         <label class="grid gap-1 text-sm text-slate-700">
             Uploaded from
-            <input id="uploaded_from" type="date" name="uploaded_from" value="{{ selected_uploaded_from }}" class="rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-800 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200" />
+            <input id="uploaded_from" type="date" name="uploaded_from" value="{{ selected_uploaded_from }}"
+                   hx-get="{{ url_for(endpoint) }}"
+                   hx-trigger="change"
+                   hx-include="closest form"
+                   hx-target="#uploads-content"
+                   hx-select="#uploads-content"
+                   hx-swap="outerHTML"
+                   hx-push-url="true"
+                   class="rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-800 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200" />
         </label>
         <label class="grid gap-1 text-sm text-slate-700">
             Uploaded to
-            <input id="uploaded_to" type="date" name="uploaded_to" value="{{ selected_uploaded_to }}" class="rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-800 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200" />
+            <input id="uploaded_to" type="date" name="uploaded_to" value="{{ selected_uploaded_to }}"
+                   hx-get="{{ url_for(endpoint) }}"
+                   hx-trigger="change"
+                   hx-include="closest form"
+                   hx-target="#uploads-content"
+                   hx-select="#uploads-content"
+                   hx-swap="outerHTML"
+                   hx-push-url="true"
+                   class="rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-800 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200" />
         </label>
         <div class="flex items-end gap-2 sm:col-span-2 lg:col-span-1">
             <button type="submit" class="whitespace-nowrap rounded-md bg-brand-500 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-600">Apply filters</button>
