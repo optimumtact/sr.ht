@@ -10,25 +10,11 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-    <script>
-        (function () {
-            try {
-                var storageKey = "srht.theme";
-                var storedTheme = window.localStorage.getItem(storageKey);
-                var theme = storedTheme === "dark" || storedTheme === "light"
-                    ? storedTheme
-                    : (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
-                document.documentElement.setAttribute("data-theme", theme);
-                document.documentElement.style.colorScheme = theme;
-            } catch (error) {
-                document.documentElement.setAttribute("data-theme", "light");
-                document.documentElement.style.colorScheme = "light";
-            }
-        })();
-    </script>
+    <script src="/static/theme_bootstrap.js"></script>
     <link rel="stylesheet" href="/static/main.css">
 </head>
-<body class="min-h-screen bg-gradient-to-br from-slate-25 via-white to-orange-50 text-slate-800">
+<body class="min-h-screen bg-gradient-to-br from-slate-25 via-white to-orange-50 text-slate-800" data-root="{{ root }}">
+    <script src="/static/app_bootstrap.js"></script>
     <div class="mx-auto min-h-screen w-full max-w-7xl px-4 py-6 lg:px-8 flex flex-col items-center justify-center">
         <div class="rounded-xl border border-slate-200 bg-white/90 p-8 shadow-lg backdrop-blur-sm max-w-md text-center">
             <div class="mb-6">

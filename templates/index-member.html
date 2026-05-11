@@ -1,10 +1,5 @@
 {% extends "layout.html" %}
-{% block body %} 
-<script>
-window.api_key = "{{ user.apiKey }}";
-window.root = "{{ root }}";
-</script>
-
+{% block body %}
 {% include "_index_member_content.html" %}
 {% endblock %}
 

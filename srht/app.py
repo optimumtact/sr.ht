@@ -69,6 +69,32 @@ def authenticate_user_from_header():
 
 login_manager.anonymous_user = lambda: None
 
+
+CSP = (
+    "default-src 'self'; "
+    "base-uri 'self'; "
+    "form-action 'self'; "
+    "frame-ancestors 'none'; "
+    "object-src 'none'; "
+    "script-src 'self'; "
+    "script-src-elem 'self'; "
+    "script-src-attr 'none'; "
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+    "font-src 'self' https://fonts.gstatic.com; "
+    "img-src 'self' data: blob:; "
+    "connect-src 'self';"
+)
+
+
+@app.after_request
+def set_security_headers(response):
+    response.headers["Content-Security-Policy"] = CSP
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "SAMEORIGIN"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    return response
+
+
 app.register_blueprint(html)
 app.register_blueprint(api)
 app.register_blueprint(admin)
