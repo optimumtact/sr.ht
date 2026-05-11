@@ -86,7 +86,10 @@ def disown():
     user = User.query.filter(User.apiKey == key).first()
     if not user:
         return {"error": "API key not recognized"}, 403
-    Upload.query.filter_by(path=filename).first().hidden = True
+    upload = Upload.query.filter_by(path=filename, user_id=user.id).first()
+    if not upload:
+        return {"error": "File not found or does not belong to you"}, 403
+    upload.hidden = True
     db.session.commit()
     return {"success": True, "filename": filename}
 
