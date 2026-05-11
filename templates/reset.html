@@ -9,6 +9,7 @@
         <p class="rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-700">This link has expired. Use the Reset password link in the top navigation to request another reset.</p>
     {% else %}
         <form action="/reset/{{ username }}/{{ confirmation }}" method="POST" class="grid gap-4">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <label for="password" class="grid gap-1 text-sm text-slate-700">
                 New Password
                 <input type="password" id="password" placeholder="Password" name="password" class="rounded-md border border-slate-300 px-3 py-2 text-slate-800 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200">

@@ -92,6 +92,7 @@
                 {% endif %}
                 <p class="text-xs text-slate-500">Owner: {{ upload.user.username }}</p>
                 <form method="post" action="/uploads/{{ upload.id }}/delete" hx-post="/uploads/{{ upload.id }}/delete" hx-target="closest article" hx-swap="delete" class="pt-2">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <button type="submit" class="w-full rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white hover:bg-red-700">Delete</button>
                 </form>
             </article>

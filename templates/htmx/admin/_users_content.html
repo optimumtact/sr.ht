@@ -63,6 +63,7 @@
                                 <td class="px-3 py-2">{% if user.admin %}Admin{% else %}Member{% endif %}</td>
                                 <td class="px-3 py-2">
                                     <form method="post" action="/admin/users/{{ user.id }}/password" hx-post="/admin/users/{{ user.id }}/password" hx-target="#admin-content" hx-select="#admin-content" hx-swap="outerHTML" class="flex min-w-[220px] items-center gap-2">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                         <input name="password" type="password" placeholder="New password" required class="w-full rounded-md border border-slate-300 px-2 py-1.5 text-xs focus:border-brand-500 focus:outline-none">
                                         <button type="submit" class="rounded-md bg-slate-800 px-2 py-1.5 text-xs font-semibold text-white hover:bg-slate-900">Update</button>
                                     </form>
@@ -71,23 +72,28 @@
                                     <div class="flex justify-end gap-2">
                                         {% if user.admin %}
                                             <form method="post" action="/admin/users/{{ user.id }}/make-member" hx-post="/admin/users/{{ user.id }}/make-member" hx-target="#admin-content" hx-select="#admin-content" hx-swap="outerHTML" class="inline">
+                                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                                 <button type="submit" class="rounded-md border border-amber-300 bg-amber-50 px-2 py-1 text-xs font-semibold text-amber-700 hover:bg-amber-100">Make member</button>
                                             </form>
                                         {% else %}
                                             <form method="post" action="/admin/users/{{ user.id }}/make-admin" hx-post="/admin/users/{{ user.id }}/make-admin" hx-target="#admin-content" hx-select="#admin-content" hx-swap="outerHTML" class="inline">
+                                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                                 <button type="submit" class="rounded-md border border-indigo-300 bg-indigo-50 px-2 py-1 text-xs font-semibold text-indigo-700 hover:bg-indigo-100">Make admin</button>
                                             </form>
                                         {% endif %}
                                         {% if user.suspended %}
                                             <form method="post" action="/admin/users/{{ user.id }}/unsuspend" hx-post="/admin/users/{{ user.id }}/unsuspend" hx-target="#admin-content" hx-select="#admin-content" hx-swap="outerHTML" class="inline">
+                                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                                 <button type="submit" class="rounded-md border border-emerald-300 bg-emerald-50 px-2 py-1 text-xs font-semibold text-emerald-700 hover:bg-emerald-100">Unsuspend</button>
                                             </form>
                                         {% else %}
                                             <form method="post" action="/admin/users/{{ user.id }}/suspend" hx-post="/admin/users/{{ user.id }}/suspend" hx-target="#admin-content" hx-select="#admin-content" hx-swap="outerHTML" class="inline">
+                                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                                 <button type="submit" class="rounded-md border border-red-300 bg-red-50 px-2 py-1 text-xs font-semibold text-red-700 hover:bg-red-100">Suspend</button>
                                             </form>
                                         {% endif %}
                                         <form method="post" action="/admin/users/{{ user.id }}/delete" hx-post="/admin/users/{{ user.id }}/delete" hx-target="#admin-content" hx-select="#admin-content" hx-swap="outerHTML" class="inline">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                             <button type="submit" class="rounded-md border border-slate-300 px-2 py-1 text-xs font-semibold text-slate-700 hover:border-slate-500">Delete</button>
                                         </form>
                                     </div>

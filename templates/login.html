@@ -11,6 +11,7 @@
     {% endif %}
 
     <form action="/login" method="POST" class="mt-4 grid gap-4">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <label class="grid gap-1 text-sm text-slate-700">
             Username
             <input id="username" name="username" value="{% if username %}{{ username }}{% endif %}" class="rounded-md border border-slate-300 px-3 py-2 text-slate-800 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200" />

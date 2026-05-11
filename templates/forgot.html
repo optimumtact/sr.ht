@@ -10,6 +10,7 @@
 if you run into trouble.</p>
 {% else %}
     <form action="/forgot-password" method="POST" class="grid gap-4">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         {% if bad_email %}
         <p class="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">Double check your email address, we don't recognize you.</p>
         {% endif %}

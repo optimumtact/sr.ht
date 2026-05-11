@@ -1,4 +1,5 @@
 import smtplib
+import ssl
 import pystache
 import html
 from email.mime.text import MIMEText
@@ -9,8 +10,9 @@ from srht.config import _cfg, _cfgi
 def send_reset(user):
     if _cfg("smtphost") == "":
         return
+    context = ssl.create_default_context()
     smtp = smtplib.SMTP(_cfg("smtphost"), _cfgi("smtpport"))
-    smtp.starttls()
+    smtp.starttls(context=context)
     smtp.ehlo()
     smtp.login(_cfg("smtpuser"), _cfg("smtppassword"))
     with open("emails/reset") as f:

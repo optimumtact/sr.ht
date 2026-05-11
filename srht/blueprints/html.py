@@ -135,7 +135,7 @@ def login():
             remember = True
         else:
             remember = False
-        user = User.query.filter(User.username.ilike(username)).first()
+        user = User.query.filter(User.username == username).first()
         if not user:
             return render_template(
                 "login.html",
@@ -215,7 +215,7 @@ def forgot_password():
             return render_template("forgot.html", bad_email=True)
         user = User.query.filter(User.email == email).first()
         if not user:
-            return render_template("forgot.html", bad_email=True, email=email)
+            return render_template("forgot.html", success=True)
         user.passwordReset = binascii.b2a_hex(os.urandom(20)).decode("utf-8")
         user.passwordResetExpiry = datetime.now() + timedelta(days=1)
         db.session.commit()

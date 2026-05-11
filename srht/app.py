@@ -6,6 +6,7 @@ from pathlib import Path
 
 from flask import Flask, render_template, request, url_for
 from flask_login import LoginManager, current_user, login_user
+from flask_wtf.csrf import CSRFProtect
 from jinja2 import ChoiceLoader, FileSystemLoader
 
 from srht.blueprints.api import api
@@ -31,6 +32,9 @@ if _cfg("securecookie") and _cfg("securecookie") == "True":
 app.jinja_env.cache = None
 app.config["SQLALCHEMY_DATABASE_URI"] = _cfg("DATABASE_URL")
 db.init_app(app)
+
+csrf = CSRFProtect(app)
+
 login_manager = LoginManager()
 login_manager.init_app(app)
 
@@ -65,6 +69,7 @@ login_manager.anonymous_user = lambda: None
 app.register_blueprint(html)
 app.register_blueprint(api)
 app.register_blueprint(admin)
+csrf.exempt(api)
 
 try:
     locale.setlocale(locale.LC_ALL, "en_US")
