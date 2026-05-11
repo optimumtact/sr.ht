@@ -164,7 +164,10 @@ def login():
             )
         login_user(user, remember=remember)
         if "return_to" in request.form and request.form["return_to"]:
-            return redirect(urllib.parse.unquote(request.form.get("return_to")))
+            return_to = urllib.parse.unquote(request.form.get("return_to"))
+            parsed = urllib.parse.urlparse(return_to)
+            if not parsed.netloc and not parsed.scheme:
+                return redirect(return_to)
         return redirect("%s://%s/" % (_cfg("protocol"), _cfg("domain")))
 
 
