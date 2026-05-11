@@ -15,6 +15,7 @@ from srht.config import _cfg, _cfgi
 from srht.common import loginrequired, with_session
 from srht.email import send_reset
 from srht.database import db
+from srht.limiter import limiter
 from datetime import datetime, timedelta
 import binascii
 import os
@@ -119,6 +120,7 @@ def index():
 
 
 @html.route("/login", methods=["GET", "POST"])
+@limiter.limit("10 per minute", methods=["POST"])
 def login():
     if request.method == "GET":
         if current_user:

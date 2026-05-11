@@ -23,6 +23,7 @@ dependencies = [
     "black",
     "typer>=0.25.1",
     "flask-wtf>=1.3.0",
+    "flask-limiter>=4.1.1",
 ]
 requires-python = ">=3.13"
 

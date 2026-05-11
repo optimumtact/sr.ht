@@ -22,6 +22,7 @@ from srht.common import (
 )
 from srht.config import _cfg
 from srht.database import db
+from srht.limiter import limiter
 from srht.objects import User
 
 app = Flask(__name__)
@@ -34,6 +35,8 @@ app.config["SQLALCHEMY_DATABASE_URI"] = _cfg("DATABASE_URL")
 db.init_app(app)
 
 csrf = CSRFProtect(app)
+
+limiter.init_app(app)
 
 login_manager = LoginManager()
 login_manager.init_app(app)
