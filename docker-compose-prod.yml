@@ -12,19 +12,12 @@ services:
       - ./.env
     depends_on:
       - db
-      - redis
   db:
     image: postgres:13
     volumes:
       - postgres_data:/var/lib/postgresql/data/
       - ./db_schema/srhtschema.sql:/docker-entrypoint-initdb.d/srhtschema.sql
-  redis:
-    image: redis:7-alpine
-    volumes:
-      - redis_data:/data
-    command: redis-server --save 60 1 --loglevel warning
 
 volumes:
   postgres_data:
   storage:
-  redis_data:

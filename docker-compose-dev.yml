@@ -8,11 +8,6 @@ services:
       - POSTGRES_USER=hello_flask
       - POSTGRES_PASSWORD=hello_flask
       - POSTGRES_DB=hello_flask_dev
-  redis:
-    image: redis:7-alpine
-    volumes:
-      - redis_data:/data
-    command: redis-server --save 60 1 --loglevel warning
   web:
     image: srht_web:latest
     build:
@@ -34,10 +29,8 @@ services:
       - ./env.dev.example
     depends_on:
       - db
-      - redis
     
     command: /venv/bin/python /app/debug.py
 volumes:
   storage:
   postgres_data:
-  redis_data:
