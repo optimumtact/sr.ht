@@ -41,9 +41,9 @@ def upload():
     if not user:
         return {"error": "API key not recognized"}, 403
     filename = "".join(c for c in f.filename if c.isalnum() or c == ".")
-    
+
     sha256_hash, md5_hash = get_hashes(f)
-    
+
     # Check for existing using either the new SHA256 or legacy MD5
     existing = Upload.query.filter((Upload.hash == sha256_hash) | (Upload.hash == md5_hash)).first()
     if existing:
@@ -73,7 +73,7 @@ def upload():
     return {
         "success": True,
         "hash": upload.hash,
-        "url": _cfg("protocol") + "://" + _cfg("domain") + "/" + upload.path,
+        "url": file_link(upload.path),
     }
 
 
@@ -114,13 +114,12 @@ def get_hashes(f):
         sha256_hash.update(chunk)
         md5_hash.update(chunk)
     f.seek(0)
-    
+
     return (
         base64.urlsafe_b64encode(sha256_hash.digest()).decode("utf-8"),
-        base64.urlsafe_b64encode(md5_hash.digest()).decode("utf-8")
+        base64.urlsafe_b64encode(md5_hash.digest()).decode("utf-8"),
     )
 
 
 def extension(filename: str) -> str:
     return Path(filename).suffix.lower()
-
