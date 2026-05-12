@@ -154,7 +154,7 @@ def cors(f):
 
 
 def file_link(path):
-    return _cfg("protocol") + "://" + _cfg("domain") + "/" + path
+    return _cfg("protocol") + "://" + _cfg("domain") + "/f/" + path
 
 
 def thumbnail_class(path):
@@ -166,7 +166,7 @@ def thumbnail_class(path):
 
 def thumbnail_link(path):
     if path:
-        return file_link(path)
+        return _cfg("protocol") + "://" + _cfg("domain") + "/f/" + path
     else:
         return "/static/no_thumbnail.svg"
 

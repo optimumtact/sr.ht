@@ -6,7 +6,6 @@ from flask import (
     request,
     redirect,
     Response,
-    send_from_directory,
     current_app,
 )
 from flask_login import current_user, login_user, logout_user
@@ -388,7 +387,3 @@ def uploads_delete(upload_id):
     return redirect("/uploads")
 
 
-@html.route("/<path:filename>", methods=["GET"])
-def serve_file(filename):
-    print(_cfg("storage"), filename)
-    return send_from_directory(_cfg("storage"), filename)
