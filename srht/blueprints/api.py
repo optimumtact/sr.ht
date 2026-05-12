@@ -41,8 +41,11 @@ def upload():
     if not user:
         return {"error": "API key not recognized"}, 403
     filename = "".join(c for c in f.filename if c.isalnum() or c == ".")
-    hash = get_hash(f)
-    existing = Upload.query.filter(Upload.hash == hash).first()
+    
+    sha256_hash, md5_hash = get_hashes(f)
+    
+    # Check for existing using either the new SHA256 or legacy MD5
+    existing = Upload.query.filter((Upload.hash == sha256_hash) | (Upload.hash == md5_hash)).first()
     if existing:
         return {
             "success": True,
@@ -53,7 +56,7 @@ def upload():
 
     upload = Upload()
     upload.user = user
-    upload.hash = hash
+    upload.hash = sha256_hash
     upload.path = os.path.join(upload.hash + extension(filename))
     upload.original_name = filename
 
@@ -123,11 +126,21 @@ def delete():
         return {"error": "File doesn't exist or is not belonging to you"}, 400
 
 
-def get_hash(f):
+def get_hashes(f):
     f.seek(0)
-    # TODO we need to swap this to sha1, but that means we need to rencode all existing hashes
-    return base64.urlsafe_b64encode(hashlib.md5(f.read()).digest()).decode("utf-8")
+    sha256_hash = hashlib.sha256()
+    md5_hash = hashlib.md5()
+    while chunk := f.read(8192):
+        sha256_hash.update(chunk)
+        md5_hash.update(chunk)
+    f.seek(0)
+    
+    return (
+        base64.urlsafe_b64encode(sha256_hash.digest()).decode("utf-8"),
+        base64.urlsafe_b64encode(md5_hash.digest()).decode("utf-8")
+    )
 
 
 def extension(filename: str) -> str:
     return Path(filename).suffix.lower()
+
