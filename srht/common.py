@@ -7,6 +7,7 @@ from pathlib import Path
 from flask import Response, abort, jsonify, redirect, request
 from flask_login import current_user
 
+from srht.admin_auth import ADMIN_REAUTH_COOKIE_NAME, verify_admin_reauth_cookie
 from srht.config import _cfg
 from srht.database import db
 
@@ -71,6 +72,44 @@ def adminrequired(f):
     return wrapper
 
 
+def _admin_reauth_return_target() -> str:
+    # Always send users to a browsable admin page when re-auth is triggered from a POST endpoint.
+    fallback = "/admin/uploads"
+    if request.method != "POST":
+        return request.full_path.rstrip("?") or fallback
+
+    path = request.path
+    if path.startswith("/admin/users"):
+        return "/admin/users"
+    if path.startswith("/admin/jobs"):
+        return "/admin/jobs"
+    if path.startswith("/admin/uploads"):
+        return "/admin/uploads"
+    return fallback
+
+
+def adminreauthrequired(f):
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        if not current_user or current_user.suspended:
+            return redirect("/login?return_to=" + urllib.parse.quote_plus(request.url))
+        if not current_user.admin:
+            abort(401)
+
+        token = request.cookies.get(ADMIN_REAUTH_COOKIE_NAME)
+        if token and verify_admin_reauth_cookie(token, current_user.id):
+            return f(*args, **kwargs)
+
+        return_to = _admin_reauth_return_target()
+        reauth_url = "/admin/login?return_to=" + urllib.parse.quote_plus(return_to)
+
+        if request.headers.get("HX-Request", "").lower() == "true":
+            return Response(status=401, headers={"HX-Redirect": reauth_url})
+        return redirect(reauth_url)
+
+    return wrapper
+
+
 def json_output(f):
     @wraps(f)
     def wrapper(*args, **kwargs):
@@ -130,10 +169,6 @@ def thumbnail_link(path):
         return file_link(path)
     else:
         return "/static/no_thumbnail.svg"
-
-
-def disown_link(path):
-    return _cfg("protocol") + "://" + _cfg("domain") + "/disown?filename=" + path
 
 
 def delete_link(path):

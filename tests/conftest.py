@@ -13,6 +13,7 @@ os.environ["perpage"] = "20"
 
 from srht.app import app as flask_app
 from srht.database import db as _db
+from srht.limiter import limiter
 from srht.objects import User
 
 
@@ -22,9 +23,12 @@ def app():
     temp_dir = tempfile.mkdtemp()
 
     # Configure app for testing
+    limiter.enabled = False
     flask_app.config.update(
         {
             "TESTING": True,
+            "WTF_CSRF_ENABLED": False,
+            "RATELIMIT_ENABLED": False,
             "SQLALCHEMY_DATABASE_URI": "sqlite:///:memory:",
             "SQLALCHEMY_TRACK_MODIFICATIONS": False,
         }

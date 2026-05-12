@@ -77,26 +77,6 @@ def upload():
     }
 
 
-@api.route("/api/disown", methods=["POST"])
-@json_output
-def disown():
-    key = request.form.get("key")
-    filename = request.form.get("filename")
-    if not key:
-        return {"error": "API key is required"}, 401
-    if not filename:
-        return {"error": "File is required"}, 400
-    user = User.query.filter(User.apiKey == key).first()
-    if not user:
-        return {"error": "API key not recognized"}, 403
-    upload = Upload.query.filter_by(path=filename, user_id=user.id).first()
-    if not upload:
-        return {"error": "File not found or does not belong to you"}, 403
-    upload.hidden = True
-    db.session.commit()
-    return {"success": True, "filename": filename}
-
-
 @api.route("/api/delete", methods=["POST"])
 @json_output
 def delete():

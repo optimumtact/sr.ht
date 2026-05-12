@@ -1,4 +1,5 @@
 from datetime import datetime
+import re
 
 from srht.database import db
 from srht.objects import Upload, User
@@ -118,15 +119,52 @@ def test_user_upload_actions_are_owner_scoped(client, app):
     )
     assert forbidden_delete.status_code == 404
 
-    disown_own = client.post(
-        f"/uploads/{owner_upload_id}/disown",
+    own_delete = client.post(
+        f"/uploads/{owner_upload_id}/delete",
         headers={"HX-Request": "true"},
     )
-    assert disown_own.status_code == 200
+    assert own_delete.status_code == 200
 
     with app.app_context():
-        hidden_upload = db.session.get(Upload, owner_upload_id)
-        assert hidden_upload.hidden is True
+        deleted_upload = db.session.get(Upload, owner_upload_id)
+        assert deleted_upload is None
+
+
+def test_non_admin_cannot_delete_another_users_upload(client, app):
+    with app.app_context():
+        attacker = User("attacker_user", "attacker_user@example.com", "password123")
+        attacker.suspended = False
+        victim = User("victim_user", "victim_user@example.com", "password123")
+        victim.suspended = False
+        db.session.add_all([attacker, victim])
+        db.session.flush()
+
+        victim_upload = Upload()
+        victim_upload.user_id = victim.id
+        victim_upload.hash = "victim-hash"
+        victim_upload.path = "victim.png"
+        victim_upload.original_name = "victim.png"
+        victim_upload.thumbnail = None
+        victim_upload.hidden = False
+        db.session.add(victim_upload)
+        db.session.commit()
+        victim_upload_id = victim_upload.id
+
+    client.post(
+        "/login",
+        data={"username": "attacker_user", "password": "password123"},
+        follow_redirects=False,
+    )
+
+    response = client.post(
+        f"/uploads/{victim_upload_id}/delete",
+        headers={"HX-Request": "true"},
+    )
+    assert response.status_code == 404
+
+    with app.app_context():
+        upload_still_exists = db.session.get(Upload, victim_upload_id)
+        assert upload_still_exists is not None
 
 
 def test_member_index_renders_full_page_for_logged_in_user(client, app):
@@ -164,3 +202,91 @@ def test_donate_route_removed(client, app):
 
     response = client.get("/donate")
     assert response.status_code == 404
+
+
+def test_admin_login_requires_existing_user_session(client, app):
+    with app.app_context():
+        admin = User("admin_reauth_only", "admin_reauth_only@example.com", "password123")
+        admin.suspended = False
+        admin.admin = True
+        db.session.add(admin)
+        db.session.commit()
+
+    response = client.get("/admin/login?return_to=%2Fadmin%2Fusers")
+    assert response.status_code == 302
+    assert "/login" in response.headers["Location"]
+
+
+def test_admin_login_sets_cookie_and_redirects(client, app):
+    with app.app_context():
+        admin = User("admin_reauth", "admin_reauth@example.com", "password123")
+        admin.suspended = False
+        admin.admin = True
+        db.session.add(admin)
+        db.session.commit()
+
+    client.post(
+        "/login",
+        data={"username": "admin_reauth", "password": "password123"},
+        follow_redirects=False,
+    )
+
+    form_response = client.get("/admin/login?return_to=%2Fadmin%2Fusers")
+    csrf_match = re.search(
+        r'name="csrf_token" type="hidden" value="([^"]+)"',
+        form_response.get_data(as_text=True),
+    )
+    csrf_token = csrf_match.group(1) if csrf_match else ""
+
+    response = client.post(
+        "/admin/login",
+        data={
+            "username": "admin_reauth",
+            "password": "password123",
+            "return_to": "/admin/users",
+            "csrf_token": csrf_token,
+        },
+        follow_redirects=False,
+    )
+
+    assert response.status_code == 302
+    assert response.headers["Location"].endswith("/admin/users")
+    assert "admin_reauth=" in response.headers.get("Set-Cookie", "")
+
+
+def test_logout_clears_admin_reauth_cookie(client, app):
+    with app.app_context():
+        admin = User("admin_logout", "admin_logout@example.com", "password123")
+        admin.suspended = False
+        admin.admin = True
+        db.session.add(admin)
+        db.session.commit()
+
+    client.post(
+        "/login",
+        data={"username": "admin_logout", "password": "password123"},
+        follow_redirects=False,
+    )
+
+    form_response = client.get("/admin/login?return_to=%2Fadmin%2Fusers")
+    csrf_match = re.search(
+        r'name="csrf_token" type="hidden" value="([^"]+)"',
+        form_response.get_data(as_text=True),
+    )
+    csrf_token = csrf_match.group(1) if csrf_match else ""
+
+    client.post(
+        "/admin/login",
+        data={
+            "username": "admin_logout",
+            "password": "password123",
+            "return_to": "/admin/users",
+            "csrf_token": csrf_token,
+        },
+        follow_redirects=False,
+    )
+
+    response = client.get("/logout", follow_redirects=False)
+    assert response.status_code == 302
+    set_cookie = response.headers.get("Set-Cookie", "")
+    assert "admin_reauth=;" in set_cookie

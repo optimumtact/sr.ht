@@ -1,13 +1,19 @@
 import os
 import re
+import urllib
 from datetime import datetime, timedelta
 
-from flask import Blueprint, Response, abort, redirect, render_template, request
+from flask import Blueprint, Response, abort, make_response, redirect, render_template, request
 from flask_login import current_user
 from flask_wtf import FlaskForm
 from sqlalchemy import desc
 
-from srht.common import adminrequired, loginrequired
+from srht.admin_auth import (
+    ADMIN_REAUTH_COOKIE_NAME,
+    issue_admin_reauth_cookie,
+    verify_admin_reauth_cookie,
+)
+from srht.common import adminreauthrequired, adminrequired, loginrequired
 from srht.config import _cfg, _cfgi
 from srht.database import db
 from srht.objects import Job, JobLog, Upload, User
@@ -19,6 +25,12 @@ admin = Blueprint("admin", __name__, template_folder="../../templates")
 
 class NewUserForm(FlaskForm):
     """Form used solely for CSRF protection on the user creation endpoint."""
+
+    pass
+
+
+class AdminLoginForm(FlaskForm):
+    """Form used solely for CSRF protection on the admin re-auth endpoint."""
 
     pass
 
@@ -54,6 +66,20 @@ def _admin_count() -> int:
     return User.query.filter(User.admin).count()
 
 
+def _safe_admin_return_to(raw_return_to: str | None) -> str:
+    if not raw_return_to:
+        return "/admin/uploads"
+
+    return_to = urllib.parse.unquote(raw_return_to)
+    parsed = urllib.parse.urlparse(return_to)
+    if parsed.netloc or parsed.scheme:
+        return "/admin/uploads"
+    if not return_to.startswith("/admin"):
+        return "/admin/uploads"
+
+    return return_to
+
+
 def _validate_new_user(username: str, email: str, password: str):
     errors = []
 
@@ -84,6 +110,47 @@ def _validate_new_user(username: str, email: str, password: str):
     return errors
 
 
+@admin.route("/admin/login", methods=["GET", "POST"])
+@loginrequired
+@adminrequired
+def admin_login():
+    form = AdminLoginForm()
+    return_to = _safe_admin_return_to(
+        request.args.get("return_to") if request.method == "GET" else request.form.get("return_to")
+    )
+
+    if request.method == "GET":
+        token = request.cookies.get(ADMIN_REAUTH_COOKIE_NAME)
+        if token and verify_admin_reauth_cookie(token, current_user.id):
+            return redirect(return_to)
+        return render_template("admin_login.html", form=form, return_to=return_to)
+
+    if not form.validate():
+        abort(400)
+
+    username = (request.form.get("username") or "").strip()
+    password = request.form.get("password") or ""
+
+    errors = []
+    if username != current_user.username:
+        errors.append("Invalid username or password.")
+    elif not current_user.check_password(password):
+        errors.append("Invalid username or password.")
+
+    if errors:
+        return render_template(
+            "admin_login.html",
+            form=form,
+            return_to=return_to,
+            username=username,
+            errors=errors,
+        )
+
+    response = make_response(redirect(return_to))
+    issue_admin_reauth_cookie(response, current_user.id)
+    return response
+
+
 @admin.route("/admin/users", methods=["GET"])
 @loginrequired
 @adminrequired
@@ -99,6 +166,7 @@ def users_admin():
 @admin.route("/admin/users/create", methods=["POST"])
 @loginrequired
 @adminrequired
+@adminreauthrequired
 def users_admin_create():
     form = NewUserForm()
     if not form.validate():
@@ -136,6 +204,7 @@ def users_admin_create():
 @admin.route("/admin/users/<int:user_id>/password", methods=["POST"])
 @loginrequired
 @adminrequired
+@adminreauthrequired
 def users_admin_set_password(user_id):
     user = db.session.get(User, user_id)
     if not user:
@@ -159,6 +228,7 @@ def users_admin_set_password(user_id):
 @admin.route("/admin/users/<int:user_id>/make-admin", methods=["POST"])
 @loginrequired
 @adminrequired
+@adminreauthrequired
 def users_admin_make_admin(user_id):
     user = db.session.get(User, user_id)
     if not user:
@@ -176,6 +246,7 @@ def users_admin_make_admin(user_id):
 @admin.route("/admin/users/<int:user_id>/make-member", methods=["POST"])
 @loginrequired
 @adminrequired
+@adminreauthrequired
 def users_admin_make_member(user_id):
     user = db.session.get(User, user_id)
     if not user:
@@ -199,6 +270,7 @@ def users_admin_make_member(user_id):
 @admin.route("/admin/users/<int:user_id>/delete", methods=["POST"])
 @loginrequired
 @adminrequired
+@adminreauthrequired
 def users_admin_delete(user_id):
     user = db.session.get(User, user_id)
     if not user:
@@ -228,6 +300,7 @@ def users_admin_delete(user_id):
 @admin.route("/admin/users/<int:user_id>/suspend", methods=["POST"])
 @loginrequired
 @adminrequired
+@adminreauthrequired
 def users_admin_suspend(user_id):
     user = db.session.get(User, user_id)
     if not user:
@@ -252,6 +325,7 @@ def users_admin_suspend(user_id):
 @admin.route("/admin/users/<int:user_id>/unsuspend", methods=["POST"])
 @loginrequired
 @adminrequired
+@adminreauthrequired
 def users_admin_unsuspend(user_id):
     user = db.session.get(User, user_id)
     if not user:
@@ -349,6 +423,7 @@ def uploads_admin(page):
 @admin.route("/admin/uploads/<int:upload_id>/delete", methods=["POST"])
 @loginrequired
 @adminrequired
+@adminreauthrequired
 def uploads_admin_delete(upload_id):
     upload = db.session.get(Upload, upload_id)
     if not upload:
@@ -516,6 +591,7 @@ def job_data(job_id):
 @admin.route("/admin/jobs/<int:job_id>/retry", methods=["POST"])
 @loginrequired
 @adminrequired
+@adminreauthrequired
 def job_retry(job_id):
     job = db.session.get(Job, job_id)
     if not job:

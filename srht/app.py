@@ -14,7 +14,6 @@ from srht.blueprints.html import html
 from srht.blueprints.admin import admin
 from srht.common import (
     delete_link,
-    disown_link,
     file_link,
     thumbnail_class,
     thumbnail_link,
@@ -137,7 +136,6 @@ def inject():
         "file_link": file_link,
         "thumbnail_link": thumbnail_link,
         "thumbnail_class": thumbnail_class,
-        "disown_link": disown_link,
         "delete_link": delete_link,
         "user": current_user,
         "random": random,

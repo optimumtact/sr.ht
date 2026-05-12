@@ -2,6 +2,7 @@ from flask import (
     Blueprint,
     render_template,
     abort,
+    make_response,
     request,
     redirect,
     Response,
@@ -13,6 +14,7 @@ from sqlalchemy import desc
 from srht.objects import User, Upload
 from srht.config import _cfg, _cfgi
 from srht.common import loginrequired, with_session
+from srht.admin_auth import clear_admin_reauth_cookie
 from srht.email import send_reset
 from srht.database import db
 from srht.limiter import limiter
@@ -22,7 +24,6 @@ import os
 import urllib
 import re
 import locale
-import bcrypt
 
 html = Blueprint("html", __name__, template_folder="../../templates")
 
@@ -146,9 +147,7 @@ def login():
                     "errors": "Your username or password is incorrect.",
                 },
             )
-        if not bcrypt.hashpw(
-            password.encode("UTF-8"), user.password.encode("UTF-8")
-        ) == user.password.encode("UTF-8"):
+        if not user.check_password(password):
             return render_template(
                 "login.html",
                 **{
@@ -177,7 +176,9 @@ def login():
 @loginrequired
 def logout():
     logout_user()
-    return redirect("%s://%s/" % (_cfg("protocol"), _cfg("domain")))
+    response = make_response(redirect("%s://%s/" % (_cfg("protocol"), _cfg("domain"))))
+    clear_admin_reauth_cookie(response)
+    return response
 
 
 @html.route("/resources")
@@ -359,22 +360,6 @@ def uploads(page):
     return render_template("uploads.html", **context)
 
 
-@html.route("/uploads/<int:upload_id>/disown", methods=["POST"])
-@loginrequired
-def uploads_disown(upload_id):
-    upload = Upload.query.filter_by(id=upload_id, user_id=current_user.id).first()
-    if not upload:
-        abort(404)
-
-    upload.hidden = True
-    db.session.commit()
-
-    if request.headers.get("HX-Request", "").lower() == "true":
-        return Response("", status=200)
-
-    return redirect("/uploads")
-
-
 @html.route("/uploads/<int:upload_id>/delete", methods=["POST"])
 @loginrequired
 def uploads_delete(upload_id):
@@ -382,7 +367,7 @@ def uploads_delete(upload_id):
     if not upload:
         abort(404)
 
-    if not (current_user.admin or upload.user_id == current_user.id):
+    if upload.user_id != current_user.id:
         abort(404)
 
     full_path = os.path.join(_cfg("storage"), upload.path)

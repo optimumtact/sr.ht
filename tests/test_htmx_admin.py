@@ -1,4 +1,5 @@
 from datetime import datetime
+import re
 
 from srht.database import db
 from srht.objects import Job, Upload, User
@@ -15,6 +16,34 @@ def _create_admin(app):
 
 
 def _login_admin(client):
+    login_response = client.post(
+        "/login",
+        data={"username": "admin", "password": "password123"},
+        follow_redirects=False,
+    )
+
+    reauth_form = client.get("/admin/login?return_to=%2Fadmin%2Fusers")
+    csrf_match = re.search(
+        r'name="csrf_token" type="hidden" value="([^"]+)"',
+        reauth_form.get_data(as_text=True),
+    )
+    csrf_token = csrf_match.group(1) if csrf_match else ""
+
+    reauth_response = client.post(
+        "/admin/login",
+        data={
+            "username": "admin",
+            "password": "password123",
+            "return_to": "/admin/users",
+            "csrf_token": csrf_token,
+        },
+        follow_redirects=False,
+    )
+
+    return login_response, reauth_response
+
+
+def _login_admin_user_session_only(client):
     return client.post(
         "/login",
         data={"username": "admin", "password": "password123"},
@@ -89,7 +118,7 @@ def test_htmx_admin_uploads_invalid_date_filter_shows_error(client, app):
     assert b"Upload from date must be in YYYY-MM-DD format." in response.data
 
 
-def test_admin_can_delete_other_user_upload_via_regular_endpoint(client, app):
+def test_admin_deletes_other_user_upload_via_admin_endpoint_only(client, app):
     _create_admin(app)
     _login_admin(client)
 
@@ -109,11 +138,17 @@ def test_admin_can_delete_other_user_upload_via_regular_endpoint(client, app):
         db.session.commit()
         upload_id = upload.id
 
-    response = client.post(
+    regular_delete = client.post(
         f"/uploads/{upload_id}/delete",
         headers={"HX-Request": "true"},
     )
-    assert response.status_code == 200
+    assert regular_delete.status_code == 404
+
+    admin_delete = client.post(
+        f"/admin/uploads/{upload_id}/delete",
+        headers={"HX-Request": "true"},
+    )
+    assert admin_delete.status_code == 204
 
     with app.app_context():
         deleted_upload = db.session.get(Upload, upload_id)
@@ -231,9 +266,6 @@ def test_htmx_admin_users_create(client, app):
     # Get the form to extract CSRF token
     form_response = client.get("/admin/users")
     assert form_response.status_code == 200
-
-    # Extract CSRF token from form
-    import re
 
     csrf_match = re.search(
         r'name="csrf_token" type="hidden" value="([^"]+)"', form_response.get_data(as_text=True)
@@ -386,3 +418,135 @@ def test_htmx_admin_users_suspend_and_unsuspend(client, app):
     with app.app_context():
         unsuspended_user = db.session.get(User, user_id)
         assert unsuspended_user.suspended is False
+
+
+def test_admin_browsing_does_not_require_reauth_cookie(client, app):
+    _create_admin(app)
+    _login_admin_user_session_only(client)
+
+    response = client.get("/admin/users")
+    assert response.status_code == 200
+    assert b"User management" in response.data
+
+
+def test_admin_mutation_requests_require_reauth_cookie(client, app):
+    _create_admin(app)
+    _login_admin_user_session_only(client)
+
+    with app.app_context():
+        user = User("mutation_target", "mutation_target@example.com", "password123")
+        user.suspended = False
+        user.admin = False
+        db.session.add(user)
+        db.session.commit()
+        user_id = user.id
+
+    response = client.post(
+        f"/admin/users/{user_id}/make-admin",
+        headers={"HX-Request": "true"},
+    )
+    assert response.status_code == 401
+    assert response.headers.get("HX-Redirect")
+    assert response.headers["HX-Redirect"].startswith("/admin/login?return_to=")
+
+
+def test_admin_reauth_redirects_user_mutation_posts_to_users_view(client, app):
+    _create_admin(app)
+    _login_admin_user_session_only(client)
+
+    with app.app_context():
+        user = User("redirect_users_target", "redirect_users_target@example.com", "password123")
+        user.suspended = False
+        user.admin = False
+        db.session.add(user)
+        db.session.commit()
+        user_id = user.id
+
+    response = client.post(
+        f"/admin/users/{user_id}/make-admin",
+        headers={"HX-Request": "true"},
+    )
+    assert response.status_code == 401
+    assert response.headers["HX-Redirect"].endswith("return_to=%2Fadmin%2Fusers")
+
+
+def test_admin_reauth_redirects_upload_mutation_posts_to_uploads_view(client, app):
+    _create_admin(app)
+    _login_admin_user_session_only(client)
+
+    with app.app_context():
+        owner = User("redirect_upload_owner", "redirect_upload_owner@example.com", "password123")
+        owner.suspended = False
+        db.session.add(owner)
+        db.session.flush()
+
+        upload = Upload()
+        upload.user_id = owner.id
+        upload.hash = "redirect-upload-hash"
+        upload.path = "redirect-upload.png"
+        upload.thumbnail = None
+        upload.original_name = "redirect-upload.png"
+        db.session.add(upload)
+        db.session.commit()
+        upload_id = upload.id
+
+    response = client.post(
+        f"/admin/uploads/{upload_id}/delete",
+        headers={"HX-Request": "true"},
+    )
+    assert response.status_code == 401
+    assert response.headers["HX-Redirect"].endswith("return_to=%2Fadmin%2Fuploads")
+
+
+def test_admin_reauth_redirects_job_mutation_posts_to_jobs_view(client, app):
+    _create_admin(app)
+    _login_admin_user_session_only(client)
+
+    with app.app_context():
+        job = Job(
+            status=int(TaskStatus.FAILED),
+            tasktype=int(TaskType.THUMBNAIL),
+            priority=10,
+            version=1,
+            pickledclass=b"",
+            taskmetadata={"example": True},
+        )
+        db.session.add(job)
+        db.session.commit()
+        job_id = job.id
+
+    response = client.post(
+        f"/admin/jobs/{job_id}/retry",
+        headers={"HX-Request": "true"},
+    )
+    assert response.status_code == 401
+    assert response.headers["HX-Redirect"].endswith("return_to=%2Fadmin%2Fjobs")
+
+
+def test_admin_reauth_sets_strict_cookie(client, app):
+    _create_admin(app)
+    _login_admin_user_session_only(client)
+
+    form_response = client.get("/admin/login?return_to=%2Fadmin%2Fusers")
+    csrf_match = re.search(
+        r'name="csrf_token" type="hidden" value="([^"]+)"',
+        form_response.get_data(as_text=True),
+    )
+    csrf_token = csrf_match.group(1) if csrf_match else ""
+
+    response = client.post(
+        "/admin/login",
+        data={
+            "username": "admin",
+            "password": "password123",
+            "return_to": "/admin/users",
+            "csrf_token": csrf_token,
+        },
+        follow_redirects=False,
+    )
+
+    assert response.status_code == 302
+    set_cookie = response.headers.get("Set-Cookie", "")
+    assert "admin_reauth=" in set_cookie
+    assert "HttpOnly" in set_cookie
+    assert "SameSite=Strict" in set_cookie

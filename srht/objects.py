@@ -137,6 +137,11 @@ class User(db.Model):
     def set_password(self, password):
         self.password = bcrypt.hashpw(password.encode("UTF-8"), bcrypt.gensalt()).decode("UTF-8")
 
+    def check_password(self, password: str) -> bool:
+        if not self.password:
+            return False
+        return bcrypt.checkpw(password.encode("UTF-8"), self.password.encode("UTF-8"))
+
     def generate_api_key(self):
         salt = os.urandom(40)
         self.apiKey = hashlib.sha256(salt).hexdigest()
