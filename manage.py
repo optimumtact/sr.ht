@@ -100,15 +100,70 @@ def queue_task_for_missing_thumbnails():
         task.queue()
 
 
-def queue_task_for_missing_captions():
-    from srht.objects import Upload
-    from srht.tasks import GenerateImageCaptionTags
+def _has_active_jobs(task_type: int) -> bool:
+    from srht.objects import Job
+    from srht.tasks.basetask import TaskStatus
 
-    uploads = Upload.query.filter(Upload.caption == None).all()
-    for upload in uploads:
-        task = GenerateImageCaptionTags(upload.id)
-        task.queue()
-        logger.info(f"Queued caption task for upload {upload.id}")
+    active_count = (
+        Job.query.filter(Job.tasktype == int(task_type))
+        .filter(Job.status.in_([int(TaskStatus.QUEUED), int(TaskStatus.CLAIMED)]))
+        .count()
+    )
+    return active_count > 0
+
+
+def queue_caption_batch(limit: int, force: bool = False):
+    from srht.objects import Upload
+    from srht.tasks import BatchGenerateImageCaptions
+    from srht.tasks.basetask import TaskType
+
+    if not force and _has_active_jobs(TaskType.BATCH_CAPTIONS):
+        logger.info("Skipped caption batch enqueue: active caption batch already exists")
+        return
+
+    uploads = (
+        Upload.query.filter(Upload.caption.is_(None))
+        .filter(Upload.thumbnail.isnot(None))
+        .order_by(Upload.created, Upload.id)
+        .limit(limit)
+        .all()
+    )
+    upload_ids = [upload.id for upload in uploads]
+    if not upload_ids:
+        logger.info("Skipped caption batch enqueue: no thumbnail-ready uploads require captions")
+        return
+
+    task = BatchGenerateImageCaptions(upload_ids=upload_ids)
+    task.queue()
+    logger.info(
+        f"Queued caption batch job {task.jobid} with {len(upload_ids)} uploads (limit={limit})"
+    )
+
+
+def queue_tag_batch(limit: int, force: bool = False):
+    from srht.objects import Upload
+    from srht.tasks import BatchGenerateImageTags
+    from srht.tasks.basetask import TaskType
+
+    if not force and _has_active_jobs(TaskType.BATCH_TAGS):
+        logger.info("Skipped tag batch enqueue: active tag batch already exists")
+        return
+
+    uploads = (
+        Upload.query.filter(Upload.caption.isnot(None))
+        .filter(~Upload.tags.any())
+        .order_by(Upload.created, Upload.id)
+        .limit(limit)
+        .all()
+    )
+    upload_ids = [upload.id for upload in uploads]
+    if not upload_ids:
+        logger.info("Skipped tag batch enqueue: no captioned uploads require tags")
+        return
+
+    task = BatchGenerateImageTags(upload_ids=upload_ids)
+    task.queue()
+    logger.info(f"Queued tag batch job {task.jobid} with {len(upload_ids)} uploads (limit={limit})")
 
 
 def apply_migrations():
@@ -260,16 +315,40 @@ def task_fix_stuck():
         stuckfix()
 
 
+@task_cli.command("queue-caption-batch")
+def task_queue_caption_batch(
+    limit: Annotated[
+        int,
+        typer.Option("--limit", "-l", min=1, help="Maximum uploads to include in caption batch."),
+    ] = 50,
+    force: Annotated[
+        bool,
+        typer.Option("--force", help="Queue batch even if one is already active."),
+    ] = False,
+):
+    with get_app_context():
+        queue_caption_batch(limit=limit, force=force)
+
+
+@task_cli.command("queue-tag-batch")
+def task_queue_tag_batch(
+    limit: Annotated[
+        int,
+        typer.Option("--limit", "-l", min=1, help="Maximum uploads to include in tag batch."),
+    ] = 50,
+    force: Annotated[
+        bool,
+        typer.Option("--force", help="Queue batch even if one is already active."),
+    ] = False,
+):
+    with get_app_context():
+        queue_tag_batch(limit=limit, force=force)
+
+
 @thumbnails_cli.command("queue")
 def thumbnails_queue_missing():
     with get_app_context():
         queue_task_for_missing_thumbnails()
-
-
-@thumbnails_cli.command("queue-captions")
-def thumbnails_queue_missing_captions():
-    with get_app_context():
-        queue_task_for_missing_captions()
 
 
 if __name__ == "__main__":

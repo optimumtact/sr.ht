@@ -3,11 +3,18 @@ import json
 import os
 from srht.config import _cfg
 from srht.objects import Job, Tag, Upload
-from srht.tasks import Task, GenerateImageCaptionTags, GenerateImageThumbnail, TaskType
+from srht.tasks import (
+    BatchGenerateImageCaptions,
+    BatchGenerateImageTags,
+    GenerateImageThumbnail,
+    Task,
+    TaskType,
+)
 import srht.tasks.image_caption_tags as image_caption_tags
 import srht.tasks.image_thumbnail as image_thumbnail
 from srht.tasks.basetask import TaskStatus
 from srht.database import db
+import manage
 
 
 def test_upload_file(client, test_user):
@@ -198,10 +205,6 @@ def test_caption_task_queued(client, test_user, app, monkeypatch):
         assert thumbnail_job is not None
         assert thumbnail_job.status == int(TaskStatus.QUEUED)
 
-        # Caption job should not exist yet
-        caption_job = Job.query.filter(Job.tasktype == TaskType.CAPTION_TAGS).first()
-        assert caption_job is None
-
     # Execute thumbnail task
     claimed = _claim_tasks(app)
     thumbnail_task = next(
@@ -212,11 +215,6 @@ def test_caption_task_queued(client, test_user, app, monkeypatch):
     with app.app_context():
         thumbnail_task.run()
 
-        # Now caption job should be queued after thumbnail completes
-        caption_job = Job.query.filter(Job.tasktype == TaskType.CAPTION_TAGS).first()
-        assert caption_job is not None
-        assert caption_job.status == int(TaskStatus.QUEUED)
-
 
 def test_caption_task_execution_inserts_normalized_unique_tags(client, test_user, app, monkeypatch):
     with open("tests/test_files/1.png", "rb") as f:
@@ -226,7 +224,7 @@ def test_caption_task_execution_inserts_normalized_unique_tags(client, test_user
     response = client.post("/api/upload", data=data, content_type="multipart/form-data")
     assert response.status_code == 200
 
-    # First, execute the thumbnail task (caption is queued after it completes)
+    # First, execute the thumbnail task.
     claimed = _claim_tasks(app)
     thumbnail_task = next(
         (task for task in claimed if isinstance(task, GenerateImageThumbnail)), None
@@ -236,15 +234,33 @@ def test_caption_task_execution_inserts_normalized_unique_tags(client, test_user
     with app.app_context():
         thumbnail_task.run()
 
-    # Now claim tasks again to get the caption task that was queued by thumbnail
+    # Queue and run caption batch.
     monkeypatch.setattr(image_caption_tags, "_HAS_ML_DEPS", True)
     monkeypatch.setattr(
-        GenerateImageCaptionTags,
+        BatchGenerateImageCaptions,
         "_generate_caption",
         lambda self, path: "A red flower in a green field under sunlight.",
     )
     monkeypatch.setattr(
-        GenerateImageCaptionTags,
+        BatchGenerateImageCaptions,
+        "_get_moondream_model",
+        lambda self: (object(), object()),
+    )
+    with app.app_context():
+        manage.queue_caption_batch(limit=20)
+
+    claimed = _claim_tasks(app)
+    caption_task = next(
+        (task for task in claimed if isinstance(task, BatchGenerateImageCaptions)), None
+    )
+    assert caption_task is not None
+
+    with app.app_context():
+        caption_task.run()
+
+    # Queue and run tag batch.
+    monkeypatch.setattr(
+        BatchGenerateImageTags,
         "_extract_tags",
         lambda self, caption: [
             ("Red Flower", 0.91),
@@ -254,10 +270,14 @@ def test_caption_task_execution_inserts_normalized_unique_tags(client, test_user
             ("sunlight", 0.64),
         ],
     )
+    monkeypatch.setattr(BatchGenerateImageTags, "_get_keybert_model", lambda self: object())
+
+    with app.app_context():
+        manage.queue_tag_batch(limit=20)
 
     claimed = _claim_tasks(app)
     caption_task = next(
-        (task for task in claimed if isinstance(task, GenerateImageCaptionTags)), None
+        (task for task in claimed if isinstance(task, BatchGenerateImageTags)), None
     )
     assert caption_task is not None
 
@@ -267,7 +287,7 @@ def test_caption_task_execution_inserts_normalized_unique_tags(client, test_user
 
         tags = (
             db.session.query(Tag.tag, Tag.relevance)
-            .filter(Tag.uploadid == caption_task.uploadid)
+            .filter(Tag.uploadid == thumbnail_task.uploadid)
             .order_by(Tag.tag.asc())
             .all()
         )
@@ -286,7 +306,7 @@ def test_caption_task_skips_non_image_upload(client, test_user, app, monkeypatch
     response = client.post("/api/upload", data=data, content_type="multipart/form-data")
     assert response.status_code == 200
 
-    # First, execute the thumbnail task (caption is queued after it completes)
+    # First, execute the thumbnail task.
     claimed = _claim_tasks(app)
     thumbnail_task = next(
         (task for task in claimed if isinstance(task, GenerateImageThumbnail)), None
@@ -296,21 +316,82 @@ def test_caption_task_skips_non_image_upload(client, test_user, app, monkeypatch
     with app.app_context():
         thumbnail_task.run()
 
-    # Now claim tasks again to get the caption task that was queued by thumbnail
+    # Queue a caption batch and verify unsupported media is skipped.
     monkeypatch.setattr(image_caption_tags, "_HAS_ML_DEPS", True)
     monkeypatch.setattr(
-        GenerateImageCaptionTags,
+        BatchGenerateImageCaptions,
         "_generate_caption",
         lambda self, path: "this should not run",
     )
+    monkeypatch.setattr(
+        BatchGenerateImageCaptions,
+        "_get_moondream_model",
+        lambda self: (object(), object()),
+    )
+
+    with app.app_context():
+        manage.queue_caption_batch(limit=20)
 
     claimed = _claim_tasks(app)
     caption_task = next(
-        (task for task in claimed if isinstance(task, GenerateImageCaptionTags)), None
+        (task for task in claimed if isinstance(task, BatchGenerateImageCaptions)), None
     )
     assert caption_task is not None
 
     with app.app_context():
         caption_task.run()
-        tags = db.session.query(Tag).filter(Tag.uploadid == caption_task.uploadid).all()
+        upload_id = caption_task.upload_ids[0]
+        upload = Upload.query.filter(Upload.id == upload_id).one()
+        assert upload.caption is None
+        tags = db.session.query(Tag).filter(Tag.uploadid == upload_id).all()
         assert tags == []
+
+
+def test_queue_caption_batch_requires_thumbnail(client, test_user, app):
+    with open("tests/test_files/1.png", "rb") as f:
+        img_data = f.read()
+
+    data = {"key": test_user.apiKey, "file": (io.BytesIO(img_data), "needs-thumb.png")}
+    response = client.post("/api/upload", data=data, content_type="multipart/form-data")
+    assert response.status_code == 200
+
+    with app.app_context():
+        manage.queue_caption_batch(limit=20)
+        batch_job = Job.query.filter(Job.tasktype == TaskType.BATCH_CAPTIONS).first()
+        assert batch_job is None
+
+    claimed = _claim_tasks(app)
+    thumbnail_task = next(
+        (task for task in claimed if isinstance(task, GenerateImageThumbnail)), None
+    )
+    assert thumbnail_task is not None
+
+    with app.app_context():
+        thumbnail_task.run()
+        manage.queue_caption_batch(limit=20)
+        batch_job = Job.query.filter(Job.tasktype == TaskType.BATCH_CAPTIONS).first()
+        assert batch_job is not None
+        assert batch_job.status == int(TaskStatus.QUEUED)
+
+
+def test_queue_caption_batch_skips_if_active(client, test_user, app):
+    with open("tests/test_files/1.png", "rb") as f:
+        img_data = f.read()
+
+    data = {"key": test_user.apiKey, "file": (io.BytesIO(img_data), "active-batch.png")}
+    response = client.post("/api/upload", data=data, content_type="multipart/form-data")
+    assert response.status_code == 200
+
+    claimed = _claim_tasks(app)
+    thumbnail_task = next(
+        (task for task in claimed if isinstance(task, GenerateImageThumbnail)), None
+    )
+    assert thumbnail_task is not None
+
+    with app.app_context():
+        thumbnail_task.run()
+        manage.queue_caption_batch(limit=20)
+        manage.queue_caption_batch(limit=20)
+
+        batch_jobs = Job.query.filter(Job.tasktype == TaskType.BATCH_CAPTIONS).all()
+        assert len(batch_jobs) == 1

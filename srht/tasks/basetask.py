@@ -20,7 +20,8 @@ class TaskStatus(IntEnum):
 class TaskType(IntEnum):
     BASE = 0
     THUMBNAIL = 1
-    CAPTION_TAGS = 2
+    BATCH_CAPTIONS = 3
+    BATCH_TAGS = 4
 
 
 class Task:
