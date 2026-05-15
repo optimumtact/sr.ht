@@ -108,6 +108,7 @@ def apply_migrations():
         folder_path = _cfg("migrations")
         if folder_path:
             try:
+
                 def _migration_sort_key(name: str):
                     if not name.endswith(".sql"):
                         return (1, name)

@@ -377,7 +377,7 @@ def uploads_admin(page):
             .scalar_subquery(),
             0.0,
         )
-        filename_match_rank = case((filename_partial_match, 0.6), else_=0.0)
+        filename_match_rank = case((filename_partial_match, 0.25), else_=0.0)
         description_rank = upload_rank + (tag_rank * 0.4) + filename_match_rank
         stmt = stmt.order_by(None).order_by(desc(description_rank), desc(Upload.created))
 
