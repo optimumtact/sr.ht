@@ -100,6 +100,17 @@ def queue_task_for_missing_thumbnails():
         task.queue()
 
 
+def queue_task_for_missing_captions():
+    from srht.objects import Upload
+    from srht.tasks import GenerateImageCaptionTags
+
+    uploads = Upload.query.filter(Upload.caption == None).all()
+    for upload in uploads:
+        task = GenerateImageCaptionTags(upload.id)
+        task.queue()
+        logger.info(f"Queued caption task for upload {upload.id}")
+
+
 def apply_migrations():
     from srht.config import _cfg
 
@@ -253,6 +264,12 @@ def task_fix_stuck():
 def thumbnails_queue_missing():
     with get_app_context():
         queue_task_for_missing_thumbnails()
+
+
+@thumbnails_cli.command("queue-captions")
+def thumbnails_queue_missing_captions():
+    with get_app_context():
+        queue_task_for_missing_captions()
 
 
 if __name__ == "__main__":
