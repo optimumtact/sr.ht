@@ -108,7 +108,17 @@ def apply_migrations():
         folder_path = _cfg("migrations")
         if folder_path:
             try:
-                for filename in os.listdir(folder_path):
+                def _migration_sort_key(name: str):
+                    if not name.endswith(".sql"):
+                        return (1, name)
+
+                    prefix = name.split("_", 1)[0]
+                    if prefix.isdigit():
+                        return (0, int(prefix), name)
+
+                    return (0, float("inf"), name)
+
+                for filename in sorted(os.listdir(folder_path), key=_migration_sort_key):
                     if filename.endswith(".sql"):
                         file_path = os.path.join(folder_path, filename)
 

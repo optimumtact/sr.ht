@@ -2,7 +2,7 @@ from datetime import datetime
 import re
 
 from srht.database import db
-from srht.objects import Upload, User
+from srht.objects import Tag, Upload, User
 
 
 def test_suspended_user_cannot_login(client, app):
@@ -66,7 +66,7 @@ def test_user_uploads_supports_htmx_filtering(client, app):
     )
 
     response = client.get(
-        "/uploads?uploaded_from=2026-01-01&uploaded_to=2026-01-31&original_name=in-range&description=flower",
+        "/uploads?uploaded_from=2026-01-01&uploaded_to=2026-01-31&description=in-range",
         headers={"HX-Request": "true"},
     )
     assert response.status_code == 200
@@ -74,8 +74,7 @@ def test_user_uploads_supports_htmx_filtering(client, app):
     assert b"in-range.png" in response.data
     assert b"out-of-range.png" not in response.data
     assert b"hidden.png" not in response.data
-    assert b'name="original_name" value="in-range"' in response.data
-    assert b'name="description" value="flower"' in response.data
+    assert b'name="description" value="in-range"' in response.data
 
 
 def test_user_upload_actions_are_owner_scoped(client, app):
@@ -104,6 +103,10 @@ def test_user_upload_actions_are_owner_scoped(client, app):
         other_upload.hidden = False
 
         db.session.add_all([owner_upload, other_upload])
+        db.session.flush()
+
+        owner_tag = Tag(uploadid=owner_upload.id, tag="owner tag", relevance=0.8)
+        db.session.add(owner_tag)
         db.session.commit()
         owner_upload_id = owner_upload.id
         other_upload_id = other_upload.id
@@ -129,6 +132,8 @@ def test_user_upload_actions_are_owner_scoped(client, app):
     with app.app_context():
         deleted_upload = db.session.get(Upload, owner_upload_id)
         assert deleted_upload is None
+        deleted_tags = db.session.query(Tag).filter(Tag.uploadid == owner_upload_id).all()
+        assert deleted_tags == []
 
 
 def test_non_admin_cannot_delete_another_users_upload(client, app):

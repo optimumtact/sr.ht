@@ -2,7 +2,7 @@ from datetime import datetime
 import re
 
 from srht.database import db
-from srht.objects import Job, Upload, User
+from srht.objects import Job, Tag, Upload, User
 from srht.tasks.basetask import TaskStatus, TaskType
 
 
@@ -66,7 +66,7 @@ def test_htmx_admin_uploads_renders_for_admin(client, app):
     assert b"All uploads" in response.data
 
 
-def test_htmx_admin_uploads_filters_by_uploader_date_and_original_name(client, app):
+def test_htmx_admin_uploads_filters_by_uploader_date_and_description(client, app):
     _create_admin(app)
     _login_admin(client)
 
@@ -99,13 +99,12 @@ def test_htmx_admin_uploads_filters_by_uploader_date_and_original_name(client, a
         alice_id = alice.id
 
     response = client.get(
-        f"/admin/uploads?uploader_id={alice_id}&uploaded_from=2026-01-12&uploaded_to=2026-01-12&original_name=alice&description=sunlight"
+        f"/admin/uploads?uploader_id={alice_id}&uploaded_from=2026-01-12&uploaded_to=2026-01-12&description=alice"
     )
     assert response.status_code == 200
     assert b"alice-upload.png" in response.data
     assert b"bob-upload.png" not in response.data
-    assert b'name="original_name" value="alice"' in response.data
-    assert b'name="description" value="sunlight"' in response.data
+    assert b'name="description" value="alice"' in response.data
     assert b'name="uploaded_from" value="2026-01-12"' in response.data
     assert b'name="uploaded_to" value="2026-01-12"' in response.data
 
@@ -136,6 +135,10 @@ def test_admin_deletes_other_user_upload_via_admin_endpoint_only(client, app):
         upload.thumbnail = None
         upload.original_name = "owner-upload.png"
         db.session.add(upload)
+        db.session.flush()
+
+        tag = Tag(uploadid=upload.id, tag="admin cleanup", relevance=0.9)
+        db.session.add(tag)
         db.session.commit()
         upload_id = upload.id
 
@@ -154,6 +157,8 @@ def test_admin_deletes_other_user_upload_via_admin_endpoint_only(client, app):
     with app.app_context():
         deleted_upload = db.session.get(Upload, upload_id)
         assert deleted_upload is None
+        deleted_tags = db.session.query(Tag).filter(Tag.uploadid == upload_id).all()
+        assert deleted_tags == []
 
 
 def test_htmx_admin_jobs_renders_for_admin(client, app):

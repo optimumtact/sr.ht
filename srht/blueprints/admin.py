@@ -2,11 +2,12 @@ import os
 import re
 import urllib
 from datetime import datetime, timedelta
+from collections import defaultdict
 
 from flask import Blueprint, Response, abort, make_response, redirect, render_template, request
 from flask_login import current_user
 from flask_wtf import FlaskForm
-from sqlalchemy import desc, func, literal_column, or_, select
+from sqlalchemy import case, desc, func, literal_column, or_, select
 
 from srht.admin_auth import (
     ADMIN_REAUTH_COOKIE_NAME,
@@ -345,7 +346,6 @@ def users_admin_unsuspend(user_id):
 @loginrequired
 @adminrequired
 def uploads_admin(page):
-    original_name_raw = (request.args.get("original_name") or "").strip()
     description_raw = (request.args.get("description") or "").strip()
     uploader_id_raw = (request.args.get("uploader_id") or "").strip()
     uploaded_on = (request.args.get("uploaded_on") or "").strip()
@@ -355,15 +355,13 @@ def uploads_admin(page):
 
     stmt = db.select(Upload).order_by(desc(Upload.created))
 
-    if original_name_raw:
-        stmt = stmt.where(Upload.original_name.ilike(f"%{original_name_raw}%"))
-
     bind = db.session.get_bind()
     is_postgres = bind is not None and bind.dialect.name == "postgresql"
     if description_raw and is_postgres:
         ts_query = func.websearch_to_tsquery("english", description_raw)
         upload_fts_col = literal_column("upload.upload_fts")
         tag_fts_col = literal_column("tags.tag_fts")
+        filename_partial_match = Upload.original_name.ilike(f"%{description_raw}%")
         upload_text_match = upload_fts_col.op("@@")(ts_query)
         tag_match_exists = (
             select(Tag.id)
@@ -371,7 +369,7 @@ def uploads_admin(page):
             .where(tag_fts_col.op("@@")(ts_query))
             .exists()
         )
-        stmt = stmt.where(or_(upload_text_match, tag_match_exists))
+        stmt = stmt.where(or_(upload_text_match, tag_match_exists, filename_partial_match))
         upload_rank = func.coalesce(func.ts_rank(upload_fts_col, ts_query), 0.0)
         tag_rank = func.coalesce(
             select(func.max(func.ts_rank(tag_fts_col, ts_query)))
@@ -379,7 +377,8 @@ def uploads_admin(page):
             .scalar_subquery(),
             0.0,
         )
-        description_rank = upload_rank + (tag_rank * 0.4)
+        filename_match_rank = case((filename_partial_match, 0.6), else_=0.0)
+        description_rank = upload_rank + (tag_rank * 0.4) + filename_match_rank
         stmt = stmt.order_by(None).order_by(desc(description_rank), desc(Upload.created))
 
     uploader_id = None
@@ -419,10 +418,20 @@ def uploads_admin(page):
         per_page=_cfgi("perpage"),
     )
 
+    upload_tags_by_id: dict[int, list[Tag]] = defaultdict(list)
+    upload_ids = [upload.id for upload in pagination.items]
+    if upload_ids:
+        tags = (
+            db.session.query(Tag)
+            .filter(Tag.uploadid.in_(upload_ids))
+            .order_by(Tag.uploadid.asc(), Tag.relevance.desc(), Tag.tag.asc())
+            .all()
+        )
+        for tag in tags:
+            upload_tags_by_id[tag.uploadid].append(tag)
+
     uploader_users = User.query.order_by(User.username).all()
     pagination_query_params = {}
-    if original_name_raw:
-        pagination_query_params["original_name"] = original_name_raw
     if description_raw:
         pagination_query_params["description"] = description_raw
     if uploader_id_raw:
@@ -438,12 +447,12 @@ def uploads_admin(page):
         pagination=pagination,
         endpoint="admin.uploads_admin",
         uploader_users=uploader_users,
-        selected_original_name=original_name_raw,
         selected_description=description_raw,
         selected_uploader_id=uploader_id_raw,
         selected_uploaded_from=uploaded_from_raw,
         selected_uploaded_to=uploaded_to_raw,
         filter_errors=filter_errors,
+        upload_tags_by_id=upload_tags_by_id,
         pagination_query_params=pagination_query_params,
     )
 
@@ -466,6 +475,7 @@ def uploads_admin_delete(upload_id):
         if os.path.exists(thumb_path):
             os.remove(thumb_path)
 
+    db.session.query(Tag).filter(Tag.uploadid == upload.id).delete(synchronize_session=False)
     db.session.delete(upload)
     db.session.commit()
 

@@ -145,9 +145,9 @@ CREATE TABLE public.tags (
     id integer NOT NULL,
     uploadid integer NOT NULL,
     tag character varying(128) NOT NULL,
-    relevance double precision DEFAULT 0 NOT NULL,
-    tag_fts tsvector,
-    created timestamp without time zone DEFAULT now() NOT NULL
+    created timestamp without time zone DEFAULT now() NOT NULL,
+    tag_fts tsvector GENERATED ALWAYS AS (to_tsvector('english'::regconfig, (COALESCE(tag, ''::character varying))::text)) STORED,
+    relevance double precision DEFAULT 0 NOT NULL
 );
 
 
@@ -186,7 +186,7 @@ CREATE TABLE public.upload (
     hidden boolean,
     thumbnail character varying,
     caption text,
-    upload_fts tsvector
+    upload_fts tsvector GENERATED ALWAYS AS ((setweight(to_tsvector('english'::regconfig, (COALESCE(original_name, ''::character varying))::text), 'A'::"char") || setweight(to_tsvector('english'::regconfig, COALESCE(caption, ''::text)), 'B'::"char"))) STORED
 );
 
 

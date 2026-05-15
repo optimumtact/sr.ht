@@ -39,6 +39,7 @@ class GenerateImageThumbnail(Task):
         "mkv",
         "mpg",
         "mpeg",
+        "quicktime",
     }
 
     def __init__(self, uploadid: int, job: Job | None = None, failure_count: int = 0):

@@ -10,7 +10,7 @@ from flask import (
     current_app,
 )
 from flask_login import current_user, login_user, logout_user
-from sqlalchemy import desc, func, literal_column, or_, select
+from sqlalchemy import case, desc, func, literal_column, or_, select
 from srht.objects import Tag, User, Upload
 from srht.config import _cfg, _cfgi
 from srht.common import loginrequired, with_session
@@ -24,6 +24,7 @@ import os
 import urllib
 import re
 import locale
+from collections import defaultdict
 
 html = Blueprint("html", __name__, template_folder="../../templates")
 
@@ -292,7 +293,6 @@ def reset_password(username, confirmation):
 @loginrequired
 def uploads(page):
     page = int(page)
-    original_name_raw = (request.args.get("original_name") or "").strip()
     description_raw = (request.args.get("description") or "").strip()
     uploaded_from_raw = (request.args.get("uploaded_from") or "").strip()
     uploaded_to_raw = (request.args.get("uploaded_to") or "").strip()
@@ -305,15 +305,13 @@ def uploads(page):
         .order_by(desc(Upload.created))
     )
 
-    if original_name_raw:
-        stmt = stmt.where(Upload.original_name.ilike(f"%{original_name_raw}%"))
-
     bind = db.session.get_bind()
     is_postgres = bind is not None and bind.dialect.name == "postgresql"
     if description_raw and is_postgres:
         ts_query = func.websearch_to_tsquery("english", description_raw)
         upload_fts_col = literal_column("upload.upload_fts")
         tag_fts_col = literal_column("tags.tag_fts")
+        filename_partial_match = Upload.original_name.ilike(f"%{description_raw}%")
         upload_text_match = upload_fts_col.op("@@")(ts_query)
         tag_match_exists = (
             select(Tag.id)
@@ -321,7 +319,7 @@ def uploads(page):
             .where(tag_fts_col.op("@@")(ts_query))
             .exists()
         )
-        stmt = stmt.where(or_(upload_text_match, tag_match_exists))
+        stmt = stmt.where(or_(upload_text_match, tag_match_exists, filename_partial_match))
         upload_rank = func.coalesce(func.ts_rank(upload_fts_col, ts_query), 0.0)
         tag_rank = func.coalesce(
             select(func.max(func.ts_rank(tag_fts_col, ts_query)))
@@ -329,7 +327,8 @@ def uploads(page):
             .scalar_subquery(),
             0.0,
         )
-        description_rank = upload_rank + (tag_rank * 0.4)
+        filename_match_rank = case((filename_partial_match, 0.6), else_=0.0)
+        description_rank = upload_rank + (tag_rank * 0.4) + filename_match_rank
         stmt = stmt.order_by(None).order_by(desc(description_rank), desc(Upload.created))
 
     uploaded_from = None
@@ -361,9 +360,19 @@ def uploads(page):
         per_page=_cfgi("perpage"),
     )
 
+    upload_tags_by_id: dict[int, list[Tag]] = defaultdict(list)
+    upload_ids = [upload.id for upload in uploads.items]
+    if upload_ids:
+        tags = (
+            db.session.query(Tag)
+            .filter(Tag.uploadid.in_(upload_ids))
+            .order_by(Tag.uploadid.asc(), Tag.relevance.desc(), Tag.tag.asc())
+            .all()
+        )
+        for tag in tags:
+            upload_tags_by_id[tag.uploadid].append(tag)
+
     pagination_query_params = {}
-    if original_name_raw:
-        pagination_query_params["original_name"] = original_name_raw
     if description_raw:
         pagination_query_params["description"] = description_raw
     if uploaded_from_raw:
@@ -374,11 +383,11 @@ def uploads(page):
     context = {
         "pagination": uploads,
         "endpoint": "html.uploads",
-        "selected_original_name": original_name_raw,
         "selected_description": description_raw,
         "selected_uploaded_from": uploaded_from_raw,
         "selected_uploaded_to": uploaded_to_raw,
         "filter_errors": filter_errors,
+        "upload_tags_by_id": upload_tags_by_id,
         "pagination_query_params": pagination_query_params,
     }
 
@@ -407,6 +416,7 @@ def uploads_delete(upload_id):
         if os.path.exists(thumb_path):
             os.remove(thumb_path)
 
+    db.session.query(Tag).filter(Tag.uploadid == upload.id).delete(synchronize_session=False)
     db.session.delete(upload)
     db.session.commit()
 
@@ -422,5 +432,3 @@ def dev_serve_file(filename):
     if not storage_path:
         abort(404)
     return send_from_directory(storage_path, filename)
-
-
