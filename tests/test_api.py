@@ -2,8 +2,9 @@ import io
 import json
 import os
 from srht.config import _cfg
-from srht.objects import Job, Upload
-from srht.tasks import TaskType, Task, GenerateImageThumbnail
+from srht.objects import Job, Tag, Upload
+from srht.tasks import Task, GenerateImageCaptionTags, GenerateImageThumbnail, TaskType
+import srht.tasks.image_caption_tags as image_caption_tags
 from srht.tasks.basetask import TaskStatus
 from srht.database import db
 
@@ -22,7 +23,7 @@ def test_upload_file(client, test_user):
     url = result["url"]
     path = url.split("/")[-1]
 
-    response = client.get(f"/{path}")
+    response = client.get(f"/f/{path}")
     assert response.status_code == 200
     assert response.data == b"this is a test file"
 
@@ -41,7 +42,7 @@ def test_delete_file(client, test_user):
     assert json.loads(delete_response.data)["success"] is True
 
     # Verify it's gone
-    get_response = client.get(f"/{filename}")
+    get_response = client.get(f"/f/{filename}")
     assert get_response.status_code == 404
 
 
@@ -73,7 +74,8 @@ def test_thumbnail_task_queued(client, test_user, app):
         assert job.status == int(TaskStatus.QUEUED)
 
 
-def test_thumbnail_execution(client, test_user, app):
+def test_thumbnail_execution(client, test_user, app, monkeypatch):
+    monkeypatch.setattr(image_caption_tags, "_HAS_ML_DEPS", False)
     # 1. Upload an image
     with open("tests/test_files/1.png", "rb") as f:
         img_data = f.read()
@@ -85,9 +87,16 @@ def test_thumbnail_execution(client, test_user, app):
 
     # 2. Claim and run the queued task
     with app.app_context():
-        task = Task.get_next_task()
+        task = None
+        for _ in range(3):
+            candidate = Task.get_next_task()
+            assert candidate is not None
+            if isinstance(candidate, GenerateImageThumbnail):
+                task = candidate
+                break
+            candidate.run()
+
         assert task is not None
-        assert isinstance(task, GenerateImageThumbnail)
 
         claimed_job = Job.query.filter(Job.id == task.jobid).first()
         assert claimed_job is not None
@@ -108,12 +117,13 @@ def test_thumbnail_execution(client, test_user, app):
         assert os.path.exists(thumb_full_path)
 
         # 5. Verify it's viewable via HTML route
-        response = client.get(f"/{upload.thumbnail}")
+        response = client.get(f"/f/{upload.thumbnail}")
         assert response.status_code == 200
         assert response.mimetype.startswith("image/")
 
 
-def test_video_thumbnail_execution(client, test_user, app):
+def test_video_thumbnail_execution(client, test_user, app, monkeypatch):
+    monkeypatch.setattr(image_caption_tags, "_HAS_ML_DEPS", False)
     # 1. Upload a video
     video_filename = "500_Tage_20_Prozent_geimpft.webm.480p.vp9.webm"
     with open(f"tests/test_files/{video_filename}", "rb") as f:
@@ -126,9 +136,16 @@ def test_video_thumbnail_execution(client, test_user, app):
 
     # 2. Claim and run the queued task
     with app.app_context():
-        task = Task.get_next_task()
+        task = None
+        for _ in range(3):
+            candidate = Task.get_next_task()
+            assert candidate is not None
+            if isinstance(candidate, GenerateImageThumbnail):
+                task = candidate
+                break
+            candidate.run()
+
         assert task is not None
-        assert isinstance(task, GenerateImageThumbnail)
 
         claimed_job = Job.query.filter(Job.id == task.jobid).first()
         assert claimed_job is not None
@@ -149,6 +166,99 @@ def test_video_thumbnail_execution(client, test_user, app):
         assert os.path.exists(thumb_full_path)
 
         # 5. Verify it's viewable via HTML route
-        response = client.get(f"/{upload.thumbnail}")
+        response = client.get(f"/f/{upload.thumbnail}")
         assert response.status_code == 200
         assert response.mimetype == "image/png"
+
+
+def _claim_tasks(app, max_count=4):
+    claimed = []
+    with app.app_context():
+        for _ in range(max_count):
+            task = Task.get_next_task()
+            if not task:
+                break
+            claimed.append(task)
+    return claimed
+
+
+def test_caption_task_queued(client, test_user, app):
+    with open("tests/test_files/1.png", "rb") as f:
+        img_data = f.read()
+
+    data = {"key": test_user.apiKey, "file": (io.BytesIO(img_data), "1.png")}
+    response = client.post("/api/upload", data=data, content_type="multipart/form-data")
+    assert response.status_code == 200
+    assert json.loads(response.data)["success"] is True
+
+    with app.app_context():
+        thumbnail_job = Job.query.filter(Job.tasktype == TaskType.THUMBNAIL).first()
+        caption_job = Job.query.filter(Job.tasktype == TaskType.CAPTION_TAGS).first()
+        assert thumbnail_job is not None
+        assert caption_job is not None
+        assert thumbnail_job.status == int(TaskStatus.QUEUED)
+        assert caption_job.status == int(TaskStatus.QUEUED)
+
+
+def test_caption_task_execution_inserts_normalized_unique_tags(client, test_user, app, monkeypatch):
+    with open("tests/test_files/1.png", "rb") as f:
+        img_data = f.read()
+
+    data = {"key": test_user.apiKey, "file": (io.BytesIO(img_data), "tagged.png")}
+    response = client.post("/api/upload", data=data, content_type="multipart/form-data")
+    assert response.status_code == 200
+
+    monkeypatch.setattr(image_caption_tags, "_HAS_ML_DEPS", True)
+    monkeypatch.setattr(
+        GenerateImageCaptionTags,
+        "_generate_caption",
+        lambda self, path: "A red flower in a green field under sunlight.",
+    )
+    monkeypatch.setattr(
+        GenerateImageCaptionTags,
+        "_extract_tags",
+        lambda self, caption: ["Red Flower", "flower", "Green Field", "green field", "sunlight"],
+    )
+
+    claimed = _claim_tasks(app)
+    caption_task = next(
+        (task for task in claimed if isinstance(task, GenerateImageCaptionTags)), None
+    )
+    assert caption_task is not None
+
+    with app.app_context():
+        caption_task.run()
+        assert caption_task.status == TaskStatus.COMPLETE
+
+        tags = (
+            db.session.query(Tag.tag)
+            .filter(Tag.uploadid == caption_task.uploadid)
+            .order_by(Tag.tag.asc())
+            .all()
+        )
+        values = [row[0] for row in tags]
+        assert values == ["flower", "green field", "red flower", "sunlight"]
+
+
+def test_caption_task_skips_non_image_upload(client, test_user, app, monkeypatch):
+    data = {"key": test_user.apiKey, "file": (io.BytesIO(b"plain text"), "note.txt")}
+    response = client.post("/api/upload", data=data, content_type="multipart/form-data")
+    assert response.status_code == 200
+
+    monkeypatch.setattr(image_caption_tags, "_HAS_ML_DEPS", True)
+    monkeypatch.setattr(
+        GenerateImageCaptionTags,
+        "_generate_caption",
+        lambda self, path: "this should not run",
+    )
+
+    claimed = _claim_tasks(app)
+    caption_task = next(
+        (task for task in claimed if isinstance(task, GenerateImageCaptionTags)), None
+    )
+    assert caption_task is not None
+
+    with app.app_context():
+        caption_task.run()
+        tags = db.session.query(Tag).filter(Tag.uploadid == caption_task.uploadid).all()
+        assert tags == []

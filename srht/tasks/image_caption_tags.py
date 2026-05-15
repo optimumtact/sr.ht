@@ -1,0 +1,204 @@
+import logging
+import re
+from pathlib import Path
+from typing import Any
+
+import magic
+from sqlalchemy import func
+
+from srht.database import db
+from srht.objects import Job, Tag, Upload
+from srht.tasks import Task, TaskType
+
+logger = logging.getLogger(__name__)
+
+_HAS_ML_DEPS: bool | None = None
+_ML_IMPORT_ERROR: str | None = None
+_PIL_IMAGE: Any = None
+_KEYBERT_CLASS: Any = None
+_AUTO_MODEL_CLASS: Any = None
+_AUTO_TOKENIZER_CLASS: Any = None
+
+_MOONDREAM_MODEL = None
+_MOONDREAM_TOKENIZER = None
+_KEYBERT_MODEL = None
+
+
+class GenerateImageCaptionTags(Task):
+    """Generate image tags from a moondream2 caption via KeyBERT."""
+
+    type = TaskType.CAPTION_TAGS
+    ALLOWED_MIME_TYPES = {
+        "image/jpeg",
+        "image/png",
+        "image/gif",
+        "image/webp",
+    }
+
+    def __init__(self, uploadid: int, job: Job | None = None, failure_count: int = 0):
+        self.uploadid = uploadid
+        super().__init__(job=job, failure_count=failure_count)
+
+    def get_as_json(self) -> dict:
+        data = super().get_as_json()
+        data.update({"uploadid": self.uploadid})
+        return data
+
+    def execute(self):
+        uploaded_file = Upload.query.filter(Upload.id == self.uploadid).one_or_none()
+        if uploaded_file is None:
+            self.log_message(f"Upload {self.uploadid} no longer exists, skipping")
+            return
+
+        uploaded_file_path = uploaded_file.get_storage_path()
+        guessed_mimetype = magic.from_file(uploaded_file_path, mime=True)
+        if guessed_mimetype not in self.ALLOWED_MIME_TYPES:
+            self.log_message(
+                (
+                    "Skipping caption/tag generation for unsupported mimetype "
+                    f"{guessed_mimetype!r} on upload {self.uploadid}"
+                )
+            )
+            return
+
+        if not self._ensure_ml_dependencies():
+            self.log_message(
+                "Caption/tag dependencies are unavailable, skipping task "
+                f"for upload {self.uploadid}: {_ML_IMPORT_ERROR}",
+                log_level=logging.WARNING,
+            )
+            return
+
+        caption = self._generate_caption(uploaded_file_path)
+        if not caption:
+            self.log_message(f"No caption generated for upload {self.uploadid}, skipping")
+            return
+
+        tags = self._extract_tags(caption)
+        if not tags:
+            self.log_message(f"No tags extracted for upload {self.uploadid}, skipping")
+            return
+
+        normalized_tags = self._normalize_tags(tags)
+        if not normalized_tags:
+            self.log_message(f"No normalized tags remained for upload {self.uploadid}, skipping")
+            return
+
+        existing_tags = {
+            row[0]
+            for row in db.session.query(Tag.tag)
+            .filter(Tag.uploadid == self.uploadid)
+            .filter(func.lower(Tag.tag).in_(normalized_tags))
+            .all()
+        }
+        to_insert = [tag for tag in normalized_tags if tag not in existing_tags]
+        for tag in to_insert:
+            db.session.add(Tag(uploadid=self.uploadid, tag=tag))
+
+        self.log_message(
+            (
+                f"Generated caption/tag metadata for upload {self.uploadid}: "
+                f"caption={caption!r}, inserted_tags={len(to_insert)}, total_tags={len(normalized_tags)}"
+            )
+        )
+
+    def _get_moondream_model(self):
+        global _MOONDREAM_MODEL, _MOONDREAM_TOKENIZER
+
+        if not self._ensure_ml_dependencies():
+            raise RuntimeError("ML dependencies are not available")
+
+        if _MOONDREAM_MODEL is None or _MOONDREAM_TOKENIZER is None:
+            _MOONDREAM_MODEL = _AUTO_MODEL_CLASS.from_pretrained(
+                "vikhyatk/moondream2",
+                trust_remote_code=True,
+            )
+            _MOONDREAM_TOKENIZER = _AUTO_TOKENIZER_CLASS.from_pretrained(
+                "vikhyatk/moondream2",
+                trust_remote_code=True,
+            )
+
+        return _MOONDREAM_MODEL, _MOONDREAM_TOKENIZER
+
+    def _get_keybert_model(self):
+        global _KEYBERT_MODEL
+
+        if not self._ensure_ml_dependencies():
+            raise RuntimeError("ML dependencies are not available")
+
+        if _KEYBERT_MODEL is None:
+            _KEYBERT_MODEL = _KEYBERT_CLASS()
+
+        return _KEYBERT_MODEL
+
+    def _generate_caption(self, uploaded_file_path: Path) -> str:
+        model, tokenizer = self._get_moondream_model()
+        with _PIL_IMAGE.open(uploaded_file_path) as image:
+            if hasattr(model, "encode_image") and hasattr(model, "answer_question"):
+                encoded_image = model.encode_image(image)
+                caption = model.answer_question(
+                    encoded_image,
+                    "Describe this image in one concise sentence.",
+                    tokenizer,
+                )
+                if caption:
+                    return str(caption).strip()
+
+            if hasattr(model, "caption"):
+                caption = model.caption(image)
+                if isinstance(caption, dict):
+                    return str(caption.get("caption") or caption.get("text") or "").strip()
+                return str(caption).strip()
+
+        return ""
+
+    def _ensure_ml_dependencies(self) -> bool:
+        global _HAS_ML_DEPS, _ML_IMPORT_ERROR
+        global _PIL_IMAGE, _KEYBERT_CLASS, _AUTO_MODEL_CLASS, _AUTO_TOKENIZER_CLASS
+
+        if _HAS_ML_DEPS is not None:
+            return _HAS_ML_DEPS
+
+        try:
+            from PIL import Image
+            from keybert import KeyBERT
+            from transformers import AutoModelForCausalLM, AutoTokenizer
+
+            _PIL_IMAGE = Image
+            _KEYBERT_CLASS = KeyBERT
+            _AUTO_MODEL_CLASS = AutoModelForCausalLM
+            _AUTO_TOKENIZER_CLASS = AutoTokenizer
+            _HAS_ML_DEPS = True
+            _ML_IMPORT_ERROR = None
+        except Exception as exc:
+            _HAS_ML_DEPS = False
+            _ML_IMPORT_ERROR = str(exc)
+
+        return _HAS_ML_DEPS
+
+    def _extract_tags(self, caption: str) -> list[str]:
+        keybert_model = self._get_keybert_model()
+        keyphrases = keybert_model.extract_keywords(
+            caption,
+            keyphrase_ngram_range=(1, 1),
+            stop_words="english",
+            top_n=12,
+        )
+        return [str(item[0]) for item in keyphrases if item and item[0]]
+
+    def _normalize_tags(self, tags: list[str]) -> list[str]:
+        normalized = []
+        seen = set()
+        for tag in tags:
+            cleaned = re.sub(r"\s+", " ", tag.strip().lower())
+            cleaned = re.sub(r"[^a-z0-9\- ]", "", cleaned)
+            cleaned = cleaned.strip()
+            if len(cleaned) < 2:
+                continue
+            if len(cleaned) > 64:
+                cleaned = cleaned[:64].strip()
+            if not cleaned or cleaned in seen:
+                continue
+            seen.add(cleaned)
+            normalized.append(cleaned)
+        return normalized

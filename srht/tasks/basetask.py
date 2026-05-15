@@ -20,6 +20,7 @@ class TaskStatus(IntEnum):
 class TaskType(IntEnum):
     BASE = 0
     THUMBNAIL = 1
+    CAPTION_TAGS = 2
 
 
 class Task:
@@ -135,8 +136,7 @@ class Task:
     def get_next_task() -> "Task | None":
         dialect_name = db.session.bind.dialect.name if db.session.bind else ""
         if dialect_name == "postgresql":
-            sql = text(
-                """
+            sql = text("""
                 WITH next_job AS (
                     SELECT id
                     FROM job
@@ -152,12 +152,10 @@ class Task:
                 FROM next_job
                 WHERE job.id = next_job.id
                 RETURNING job.id;
-                """
-            )
+                """)
         else:
             # SQLite does not support FOR UPDATE SKIP LOCKED.
-            sql = text(
-                """
+            sql = text("""
                 UPDATE job
                 SET status = :claimed_status,
                     processid = :process_id,
@@ -171,8 +169,7 @@ class Task:
                 )
                 AND status = :queued_status
                 RETURNING id;
-                """
-            )
+                """)
 
         result = db.session.execute(
             sql,

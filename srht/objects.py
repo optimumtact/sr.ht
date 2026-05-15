@@ -7,9 +7,9 @@ import bcrypt
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy import (
     Boolean,
-    CheckConstraint,
     Column,
     JSON,
+    UniqueConstraint,
     Text,
     DateTime,
     ForeignKey,
@@ -30,6 +30,12 @@ class Upload(db.Model):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey("user.id"))
     user = relationship("User", backref=backref("upload", order_by=id, lazy="dynamic"))
+    tags = relationship(
+        "Tag",
+        back_populates="upload",
+        cascade="all, delete-orphan",
+        lazy="dynamic",
+    )
     hash = Column(String, nullable=False)
     shorthash = Column(String, nullable=True)
     thumbnail = Column(String, nullable=True)
@@ -171,6 +177,26 @@ class User(db.Model):
 
     def get_id(self):
         return self.username
+
+
+class Tag(db.Model):
+    __tablename__ = "tags"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    uploadid: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey("upload.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    upload = relationship("Upload", back_populates="tags")
+    tag: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    created: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    __table_args__ = (UniqueConstraint("uploadid", "tag", name="uq_tags_uploadid_tag"),)
+
+    def __init__(self, uploadid: int, tag: str):
+        self.uploadid = uploadid
+        self.tag = tag
+        self.created = datetime.utcnow()
 
 
 class JobLog(db.Model):
