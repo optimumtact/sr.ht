@@ -5,6 +5,7 @@ FROM base AS builder
 # Builder image
 RUN mkdir /install
 RUN mkdir /app
+RUN mkdir /app/models
 ENV PATH="/root/.local/bin:${PATH}"
 RUN export DEBIAN_FRONTEND=noninteractive && apt update 
 RUN export DEBIAN_FRONTEND=noninteractive && apt-get -yq install gcc python3-dev make curl g++ ffmpeg
@@ -18,6 +19,11 @@ WORKDIR /src
 COPY pyproject.toml uv.lock ./
 ENV UV_PROJECT_ENVIRONMENT=/venv
 RUN uv sync --frozen --no-dev --no-install-project
+
+# Download and cache ML models
+COPY download_models.py /app/download_models.py
+ENV HF_HOME=/app/models
+RUN /venv/bin/python /app/download_models.py
 
 # Now do the static images
 COPY _static /src/_static
@@ -35,11 +41,14 @@ FROM base
 # set environment variables
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
+ENV HF_HOME=/app/models
 
 RUN export DEBIAN_FRONTEND=noninteractive && apt update 
 RUN export DEBIAN_FRONTEND=noninteractive && apt-get -yq install nginx postgresql-client ffmpeg
 # Copy requirements from builder
 COPY --from=builder /venv /venv
+# Copy pre-cached models
+COPY --from=builder /app/models /app/models
 WORKDIR /app
 # Bundle app sources
 COPY Procfile Procfile

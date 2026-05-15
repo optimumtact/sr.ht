@@ -1,4 +1,5 @@
 import logging
+import os
 import re
 from pathlib import Path
 from typing import Any
@@ -11,6 +12,10 @@ from srht.objects import Job, Tag, Upload
 from srht.tasks import Task, TaskType
 
 logger = logging.getLogger(__name__)
+
+# Set HF_HOME to use pre-cached models in Docker, or default to user home
+if not os.environ.get("HF_HOME"):
+    os.environ["HF_HOME"] = os.path.expanduser("~/.cache/huggingface")
 
 _HAS_ML_DEPS: bool | None = None
 _ML_IMPORT_ERROR: str | None = None
@@ -141,6 +146,7 @@ class GenerateImageCaptionTags(Task):
             _MOONDREAM_MODEL = _AUTO_MODEL_CLASS.from_pretrained(
                 "vikhyatk/moondream2",
                 trust_remote_code=True,
+                attn_implementation="eager",
             )
             _MOONDREAM_TOKENIZER = _AUTO_TOKENIZER_CLASS.from_pretrained(
                 "vikhyatk/moondream2",
