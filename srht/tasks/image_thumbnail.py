@@ -10,6 +10,7 @@ from PIL import Image
 from srht.database import db
 from srht.objects import Job, Upload
 from srht.tasks import Task, TaskType
+from srht.tasks.image_caption_tags import GenerateImageCaptionTags
 
 logger = logging.getLogger(__name__)
 
@@ -56,6 +57,11 @@ class GenerateImageThumbnail(Task):
         )
         uploaded_file.thumbnail = "thumbnails" + "/" + thumbnail.name
         db.session.add(uploaded_file)
+        db.session.commit()
+
+        # Queue caption/tag generation after thumbnail is ready
+        caption_task = GenerateImageCaptionTags(self.uploadid)
+        caption_task.queue()
 
     def is_valid_image_pillow(self, file_name: Path) -> bool:
         """Check if an image is a valid iamge

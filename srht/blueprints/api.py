@@ -9,7 +9,7 @@ from srht.common import adminrequired, file_link, json_output, with_session
 from srht.config import _cfg
 from srht.database import db
 from srht.objects import Upload, User
-from srht.tasks import GenerateImageCaptionTags, GenerateImageThumbnail
+from srht.tasks import GenerateImageThumbnail
 
 api = Blueprint("api", __name__, template_folder="../../templates")
 
@@ -68,8 +68,6 @@ def upload():
 
     db.session.add(upload)
     db.session.commit()
-    caption_task = GenerateImageCaptionTags(upload.id)
-    caption_task.queue()
     task = GenerateImageThumbnail(upload.id)
     task.queue()
     return {

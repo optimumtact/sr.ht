@@ -39,6 +39,7 @@ class Upload(db.Model):
     hash = Column(String, nullable=False)
     shorthash = Column(String, nullable=True)
     thumbnail = Column(String, nullable=True)
+    caption = Column(Text, nullable=True)
     path = Column(String, nullable=False)
     created = Column(DateTime)
     original_name = Column(Unicode(512))

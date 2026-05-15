@@ -5,6 +5,7 @@ from srht.config import _cfg
 from srht.objects import Job, Tag, Upload
 from srht.tasks import Task, GenerateImageCaptionTags, GenerateImageThumbnail, TaskType
 import srht.tasks.image_caption_tags as image_caption_tags
+import srht.tasks.image_thumbnail as image_thumbnail
 from srht.tasks.basetask import TaskStatus
 from srht.database import db
 
@@ -182,7 +183,7 @@ def _claim_tasks(app, max_count=4):
     return claimed
 
 
-def test_caption_task_queued(client, test_user, app):
+def test_caption_task_queued(client, test_user, app, monkeypatch):
     with open("tests/test_files/1.png", "rb") as f:
         img_data = f.read()
 
@@ -192,11 +193,28 @@ def test_caption_task_queued(client, test_user, app):
     assert json.loads(response.data)["success"] is True
 
     with app.app_context():
+        # Thumbnail should be queued immediately after upload
         thumbnail_job = Job.query.filter(Job.tasktype == TaskType.THUMBNAIL).first()
-        caption_job = Job.query.filter(Job.tasktype == TaskType.CAPTION_TAGS).first()
         assert thumbnail_job is not None
-        assert caption_job is not None
         assert thumbnail_job.status == int(TaskStatus.QUEUED)
+
+        # Caption job should not exist yet
+        caption_job = Job.query.filter(Job.tasktype == TaskType.CAPTION_TAGS).first()
+        assert caption_job is None
+
+    # Execute thumbnail task
+    claimed = _claim_tasks(app)
+    thumbnail_task = next(
+        (task for task in claimed if isinstance(task, GenerateImageThumbnail)), None
+    )
+    assert thumbnail_task is not None
+
+    with app.app_context():
+        thumbnail_task.run()
+
+        # Now caption job should be queued after thumbnail completes
+        caption_job = Job.query.filter(Job.tasktype == TaskType.CAPTION_TAGS).first()
+        assert caption_job is not None
         assert caption_job.status == int(TaskStatus.QUEUED)
 
 
@@ -208,6 +226,17 @@ def test_caption_task_execution_inserts_normalized_unique_tags(client, test_user
     response = client.post("/api/upload", data=data, content_type="multipart/form-data")
     assert response.status_code == 200
 
+    # First, execute the thumbnail task (caption is queued after it completes)
+    claimed = _claim_tasks(app)
+    thumbnail_task = next(
+        (task for task in claimed if isinstance(task, GenerateImageThumbnail)), None
+    )
+    assert thumbnail_task is not None
+
+    with app.app_context():
+        thumbnail_task.run()
+
+    # Now claim tasks again to get the caption task that was queued by thumbnail
     monkeypatch.setattr(image_caption_tags, "_HAS_ML_DEPS", True)
     monkeypatch.setattr(
         GenerateImageCaptionTags,
@@ -245,6 +274,17 @@ def test_caption_task_skips_non_image_upload(client, test_user, app, monkeypatch
     response = client.post("/api/upload", data=data, content_type="multipart/form-data")
     assert response.status_code == 200
 
+    # First, execute the thumbnail task (caption is queued after it completes)
+    claimed = _claim_tasks(app)
+    thumbnail_task = next(
+        (task for task in claimed if isinstance(task, GenerateImageThumbnail)), None
+    )
+    assert thumbnail_task is not None
+
+    with app.app_context():
+        thumbnail_task.run()
+
+    # Now claim tasks again to get the caption task that was queued by thumbnail
     monkeypatch.setattr(image_caption_tags, "_HAS_ML_DEPS", True)
     monkeypatch.setattr(
         GenerateImageCaptionTags,

@@ -138,23 +138,6 @@ ALTER SEQUENCE public.pending_job_id_seq OWNED BY public.pending_job.id;
 
 
 --
--- Name: upload; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.upload (
-    id integer NOT NULL,
-    user_id integer,
-    hash character varying NOT NULL,
-    shorthash character varying,
-    path character varying NOT NULL,
-    created timestamp without time zone,
-    original_name character varying(512),
-    hidden boolean,
-    thumbnail character varying
-);
-
-
---
 -- Name: tags; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -162,7 +145,7 @@ CREATE TABLE public.tags (
     id integer NOT NULL,
     uploadid integer NOT NULL,
     tag character varying(128) NOT NULL,
-    created timestamp without time zone NOT NULL
+    created timestamp without time zone DEFAULT now() NOT NULL
 );
 
 
@@ -184,6 +167,24 @@ CREATE SEQUENCE public.tags_id_seq
 --
 
 ALTER SEQUENCE public.tags_id_seq OWNED BY public.tags.id;
+
+
+--
+-- Name: upload; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.upload (
+    id integer NOT NULL,
+    user_id integer,
+    hash character varying NOT NULL,
+    shorthash character varying,
+    path character varying NOT NULL,
+    created timestamp without time zone,
+    original_name character varying(512),
+    hidden boolean,
+    thumbnail character varying,
+    caption text
+);
 
 
 --
@@ -267,17 +268,17 @@ ALTER TABLE ONLY public.pending_job ALTER COLUMN id SET DEFAULT nextval('public.
 
 
 --
--- Name: upload id; Type: DEFAULT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.upload ALTER COLUMN id SET DEFAULT nextval('public.upload_id_seq'::regclass);
-
-
---
 -- Name: tags id; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.tags ALTER COLUMN id SET DEFAULT nextval('public.tags_id_seq'::regclass);
+
+
+--
+-- Name: upload id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.upload ALTER COLUMN id SET DEFAULT nextval('public.upload_id_seq'::regclass);
 
 
 --
@@ -312,19 +313,19 @@ ALTER TABLE ONLY public.pending_job
 
 
 --
--- Name: upload upload_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.upload
-    ADD CONSTRAINT upload_pkey PRIMARY KEY (id);
-
-
---
 -- Name: tags tags_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.tags
     ADD CONSTRAINT tags_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: upload upload_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.upload
+    ADD CONSTRAINT upload_pkey PRIMARY KEY (id);
 
 
 --
@@ -351,12 +352,6 @@ CREATE INDEX ix_job_created ON public.job USING btree (created);
 
 
 --
--- Name: ix_job_status; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX ix_job_status ON public.job USING btree (status);
-
-
 -- Name: ix_job_log_created; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -371,17 +366,10 @@ CREATE INDEX ix_job_log_job_id ON public.job_log USING btree (job_id);
 
 
 --
--- Name: ix_user_email; Type: INDEX; Schema: public; Owner: -
+-- Name: ix_job_status; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX ix_user_email ON public."user" USING btree (email);
-
-
---
--- Name: ix_user_username; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX ix_user_username ON public."user" USING btree (username);
+CREATE INDEX ix_job_status ON public.job USING btree (status);
 
 
 --
@@ -396,6 +384,20 @@ CREATE INDEX ix_tags_tag ON public.tags USING btree (tag);
 --
 
 CREATE INDEX ix_tags_uploadid ON public.tags USING btree (uploadid);
+
+
+--
+-- Name: ix_user_email; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX ix_user_email ON public."user" USING btree (email);
+
+
+--
+-- Name: ix_user_username; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX ix_user_username ON public."user" USING btree (username);
 
 
 --
@@ -415,19 +417,19 @@ ALTER TABLE ONLY public.pending_job
 
 
 --
--- Name: upload upload_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.upload
-    ADD CONSTRAINT upload_user_id_fkey FOREIGN KEY (user_id) REFERENCES public."user"(id);
-
-
---
 -- Name: tags tags_uploadid_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.tags
     ADD CONSTRAINT tags_uploadid_fkey FOREIGN KEY (uploadid) REFERENCES public.upload(id) ON DELETE CASCADE;
+
+
+--
+-- Name: upload upload_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.upload
+    ADD CONSTRAINT upload_user_id_fkey FOREIGN KEY (user_id) REFERENCES public."user"(id);
 
 
 --

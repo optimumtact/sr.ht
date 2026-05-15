@@ -1,0 +1,1 @@
+ALTER TABLE public.upload ADD COLUMN caption TEXT DEFAULT NULL;
