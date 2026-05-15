@@ -8,6 +8,7 @@ from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy import (
     Boolean,
     Column,
+    Float,
     JSON,
     UniqueConstraint,
     Text,
@@ -191,12 +192,14 @@ class Tag(db.Model):
     )
     upload = relationship("Upload", back_populates="tags")
     tag: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    relevance: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
     created: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     __table_args__ = (UniqueConstraint("uploadid", "tag", name="uq_tags_uploadid_tag"),)
 
-    def __init__(self, uploadid: int, tag: str):
+    def __init__(self, uploadid: int, tag: str, relevance: float = 0.0):
         self.uploadid = uploadid
         self.tag = tag
+        self.relevance = relevance
         self.created = datetime.utcnow()
 
 

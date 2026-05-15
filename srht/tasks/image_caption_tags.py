@@ -97,10 +97,12 @@ class GenerateImageCaptionTags(Task):
             self.log_message(f"No tags extracted for upload {self.uploadid}, skipping")
             return
 
-        normalized_tags = self._normalize_tags(tags)
-        if not normalized_tags:
+        normalized_tags_with_scores = self._normalize_tags(tags)
+        if not normalized_tags_with_scores:
             self.log_message(f"No normalized tags remained for upload {self.uploadid}, skipping")
             return
+
+        normalized_tags = list(normalized_tags_with_scores.keys())
 
         existing_tags = {
             row[0]
@@ -111,7 +113,13 @@ class GenerateImageCaptionTags(Task):
         }
         to_insert = [tag for tag in normalized_tags if tag not in existing_tags]
         for tag in to_insert:
-            db.session.add(Tag(uploadid=self.uploadid, tag=tag))
+            db.session.add(
+                Tag(
+                    uploadid=self.uploadid,
+                    tag=tag,
+                    relevance=normalized_tags_with_scores[tag],
+                )
+            )
 
         self.log_message(
             (
@@ -197,20 +205,23 @@ class GenerateImageCaptionTags(Task):
 
         return _HAS_ML_DEPS
 
-    def _extract_tags(self, caption: str) -> list[str]:
+    def _extract_tags(self, caption: str) -> list[tuple[str, float]]:
         keybert_model = self._get_keybert_model()
         keyphrases = keybert_model.extract_keywords(
             caption,
-            keyphrase_ngram_range=(1, 1),
+            keyphrase_ngram_range=(1, 2),
             stop_words="english",
             top_n=12,
         )
-        return [str(item[0]) for item in keyphrases if item and item[0]]
+        return [
+            (str(item[0]), float(item[1]))
+            for item in keyphrases
+            if item and len(item) >= 2 and item[0]
+        ]
 
-    def _normalize_tags(self, tags: list[str]) -> list[str]:
-        normalized = []
-        seen = set()
-        for tag in tags:
+    def _normalize_tags(self, tags: list[tuple[str, float]]) -> dict[str, float]:
+        normalized: dict[str, float] = {}
+        for tag, relevance in tags:
             cleaned = re.sub(r"\s+", " ", tag.strip().lower())
             cleaned = re.sub(r"[^a-z0-9\- ]", "", cleaned)
             cleaned = cleaned.strip()
@@ -218,8 +229,9 @@ class GenerateImageCaptionTags(Task):
                 continue
             if len(cleaned) > 64:
                 cleaned = cleaned[:64].strip()
-            if not cleaned or cleaned in seen:
+            if not cleaned:
                 continue
-            seen.add(cleaned)
-            normalized.append(cleaned)
+            current = normalized.get(cleaned)
+            if current is None or relevance > current:
+                normalized[cleaned] = relevance
         return normalized

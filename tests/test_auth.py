@@ -66,7 +66,7 @@ def test_user_uploads_supports_htmx_filtering(client, app):
     )
 
     response = client.get(
-        "/uploads?uploaded_from=2026-01-01&uploaded_to=2026-01-31&original_name=in-range",
+        "/uploads?uploaded_from=2026-01-01&uploaded_to=2026-01-31&original_name=in-range&description=flower",
         headers={"HX-Request": "true"},
     )
     assert response.status_code == 200
@@ -75,6 +75,7 @@ def test_user_uploads_supports_htmx_filtering(client, app):
     assert b"out-of-range.png" not in response.data
     assert b"hidden.png" not in response.data
     assert b'name="original_name" value="in-range"' in response.data
+    assert b'name="description" value="flower"' in response.data
 
 
 def test_user_upload_actions_are_owner_scoped(client, app):

@@ -145,6 +145,8 @@ CREATE TABLE public.tags (
     id integer NOT NULL,
     uploadid integer NOT NULL,
     tag character varying(128) NOT NULL,
+    relevance double precision DEFAULT 0 NOT NULL,
+    tag_fts tsvector,
     created timestamp without time zone DEFAULT now() NOT NULL
 );
 
@@ -183,7 +185,8 @@ CREATE TABLE public.upload (
     original_name character varying(512),
     hidden boolean,
     thumbnail character varying,
-    caption text
+    caption text,
+    upload_fts tsvector
 );
 
 
@@ -380,10 +383,24 @@ CREATE INDEX ix_tags_tag ON public.tags USING btree (tag);
 
 
 --
+-- Name: ix_tags_tag_fts; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX ix_tags_tag_fts ON public.tags USING gin (tag_fts);
+
+
+--
 -- Name: ix_tags_uploadid; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX ix_tags_uploadid ON public.tags USING btree (uploadid);
+
+
+--
+-- Name: ix_upload_upload_fts; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX ix_upload_upload_fts ON public.upload USING gin (upload_fts);
 
 
 --

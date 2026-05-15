@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 from flask import Blueprint, Response, abort, make_response, redirect, render_template, request
 from flask_login import current_user
 from flask_wtf import FlaskForm
-from sqlalchemy import desc
+from sqlalchemy import desc, func, literal_column, or_, select
 
 from srht.admin_auth import (
     ADMIN_REAUTH_COOKIE_NAME,
@@ -16,7 +16,7 @@ from srht.admin_auth import (
 from srht.common import adminreauthrequired, adminrequired, loginrequired
 from srht.config import _cfg, _cfgi
 from srht.database import db
-from srht.objects import Job, JobLog, Upload, User
+from srht.objects import Job, JobLog, Tag, Upload, User
 from srht.tasks import Task
 from srht.tasks.basetask import TaskStatus, TaskType
 
@@ -346,6 +346,7 @@ def users_admin_unsuspend(user_id):
 @adminrequired
 def uploads_admin(page):
     original_name_raw = (request.args.get("original_name") or "").strip()
+    description_raw = (request.args.get("description") or "").strip()
     uploader_id_raw = (request.args.get("uploader_id") or "").strip()
     uploaded_on = (request.args.get("uploaded_on") or "").strip()
     uploaded_from_raw = (request.args.get("uploaded_from") or uploaded_on).strip()
@@ -356,6 +357,30 @@ def uploads_admin(page):
 
     if original_name_raw:
         stmt = stmt.where(Upload.original_name.ilike(f"%{original_name_raw}%"))
+
+    bind = db.session.get_bind()
+    is_postgres = bind is not None and bind.dialect.name == "postgresql"
+    if description_raw and is_postgres:
+        ts_query = func.websearch_to_tsquery("english", description_raw)
+        upload_fts_col = literal_column("upload.upload_fts")
+        tag_fts_col = literal_column("tags.tag_fts")
+        upload_text_match = upload_fts_col.op("@@")(ts_query)
+        tag_match_exists = (
+            select(Tag.id)
+            .where(Tag.uploadid == Upload.id)
+            .where(tag_fts_col.op("@@")(ts_query))
+            .exists()
+        )
+        stmt = stmt.where(or_(upload_text_match, tag_match_exists))
+        upload_rank = func.coalesce(func.ts_rank(upload_fts_col, ts_query), 0.0)
+        tag_rank = func.coalesce(
+            select(func.max(func.ts_rank(tag_fts_col, ts_query)))
+            .where(Tag.uploadid == Upload.id)
+            .scalar_subquery(),
+            0.0,
+        )
+        description_rank = upload_rank + (tag_rank * 0.4)
+        stmt = stmt.order_by(None).order_by(desc(description_rank), desc(Upload.created))
 
     uploader_id = None
     if uploader_id_raw:
@@ -398,6 +423,8 @@ def uploads_admin(page):
     pagination_query_params = {}
     if original_name_raw:
         pagination_query_params["original_name"] = original_name_raw
+    if description_raw:
+        pagination_query_params["description"] = description_raw
     if uploader_id_raw:
         pagination_query_params["uploader_id"] = uploader_id_raw
     if uploaded_from_raw:
@@ -412,6 +439,7 @@ def uploads_admin(page):
         endpoint="admin.uploads_admin",
         uploader_users=uploader_users,
         selected_original_name=original_name_raw,
+        selected_description=description_raw,
         selected_uploader_id=uploader_id_raw,
         selected_uploaded_from=uploaded_from_raw,
         selected_uploaded_to=uploaded_to_raw,

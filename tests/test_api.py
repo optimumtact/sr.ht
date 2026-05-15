@@ -246,7 +246,13 @@ def test_caption_task_execution_inserts_normalized_unique_tags(client, test_user
     monkeypatch.setattr(
         GenerateImageCaptionTags,
         "_extract_tags",
-        lambda self, caption: ["Red Flower", "flower", "Green Field", "green field", "sunlight"],
+        lambda self, caption: [
+            ("Red Flower", 0.91),
+            ("flower", 0.52),
+            ("Green Field", 0.84),
+            ("green field", 0.77),
+            ("sunlight", 0.64),
+        ],
     )
 
     claimed = _claim_tasks(app)
@@ -260,13 +266,19 @@ def test_caption_task_execution_inserts_normalized_unique_tags(client, test_user
         assert caption_task.status == TaskStatus.COMPLETE
 
         tags = (
-            db.session.query(Tag.tag)
+            db.session.query(Tag.tag, Tag.relevance)
             .filter(Tag.uploadid == caption_task.uploadid)
             .order_by(Tag.tag.asc())
             .all()
         )
         values = [row[0] for row in tags]
         assert values == ["flower", "green field", "red flower", "sunlight"]
+        relevances = {row[0]: row[1] for row in tags}
+        assert relevances["red flower"] == 0.91
+        # Keep the higher score when normalized duplicates collapse.
+        assert relevances["green field"] == 0.84
+        assert relevances["flower"] == 0.52
+        assert relevances["sunlight"] == 0.64
 
 
 def test_caption_task_skips_non_image_upload(client, test_user, app, monkeypatch):

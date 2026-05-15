@@ -10,8 +10,8 @@ from flask import (
     current_app,
 )
 from flask_login import current_user, login_user, logout_user
-from sqlalchemy import desc
-from srht.objects import User, Upload
+from sqlalchemy import desc, func, literal_column, or_, select
+from srht.objects import Tag, User, Upload
 from srht.config import _cfg, _cfgi
 from srht.common import loginrequired, with_session
 from srht.admin_auth import clear_admin_reauth_cookie
@@ -293,6 +293,7 @@ def reset_password(username, confirmation):
 def uploads(page):
     page = int(page)
     original_name_raw = (request.args.get("original_name") or "").strip()
+    description_raw = (request.args.get("description") or "").strip()
     uploaded_from_raw = (request.args.get("uploaded_from") or "").strip()
     uploaded_to_raw = (request.args.get("uploaded_to") or "").strip()
     filter_errors = []
@@ -306,6 +307,30 @@ def uploads(page):
 
     if original_name_raw:
         stmt = stmt.where(Upload.original_name.ilike(f"%{original_name_raw}%"))
+
+    bind = db.session.get_bind()
+    is_postgres = bind is not None and bind.dialect.name == "postgresql"
+    if description_raw and is_postgres:
+        ts_query = func.websearch_to_tsquery("english", description_raw)
+        upload_fts_col = literal_column("upload.upload_fts")
+        tag_fts_col = literal_column("tags.tag_fts")
+        upload_text_match = upload_fts_col.op("@@")(ts_query)
+        tag_match_exists = (
+            select(Tag.id)
+            .where(Tag.uploadid == Upload.id)
+            .where(tag_fts_col.op("@@")(ts_query))
+            .exists()
+        )
+        stmt = stmt.where(or_(upload_text_match, tag_match_exists))
+        upload_rank = func.coalesce(func.ts_rank(upload_fts_col, ts_query), 0.0)
+        tag_rank = func.coalesce(
+            select(func.max(func.ts_rank(tag_fts_col, ts_query)))
+            .where(Tag.uploadid == Upload.id)
+            .scalar_subquery(),
+            0.0,
+        )
+        description_rank = upload_rank + (tag_rank * 0.4)
+        stmt = stmt.order_by(None).order_by(desc(description_rank), desc(Upload.created))
 
     uploaded_from = None
     uploaded_to = None
@@ -339,6 +364,8 @@ def uploads(page):
     pagination_query_params = {}
     if original_name_raw:
         pagination_query_params["original_name"] = original_name_raw
+    if description_raw:
+        pagination_query_params["description"] = description_raw
     if uploaded_from_raw:
         pagination_query_params["uploaded_from"] = uploaded_from_raw
     if uploaded_to_raw:
@@ -348,6 +375,7 @@ def uploads(page):
         "pagination": uploads,
         "endpoint": "html.uploads",
         "selected_original_name": original_name_raw,
+        "selected_description": description_raw,
         "selected_uploaded_from": uploaded_from_raw,
         "selected_uploaded_to": uploaded_to_raw,
         "filter_errors": filter_errors,

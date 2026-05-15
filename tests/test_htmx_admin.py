@@ -99,12 +99,13 @@ def test_htmx_admin_uploads_filters_by_uploader_date_and_original_name(client, a
         alice_id = alice.id
 
     response = client.get(
-        f"/admin/uploads?uploader_id={alice_id}&uploaded_from=2026-01-12&uploaded_to=2026-01-12&original_name=alice"
+        f"/admin/uploads?uploader_id={alice_id}&uploaded_from=2026-01-12&uploaded_to=2026-01-12&original_name=alice&description=sunlight"
     )
     assert response.status_code == 200
     assert b"alice-upload.png" in response.data
     assert b"bob-upload.png" not in response.data
     assert b'name="original_name" value="alice"' in response.data
+    assert b'name="description" value="sunlight"' in response.data
     assert b'name="uploaded_from" value="2026-01-12"' in response.data
     assert b'name="uploaded_to" value="2026-01-12"' in response.data
 
