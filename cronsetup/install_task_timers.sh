@@ -73,7 +73,7 @@ Description=Run ${task_name} Task
 [Service]
 Type=oneshot
 WorkingDirectory=${working_dir}
-ExecStart=/bin/sh -c \"${compose_bin} compose exec -T web ${python_bin} ${manage_path} task run -c ${run_count}\"
+ExecStart=/bin/sh -c \"${compose_bin} compose exec -T web ${python_bin} ${manage_path} task run --delay -c ${run_count}\"
 StandardOutput=journal
 StandardError=journal
 "

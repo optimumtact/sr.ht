@@ -4,6 +4,9 @@ import sys
 from datetime import datetime
 from typing import Annotated
 
+import random
+import time
+
 import typer
 from sqlalchemy import func, text
 
@@ -55,8 +58,13 @@ def get_db():
     return db
 
 
-def do_task(count: int):
+def do_task(count: int, delay: bool = False):
     from srht.tasks import Task
+
+    if delay:
+        delay_seconds = random.uniform(1, 30)
+        logger.info(f"Delaying task execution by {delay_seconds:.2f} seconds to reduce contention.")
+        time.sleep(delay_seconds)
 
     start = 0
     run_due_schedules()
@@ -367,9 +375,16 @@ def task_run(
             help="Maximum number of queued jobs to run.",
         ),
     ] = 1,
+    delay: Annotated[
+        bool,
+        typer.Option(
+            "--delay",
+            help="Add a random delay to task execution to reduce contention when multiple workers are running.",
+        ),
+    ] = False,
 ):
     with get_app_context():
-        do_task(count)
+        do_task(count, delay=delay)
 
 
 @task_cli.command("fix-stuck")
