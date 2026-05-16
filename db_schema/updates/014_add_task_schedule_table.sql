@@ -1,5 +1,5 @@
 CREATE TABLE IF NOT EXISTS public.task_schedule (
-    id integer PRIMARY KEY,
+    id SERIAL PRIMARY KEY,
     tasktype integer NOT NULL,
     cron_expression character varying(128) NOT NULL,
     enabled boolean DEFAULT true NOT NULL,
