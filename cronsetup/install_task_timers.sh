@@ -8,9 +8,9 @@ Usage:
   install_task_timers.sh --working-directory <path> --task-name <name> --amount <1-4> [options]
 
 Required:
-  -d, --working-directory <path>   WorkingDirectory for the generated service units.
-  -t, --task-name <name>           Task name used in unit filenames and descriptions.
-  -a, --amount <1-4>               Number of service/timer pairs to install.
+  -d, --working-directory <path>   WorkingDirectory for the generated service template unit.
+  -t, --task-name <name>           Task name used in template unit filenames and descriptions.
+  -a, --amount <1-4>               Number of timer instances to enable.
 
 Optional:
   -c, --run-count <n>              manage.py task run count per execution (default: 10).
@@ -19,7 +19,7 @@ Optional:
       --compose-bin <path>         Docker compose binary path (default: /usr/bin/docker).
       --python-bin <path>          Python binary inside container (default: /venv/bin/python).
       --manage-path <path>         manage.py path relative to WorkingDirectory (default: manage.py).
-      --dry-run                    Print files that would be written; do not modify systemd.
+      --dry-run                    Print files and instances that would be installed; do not modify systemd.
   -h, --help                       Show this help text.
 
 Example:
@@ -50,21 +50,19 @@ sanitize_name() {
 }
 
 write_unit_files() {
-  local idx="$1"
-  local task_name="$2"
-  local task_safe="$3"
-  local working_dir="$4"
-  local run_count="$5"
-  local interval_minutes="$6"
-  local boot_delay="$7"
-  local compose_bin="$8"
-  local python_bin="$9"
-  local manage_path="${10}"
-  local dry_run="${11}"
+  local task_name="$1"
+  local task_safe="$2"
+  local working_dir="$3"
+  local run_count="$4"
+  local interval_minutes="$5"
+  local boot_delay="$6"
+  local compose_bin="$7"
+  local python_bin="$8"
+  local manage_path="$9"
+  local dry_run="${10}"
 
-  local base="${task_safe}-${idx}"
-  local service_name="${base}.service"
-  local timer_name="${base}.timer"
+  local service_name="${task_safe}@.service"
+  local timer_name="${task_safe}@.timer"
   local service_path="/etc/systemd/system/${service_name}"
   local timer_path="/etc/systemd/system/${timer_name}"
 
@@ -88,7 +86,7 @@ Description=Run ${task_name} cron every ${interval_minutes} minutes
 OnBootSec=${boot_delay}
 OnUnitActiveSec=${interval_minutes}min
 Persistent=true
-Unit=${service_name}
+Unit=${task_safe}@%i.service
 
 [Install]
 WantedBy=timers.target
@@ -210,23 +208,25 @@ main() {
   local task_safe
   task_safe="$(sanitize_name "$task_name")"
 
-  local i
-  for (( i=1; i<=amount; i++ )); do
-    write_unit_files \
-      "$i" "$task_name" "$task_safe" "$working_dir" "$run_count" \
-      "$interval_minutes" "$boot_delay" "$compose_bin" "$python_bin" \
-      "$manage_path" "$dry_run"
-  done
+  write_unit_files \
+    "$task_name" "$task_safe" "$working_dir" "$run_count" \
+    "$interval_minutes" "$boot_delay" "$compose_bin" "$python_bin" \
+    "$manage_path" "$dry_run"
 
   if [[ "$dry_run" == "true" ]]; then
+    local i
+    for (( i=1; i<=amount; i++ )); do
+      echo "Would enable and start ${task_safe}@${i}.timer"
+    done
     echo "Dry-run complete. No files were written."
     exit 0
   fi
 
   systemctl daemon-reload
 
+  local i
   for (( i=1; i<=amount; i++ )); do
-    local timer_name="${task_safe}-${i}.timer"
+    local timer_name="${task_safe}@${i}.timer"
     systemctl enable --now "$timer_name"
     echo "Enabled and started $timer_name"
   done
