@@ -121,16 +121,6 @@ class _CaptionTagTaskBase(Task):
     def _generate_caption(self, uploaded_file_path: Path) -> str:
         model, tokenizer = self._get_moondream_model()
         with _PIL_IMAGE.open(uploaded_file_path) as image:
-            if hasattr(model, "encode_image") and hasattr(model, "answer_question"):
-                encoded_image = model.encode_image(image)
-                caption = model.answer_question(
-                    encoded_image,
-                    "Describe this image in one concise sentence.",
-                    tokenizer,
-                )
-                if caption:
-                    return str(caption).strip()
-
             if hasattr(model, "caption"):
                 caption = model.caption(image)
                 if isinstance(caption, dict):
@@ -239,6 +229,7 @@ class BatchGenerateImageCaptions(_CaptionTagTaskBase):
             attempted += 1
             try:
                 uploaded_file = Upload.query.filter(Upload.id == upload_id).one_or_none()
+                self.log_message(f"Processing caption for upload {upload_id}: {uploaded_file}")
                 if uploaded_file is None:
                     skipped += 1
                     continue
@@ -264,6 +255,7 @@ class BatchGenerateImageCaptions(_CaptionTagTaskBase):
                     continue
 
                 caption = self._generate_caption(uploaded_file_path)
+                self.log_message(f"Generated caption for upload {upload_id}: {caption!r}")
                 if not caption:
                     skipped += 1
                     continue
@@ -358,7 +350,7 @@ class BatchGenerateImageTags(_CaptionTagTaskBase):
                     skipped += 1
                 else:
                     succeeded += 1
-
+                self.log_message(f"Processed tags for upload {upload_id}: {normalized_tags}")
                 if idx % self.COMMIT_CHUNK_SIZE == 0:
                     db.session.commit()
             except Exception as exc:

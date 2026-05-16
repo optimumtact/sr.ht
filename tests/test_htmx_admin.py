@@ -296,6 +296,40 @@ def test_htmx_admin_users_create(client, app):
         assert user is not None
         assert user.suspended is False
         assert user.admin is True
+        assert user.ai_opt_in is False
+
+
+def test_htmx_admin_users_ai_toggle(client, app):
+    _create_admin(app)
+    _login_admin(client)
+
+    with app.app_context():
+        user = User("member_ai", "member_ai@example.com", "password123")
+        user.suspended = False
+        user.ai_opt_in = False
+        db.session.add(user)
+        db.session.commit()
+        user_id = user.id
+
+    enable = client.post(
+        f"/admin/users/{user_id}/enable-ai",
+        headers={"HX-Request": "true"},
+    )
+    assert enable.status_code == 200
+
+    with app.app_context():
+        enabled = db.session.get(User, user_id)
+        assert enabled.ai_opt_in is True
+
+    disable = client.post(
+        f"/admin/users/{user_id}/disable-ai",
+        headers={"HX-Request": "true"},
+    )
+    assert disable.status_code == 200
+
+    with app.app_context():
+        disabled = db.session.get(User, user_id)
+        assert disabled.ai_opt_in is False
 
 
 def test_htmx_admin_users_password_update(client, app):

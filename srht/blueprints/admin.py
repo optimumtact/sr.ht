@@ -341,6 +341,42 @@ def users_admin_unsuspend(user_id):
     return redirect("/admin/users")
 
 
+@admin.route("/admin/users/<int:user_id>/enable-ai", methods=["POST"])
+@loginrequired
+@adminrequired
+@adminreauthrequired
+def users_admin_enable_ai(user_id):
+    user = db.session.get(User, user_id)
+    if not user:
+        abort(404)
+
+    user.ai_opt_in = True
+    db.session.commit()
+
+    if _is_htmx_request():
+        return _render_users_content()
+
+    return redirect("/admin/users")
+
+
+@admin.route("/admin/users/<int:user_id>/disable-ai", methods=["POST"])
+@loginrequired
+@adminrequired
+@adminreauthrequired
+def users_admin_disable_ai(user_id):
+    user = db.session.get(User, user_id)
+    if not user:
+        abort(404)
+
+    user.ai_opt_in = False
+    db.session.commit()
+
+    if _is_htmx_request():
+        return _render_users_content()
+
+    return redirect("/admin/users")
+
+
 @admin.route("/admin/uploads", methods=["GET"], defaults={"page": 1})
 @admin.route("/admin/uploads/<int:page>", methods=["GET"])
 @loginrequired

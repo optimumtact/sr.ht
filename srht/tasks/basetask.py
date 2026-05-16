@@ -20,6 +20,7 @@ class TaskStatus(IntEnum):
 class TaskType(IntEnum):
     BASE = 0
     THUMBNAIL = 1
+    CAPTION_TAGS = 2  # Legacy, not used anymore
     BATCH_CAPTIONS = 3
     BATCH_TAGS = 4
 
@@ -28,7 +29,7 @@ class Task:
     """An executable task"""
 
     type = TaskType.BASE
-    LATEST_VERSION = 2
+    LATEST_VERSION = 3
     _registry = {}
 
     def __init_subclass__(cls, **kwargs):

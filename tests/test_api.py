@@ -2,7 +2,7 @@ import io
 import json
 import os
 from srht.config import _cfg
-from srht.objects import Job, Tag, Upload
+from srht.objects import Job, Tag, Upload, User
 from srht.tasks import (
     BatchGenerateImageCaptions,
     BatchGenerateImageTags,
@@ -190,6 +190,14 @@ def _claim_tasks(app, max_count=4):
     return claimed
 
 
+def _set_ai_opt_in_for_user(app, user_id: int, enabled: bool):
+    with app.app_context():
+        user = db.session.get(User, user_id)
+        assert user is not None
+        user.ai_opt_in = enabled
+        db.session.commit()
+
+
 def test_caption_task_queued(client, test_user, app, monkeypatch):
     with open("tests/test_files/1.png", "rb") as f:
         img_data = f.read()
@@ -198,6 +206,8 @@ def test_caption_task_queued(client, test_user, app, monkeypatch):
     response = client.post("/api/upload", data=data, content_type="multipart/form-data")
     assert response.status_code == 200
     assert json.loads(response.data)["success"] is True
+
+    _set_ai_opt_in_for_user(app, test_user.id, True)
 
     with app.app_context():
         # Thumbnail should be queued immediately after upload
@@ -223,6 +233,8 @@ def test_caption_task_execution_inserts_normalized_unique_tags(client, test_user
     data = {"key": test_user.apiKey, "file": (io.BytesIO(img_data), "tagged.png")}
     response = client.post("/api/upload", data=data, content_type="multipart/form-data")
     assert response.status_code == 200
+
+    _set_ai_opt_in_for_user(app, test_user.id, True)
 
     # First, execute the thumbnail task.
     claimed = _claim_tasks(app)
@@ -306,6 +318,8 @@ def test_caption_task_skips_non_image_upload(client, test_user, app, monkeypatch
     response = client.post("/api/upload", data=data, content_type="multipart/form-data")
     assert response.status_code == 200
 
+    _set_ai_opt_in_for_user(app, test_user.id, True)
+
     # First, execute the thumbnail task.
     claimed = _claim_tasks(app)
     thumbnail_task = next(
@@ -355,6 +369,8 @@ def test_queue_caption_batch_requires_thumbnail(client, test_user, app):
     response = client.post("/api/upload", data=data, content_type="multipart/form-data")
     assert response.status_code == 200
 
+    _set_ai_opt_in_for_user(app, test_user.id, True)
+
     with app.app_context():
         manage.queue_caption_batch(limit=20)
         batch_job = Job.query.filter(Job.tasktype == TaskType.BATCH_CAPTIONS).first()
@@ -382,6 +398,8 @@ def test_queue_caption_batch_skips_if_active(client, test_user, app):
     response = client.post("/api/upload", data=data, content_type="multipart/form-data")
     assert response.status_code == 200
 
+    _set_ai_opt_in_for_user(app, test_user.id, True)
+
     claimed = _claim_tasks(app)
     thumbnail_task = next(
         (task for task in claimed if isinstance(task, GenerateImageThumbnail)), None
@@ -395,3 +413,24 @@ def test_queue_caption_batch_skips_if_active(client, test_user, app):
 
         batch_jobs = Job.query.filter(Job.tasktype == TaskType.BATCH_CAPTIONS).all()
         assert len(batch_jobs) == 1
+
+
+def test_queue_caption_batch_excludes_users_without_ai_opt_in(client, test_user, app):
+    with open("tests/test_files/1.png", "rb") as f:
+        img_data = f.read()
+
+    data = {"key": test_user.apiKey, "file": (io.BytesIO(img_data), "no-ai-opt-in.png")}
+    response = client.post("/api/upload", data=data, content_type="multipart/form-data")
+    assert response.status_code == 200
+
+    claimed = _claim_tasks(app)
+    thumbnail_task = next(
+        (task for task in claimed if isinstance(task, GenerateImageThumbnail)), None
+    )
+    assert thumbnail_task is not None
+
+    with app.app_context():
+        thumbnail_task.run()
+        manage.queue_caption_batch(limit=20)
+        batch_job = Job.query.filter(Job.tasktype == TaskType.BATCH_CAPTIONS).first()
+        assert batch_job is None

@@ -113,7 +113,7 @@ def _has_active_jobs(task_type: int) -> bool:
 
 
 def queue_caption_batch(limit: int, force: bool = False):
-    from srht.objects import Upload
+    from srht.objects import Upload, User
     from srht.tasks import BatchGenerateImageCaptions
     from srht.tasks.basetask import TaskType
 
@@ -124,6 +124,7 @@ def queue_caption_batch(limit: int, force: bool = False):
     uploads = (
         Upload.query.filter(Upload.caption.is_(None))
         .filter(Upload.thumbnail.isnot(None))
+        .filter(Upload.user.has(User.ai_opt_in.is_(True)))
         .order_by(Upload.created, Upload.id)
         .limit(limit)
         .all()
@@ -141,7 +142,7 @@ def queue_caption_batch(limit: int, force: bool = False):
 
 
 def queue_tag_batch(limit: int, force: bool = False):
-    from srht.objects import Upload
+    from srht.objects import Upload, User
     from srht.tasks import BatchGenerateImageTags
     from srht.tasks.basetask import TaskType
 
@@ -152,6 +153,7 @@ def queue_tag_batch(limit: int, force: bool = False):
     uploads = (
         Upload.query.filter(Upload.caption.isnot(None))
         .filter(~Upload.tags.any())
+        .filter(Upload.user.has(User.ai_opt_in.is_(True)))
         .order_by(Upload.created, Upload.id)
         .limit(limit)
         .all()

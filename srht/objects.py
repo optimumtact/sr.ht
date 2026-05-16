@@ -135,6 +135,7 @@ class User(db.Model):
     email = Column(String(256), nullable=False, index=True)
     admin = Column(Boolean())
     suspended = Column(Boolean(), nullable=False, default=False)
+    ai_opt_in = Column(Boolean(), nullable=False, default=False)
     password = Column(String)
     created = Column(DateTime)
     passwordReset = Column(String(128))
@@ -159,6 +160,7 @@ class User(db.Model):
         self.username = username
         self.admin = False
         self.suspended = False
+        self.ai_opt_in = False
         self.created = datetime.now()
         self.generate_api_key()
         self.set_password(password)

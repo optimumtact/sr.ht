@@ -225,7 +225,8 @@ CREATE TABLE public."user" (
     "passwordResetExpiry" timestamp without time zone,
     "apiKey" character varying(128),
     comments character varying(512),
-    suspended boolean DEFAULT false NOT NULL
+    suspended boolean DEFAULT false NOT NULL,
+    ai_opt_in boolean DEFAULT false NOT NULL
 );
 
 
