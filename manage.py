@@ -1,6 +1,7 @@
 import logging
 import os
 import sys
+from datetime import datetime
 from typing import Annotated
 
 import typer
@@ -58,6 +59,7 @@ def do_task(count: int):
     from srht.tasks import Task
 
     start = 0
+    run_due_schedules()
     while count > start:
         task = Task.get_next_task()
         if task:
@@ -132,13 +134,14 @@ def queue_caption_batch(limit: int, force: bool = False):
     upload_ids = [upload.id for upload in uploads]
     if not upload_ids:
         logger.info("Skipped caption batch enqueue: no thumbnail-ready uploads require captions")
-        return
+        return None
 
     task = BatchGenerateImageCaptions(upload_ids=upload_ids)
     task.queue()
     logger.info(
         f"Queued caption batch job {task.jobid} with {len(upload_ids)} uploads (limit={limit})"
     )
+    return task
 
 
 def queue_tag_batch(limit: int, force: bool = False):
@@ -161,11 +164,61 @@ def queue_tag_batch(limit: int, force: bool = False):
     upload_ids = [upload.id for upload in uploads]
     if not upload_ids:
         logger.info("Skipped tag batch enqueue: no captioned uploads require tags")
-        return
+        return None
 
     task = BatchGenerateImageTags(upload_ids=upload_ids)
     task.queue()
     logger.info(f"Queued tag batch job {task.jobid} with {len(upload_ids)} uploads (limit={limit})")
+    return task
+
+
+def run_due_schedules():
+    from srht.objects import TaskSchedule
+    from srht.tasks.basetask import TaskType
+
+    now = datetime.now()
+    TaskSchedule.ensure_defaults()
+    due_schedules = (
+        TaskSchedule.query.filter(TaskSchedule.enabled.is_(True))
+        .filter(TaskSchedule.next_run_time <= now)
+        .order_by(TaskSchedule.next_run_time.asc(), TaskSchedule.id.asc())
+        .all()
+    )
+    print(f"Found {len(due_schedules)} due schedule(s).")
+    if not due_schedules:
+        return 0
+
+    queued_count = 0
+
+    for schedule in due_schedules:
+        try:
+            queued_task = None
+            if schedule.tasktype == int(TaskType.BATCH_CAPTIONS):
+                queued_task = queue_caption_batch(limit=50)
+            elif schedule.tasktype == int(TaskType.BATCH_TAGS):
+                queued_task = queue_tag_batch(limit=50)
+            else:
+                logger.info(f"Skipping unknown schedule task type {schedule.tasktype}")
+                continue
+
+            schedule.advance(now)
+            db = get_db()
+            db.session.add(schedule)
+            db.session.commit()
+            if queued_task:
+                queued_count += 1
+                logger.info(
+                    f"Queued scheduled task {schedule.tasktype} from schedule {schedule.id}; next run {schedule.next_run_time}"
+                )
+            else:
+                logger.info(
+                    f"Advanced schedule {schedule.id} for task type {schedule.tasktype}; next run {schedule.next_run_time}"
+                )
+        except Exception as exc:
+            logger.error(f"Failed to evaluate schedule {schedule.id}: {exc}")
+            get_db().session.rollback()
+
+    return queued_count
 
 
 def apply_migrations():
@@ -304,7 +357,13 @@ def database_migrate():
 def task_run(
     count: Annotated[
         int,
-        typer.Option("--count", "-c", min=1, help="Maximum number of queued jobs to run."),
+        typer.Option(
+            "--count",
+            "-c",
+            "-n",
+            min=1,
+            help="Maximum number of queued jobs to run.",
+        ),
     ] = 1,
 ):
     with get_app_context():

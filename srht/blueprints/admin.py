@@ -17,7 +17,7 @@ from srht.admin_auth import (
 from srht.common import adminreauthrequired, adminrequired, loginrequired
 from srht.config import _cfg, _cfgi
 from srht.database import db
-from srht.objects import Job, JobLog, Tag, Upload, User
+from srht.objects import Job, JobLog, Tag, TaskSchedule, Upload, User
 from srht.tasks import Task
 from srht.tasks.basetask import TaskStatus, TaskType
 
@@ -60,6 +60,23 @@ def _render_users_content(form_errors=None, form_values=None):
         form_values=form_values,
         new_user_form=NewUserForm(),
         **_users_context(),
+    )
+
+
+def _schedules_context():
+    schedules = TaskSchedule.ensure_defaults()
+    return {
+        "schedules": schedules,
+        "TaskType": TaskType,
+    }
+
+
+def _render_schedules_content(form_errors=None, form_values=None):
+    return render_template(
+        "htmx/admin/_schedules_content.html",
+        form_errors=form_errors,
+        form_values=form_values,
+        **_schedules_context(),
     )
 
 
@@ -375,6 +392,56 @@ def users_admin_disable_ai(user_id):
         return _render_users_content()
 
     return redirect("/admin/users")
+
+
+@admin.route("/admin/schedules", methods=["GET"])
+@loginrequired
+@adminrequired
+def schedules_admin():
+    return _render_htmx(
+        "htmx/admin/schedules.html",
+        "htmx/admin/_schedules_content.html",
+        **_schedules_context(),
+    )
+
+
+@admin.route("/admin/schedules/<int:schedule_id>/update", methods=["POST"])
+@loginrequired
+@adminrequired
+@adminreauthrequired
+def schedules_admin_update(schedule_id):
+    schedule = db.session.get(TaskSchedule, schedule_id)
+    if not schedule:
+        abort(404)
+
+    cron_expression = (request.form.get("cron_expression") or "").strip()
+    enabled = request.form.get("enabled") == "on"
+    form_errors = []
+
+    if not cron_expression:
+        form_errors.append("Cron expression is required.")
+    else:
+        original_cron = schedule.cron_expression
+        schedule.cron_expression = cron_expression
+        try:
+            schedule.calculate_next_run(datetime.now())
+        except Exception as exc:
+            schedule.cron_expression = original_cron
+            form_errors.append(f"Invalid cron expression: {exc}")
+
+    if form_errors:
+        return _render_schedules_content(form_errors=form_errors)
+
+    now = datetime.now()
+    schedule.enabled = enabled
+    schedule.next_run_time = schedule.calculate_next_run(now)
+    schedule.updated = now
+    db.session.commit()
+
+    if _is_htmx_request():
+        return _render_schedules_content()
+
+    return redirect("/admin/schedules")
 
 
 @admin.route("/admin/uploads", methods=["GET"], defaults={"page": 1})

@@ -1,8 +1,10 @@
 import io
 import json
 import os
+from datetime import datetime, timedelta
+
 from srht.config import _cfg
-from srht.objects import Job, Tag, Upload, User
+from srht.objects import Job, Tag, TaskSchedule, Upload, User
 from srht.tasks import (
     BatchGenerateImageCaptions,
     BatchGenerateImageTags,
@@ -413,6 +415,85 @@ def test_queue_caption_batch_skips_if_active(client, test_user, app):
 
         batch_jobs = Job.query.filter(Job.tasktype == TaskType.BATCH_CAPTIONS).all()
         assert len(batch_jobs) == 1
+
+
+def test_task_run_queues_due_schedules_before_fetching_jobs(client, test_user, app, monkeypatch):
+    with open("tests/test_files/1.png", "rb") as f:
+        img_data = f.read()
+
+    data = {"key": test_user.apiKey, "file": (io.BytesIO(img_data), "scheduled.png")}
+    response = client.post("/api/upload", data=data, content_type="multipart/form-data")
+    assert response.status_code == 200
+
+    _set_ai_opt_in_for_user(app, test_user.id, True)
+
+    claimed = _claim_tasks(app)
+    thumbnail_task = next(
+        (task for task in claimed if isinstance(task, GenerateImageThumbnail)), None
+    )
+    assert thumbnail_task is not None
+
+    with app.app_context():
+        thumbnail_task.run()
+        TaskSchedule.ensure_defaults()
+        schedule = TaskSchedule.query.filter(
+            TaskSchedule.tasktype == int(TaskType.BATCH_CAPTIONS)
+        ).first()
+        assert schedule is not None
+        due_time = datetime.now() - timedelta(minutes=1)
+        schedule.next_run_time = due_time
+        db.session.commit()
+
+    monkeypatch.setattr(Task, "get_next_task", lambda: None)
+
+    with app.app_context():
+        manage.do_task(1)
+
+        queued_job = Job.query.filter(Job.tasktype == TaskType.BATCH_CAPTIONS).first()
+        assert queued_job is not None
+        assert queued_job.status == int(TaskStatus.QUEUED)
+
+        updated_schedule = (
+            db.session.query(TaskSchedule)
+            .filter(TaskSchedule.tasktype == int(TaskType.BATCH_CAPTIONS))
+            .first()
+        )
+        assert updated_schedule is not None
+        assert updated_schedule.next_run_time > due_time
+
+
+def test_task_get_next_task_skips_old_version_jobs(app):
+    with app.app_context():
+        old_job = Job(
+            status=int(TaskStatus.QUEUED),
+            tasktype=int(TaskType.THUMBNAIL),
+            priority=10,
+            version=Task.LATEST_VERSION - 1,
+            pickledclass=b"",
+            taskmetadata={"uploadid": 1, "example": "old"},
+        )
+        old_job.created = datetime.now() - timedelta(minutes=10)
+
+        new_job = Job(
+            status=int(TaskStatus.QUEUED),
+            tasktype=int(TaskType.THUMBNAIL),
+            priority=10,
+            version=Task.LATEST_VERSION,
+            pickledclass=b"",
+            taskmetadata={"uploadid": 1, "example": "new"},
+        )
+        new_job.created = datetime.now() - timedelta(minutes=5)
+
+        db.session.add_all([old_job, new_job])
+        db.session.commit()
+
+        task = Task.get_next_task()
+        assert task is not None
+        assert task.jobid == new_job.id
+
+        stale_job = db.session.get(Job, old_job.id)
+        assert stale_job is not None
+        assert stale_job.status == int(TaskStatus.QUEUED)
 
 
 def test_queue_caption_batch_excludes_users_without_ai_opt_in(client, test_user, app):

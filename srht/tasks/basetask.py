@@ -1,7 +1,9 @@
 import logging
+import inspect
 import os
 from enum import IntEnum
 import traceback
+from typing import cast
 
 from sqlalchemy import text
 
@@ -65,7 +67,7 @@ class Task:
             self.job = job
             self.version = job.version
             self.status = TaskStatus(job.status)
-        self.jobid = self.job.id
+        self.jobid = cast(int, self.job.id)
 
     def queue(self):
         self.status = TaskStatus.QUEUED
@@ -129,6 +131,20 @@ class Task:
         if task_class is None:
             raise Exception(f"No task class registered for tasktype={job.tasktype}")
         task_data = job.taskmetadata or {}
+        constructor = inspect.signature(task_class.__init__)
+        accepts_kwargs = any(
+            parameter.kind == inspect.Parameter.VAR_KEYWORD
+            for parameter in constructor.parameters.values()
+        )
+        if not accepts_kwargs:
+            allowed_kwargs = {
+                name
+                for name, parameter in constructor.parameters.items()
+                if name not in {"self", "job"}
+                and parameter.kind
+                in (inspect.Parameter.POSITIONAL_OR_KEYWORD, inspect.Parameter.KEYWORD_ONLY)
+            }
+            task_data = {key: value for key, value in task_data.items() if key in allowed_kwargs}
         task = task_class(job=job, **task_data)
         if not isinstance(task, Task):
             raise Exception("Task constructor did not produce a Task subclass")
@@ -143,6 +159,7 @@ class Task:
                     SELECT id
                     FROM job
                     WHERE status = :queued_status
+                      AND version = :latest_version
                     ORDER BY priority ASC, created ASC, id ASC
                     FOR UPDATE SKIP LOCKED
                     LIMIT 1
@@ -166,6 +183,7 @@ class Task:
                     SELECT id
                     FROM job
                     WHERE status = :queued_status
+                      AND version = :latest_version
                     ORDER BY priority ASC, created ASC, id ASC
                     LIMIT 1
                 )
@@ -179,6 +197,7 @@ class Task:
                 "queued_status": int(TaskStatus.QUEUED),
                 "claimed_status": int(TaskStatus.CLAIMED),
                 "process_id": os.getpid(),
+                "latest_version": Task.LATEST_VERSION,
             },
         ).fetchone()
         if result:

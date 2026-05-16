@@ -2,7 +2,7 @@ from datetime import datetime
 import re
 
 from srht.database import db
-from srht.objects import Job, Tag, Upload, User
+from srht.objects import Job, Tag, TaskSchedule, Upload, User
 from srht.tasks.basetask import TaskStatus, TaskType
 
 
@@ -330,6 +330,70 @@ def test_htmx_admin_users_ai_toggle(client, app):
     with app.app_context():
         disabled = db.session.get(User, user_id)
         assert disabled.ai_opt_in is False
+
+
+def test_htmx_admin_schedules_renders_and_updates(client, app):
+    _create_admin(app)
+    _login_admin(client)
+
+    response = client.get("/admin/schedules")
+    assert response.status_code == 200
+    assert b"AI schedules" in response.data
+    assert b'type="checkbox"' not in response.data
+    assert b'<button type="submit" name="enabled"' in response.data
+
+    with app.app_context():
+        TaskSchedule.ensure_defaults()
+        schedule = TaskSchedule.query.filter(
+            TaskSchedule.tasktype == int(TaskType.BATCH_CAPTIONS)
+        ).first()
+        assert schedule is not None
+        schedule_id = schedule.id
+
+    update_response = client.post(
+        f"/admin/schedules/{schedule_id}/update",
+        data={"cron_expression": "*/10 * * * *", "enabled": "on"},
+        headers={"HX-Request": "true"},
+    )
+    assert update_response.status_code == 200
+
+    with app.app_context():
+        updated = db.session.get(TaskSchedule, schedule_id)
+        assert updated is not None
+        assert updated.cron_expression == "*/10 * * * *"
+        assert updated.enabled is True
+
+    disable_response = client.post(
+        f"/admin/schedules/{schedule_id}/update",
+        data={"cron_expression": "*/10 * * * *", "enabled": "off"},
+        headers={"HX-Request": "true"},
+    )
+    assert disable_response.status_code == 200
+
+    with app.app_context():
+        disabled = db.session.get(TaskSchedule, schedule_id)
+        assert disabled is not None
+        assert disabled.enabled is False
+
+
+def test_htmx_admin_schedules_reject_invalid_cron(client, app):
+    _create_admin(app)
+    _login_admin(client)
+
+    with app.app_context():
+        TaskSchedule.ensure_defaults()
+        schedule = TaskSchedule.query.filter(
+            TaskSchedule.tasktype == int(TaskType.BATCH_TAGS)
+        ).first()
+        assert schedule is not None
+
+    response = client.post(
+        f"/admin/schedules/{schedule.id}/update",
+        data={"cron_expression": "not a cron"},
+        headers={"HX-Request": "true"},
+    )
+    assert response.status_code == 200
+    assert b"Invalid cron expression" in response.data
 
 
 def test_htmx_admin_users_password_update(client, app):

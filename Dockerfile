@@ -39,8 +39,8 @@ RUN make install-tailwind && make
 FROM base
 
 # set environment variables
-ENV PYTHONDONTWRITEBYTECODE 1
-ENV PYTHONUNBUFFERED 1
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
 ENV HF_HOME=/app/models
 
 RUN export DEBIAN_FRONTEND=noninteractive && apt update 

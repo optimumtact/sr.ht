@@ -114,6 +114,80 @@ class Job(db.Model):
         db.session.commit()
 
 
+class TaskSchedule(db.Model):
+    __tablename__ = "task_schedule"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    tasktype: Mapped[int] = mapped_column(Integer, nullable=False, unique=True, index=True)
+    cron_expression: Mapped[str] = mapped_column(String(128), nullable=False)
+    enabled: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    next_run_time: Mapped[datetime] = mapped_column(DateTime, nullable=False, index=True)
+    last_run_time: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    created: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    updated: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+
+    __table_args__ = (UniqueConstraint("tasktype", name="uq_task_schedule_tasktype"),)
+
+    DEFAULT_CRON = "*/5 * * * *"
+
+    def __init__(
+        self,
+        tasktype: int,
+        cron_expression: str | None = None,
+        enabled: bool = True,
+        next_run_time: datetime | None = None,
+        last_run_time: datetime | None = None,
+    ):
+        now = datetime.now()
+        self.tasktype = tasktype
+        self.cron_expression = cron_expression or self.DEFAULT_CRON
+        self.enabled = enabled
+        self.created = now
+        self.updated = now
+        self.last_run_time = last_run_time
+        self.next_run_time = next_run_time or self.calculate_next_run(now)
+
+    @staticmethod
+    def _cron_base_time(base_time: datetime | None = None) -> datetime:
+        return base_time or datetime.now()
+
+    def calculate_next_run(self, base_time: datetime | None = None) -> datetime:
+        from croniter import croniter
+
+        return croniter(self.cron_expression, self._cron_base_time(base_time)).get_next(datetime)
+
+    def advance(self, base_time: datetime | None = None):
+        now = self._cron_base_time(base_time)
+        self.last_run_time = now
+        self.next_run_time = self.calculate_next_run(self.next_run_time or now)
+        self.updated = now
+
+    @classmethod
+    def default_schedules(cls):
+        from srht.tasks.basetask import TaskType
+
+        return [
+            (int(TaskType.BATCH_CAPTIONS), cls.DEFAULT_CRON),
+            (int(TaskType.BATCH_TAGS), cls.DEFAULT_CRON),
+        ]
+
+    @classmethod
+    def ensure_defaults(cls):
+        now = datetime.now()
+        created = False
+        for tasktype, cron_expression in cls.default_schedules():
+            existing = cls.query.filter(cls.tasktype == tasktype).one_or_none()
+            if existing is None:
+                schedule = cls(tasktype=tasktype, cron_expression=cron_expression)
+                schedule.created = now
+                schedule.updated = now
+                db.session.add(schedule)
+                created = True
+        if created:
+            db.session.commit()
+        return cls.query.order_by(cls.tasktype.asc()).all()
+
+
 class PendingJob(db.Model):
     """Just a queue of jobs that need handling by a processor (cron etc)"""
 

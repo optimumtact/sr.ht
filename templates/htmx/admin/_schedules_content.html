@@ -1,0 +1,65 @@
+<div id="admin-content" class="grid gap-4">
+    {% if form_errors %}
+        <div class="grid gap-2 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+            {% for err in form_errors %}
+                <p>{{ err }}</p>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <section class="grid gap-3 rounded-lg border border-slate-200 bg-white p-4">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+            <div>
+                <h2 class="text-base font-bold text-slate-900">Batch schedules</h2>
+                <p class="text-sm text-slate-500">These schedules are checked whenever the task runner polls for work.</p>
+            </div>
+        </div>
+
+        {% if schedules %}
+            <div class="overflow-x-auto rounded-md border border-slate-200">
+                <table class="min-w-full divide-y divide-slate-200 text-sm">
+                    <thead class="bg-slate-50 text-left text-xs font-bold uppercase tracking-wide text-slate-500">
+                        <tr>
+                            <th class="px-3 py-2">Task</th>
+                            <th class="px-3 py-2">Enabled</th>
+                            <th class="px-3 py-2">Cron</th>
+                            <th class="px-3 py-2">Next runtime</th>
+                            <th class="px-3 py-2">Last runtime</th>
+                            <th class="px-3 py-2 text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100 bg-white">
+                        {% for schedule in schedules %}
+                            <tr>
+                                <td class="px-3 py-2 font-semibold text-slate-800">{{ TaskType(schedule.tasktype).name.replace('_', ' ') }}</td>
+                                <td class="px-3 py-2">
+                                    <form method="post" action="/admin/schedules/{{ schedule.id }}/update" hx-post="/admin/schedules/{{ schedule.id }}/update" hx-target="#admin-content" hx-select="#admin-content" hx-swap="outerHTML" class="inline-flex">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <input type="hidden" name="cron_expression" value="{{ schedule.cron_expression }}">
+                                        <button type="submit" name="enabled" value="{% if schedule.enabled %}off{% else %}on{% endif %}" class="rounded-full px-2 py-0.5 text-xs font-semibold transition {% if schedule.enabled %}bg-emerald-100 text-emerald-700 hover:bg-emerald-200{% else %}bg-slate-100 text-slate-700 hover:bg-slate-200{% endif %}">
+                                            {% if schedule.enabled %}Enabled{% else %}Disabled{% endif %}
+                                        </button>
+                                    </form>
+                                </td>
+                                <td class="px-3 py-2">
+                                    <form method="post" action="/admin/schedules/{{ schedule.id }}/update" hx-post="/admin/schedules/{{ schedule.id }}/update" hx-target="#admin-content" hx-select="#admin-content" hx-swap="outerHTML" class="flex min-w-[280px] flex-wrap items-center gap-2">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <input name="cron_expression" value="{{ schedule.cron_expression }}" required class="w-full rounded-md border border-slate-300 px-2 py-1.5 text-xs focus:border-brand-500 focus:outline-none">
+                                        <input type="hidden" name="enabled" value="{% if schedule.enabled %}on{% else %}off{% endif %}">
+                                </td>
+                                <td class="px-3 py-2 whitespace-nowrap">{% if schedule.next_run_time %}{{ schedule.next_run_time.strftime("%Y-%m-%d %H:%M:%S") }}{% else %}-{% endif %}</td>
+                                <td class="px-3 py-2 whitespace-nowrap">{% if schedule.last_run_time %}{{ schedule.last_run_time.strftime("%Y-%m-%d %H:%M:%S") }}{% else %}-{% endif %}</td>
+                                <td class="px-3 py-2 text-right">
+                                        <button type="submit" class="rounded-md bg-brand-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-600">Save</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p class="rounded-md border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-500">No schedules.</p>
+        {% endif %}
+    </section>
+</div>
