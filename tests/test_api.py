@@ -359,8 +359,88 @@ def test_caption_task_skips_non_image_upload(client, test_user, app, monkeypatch
         upload_id = caption_task.upload_ids[0]
         upload = Upload.query.filter(Upload.id == upload_id).one()
         assert upload.caption is None
+        assert upload.caption_complete is True
         tags = db.session.query(Tag).filter(Tag.uploadid == upload_id).all()
         assert tags == []
+
+
+def test_caption_task_does_not_requeue_unsupported_upload(client, test_user, app, monkeypatch):
+    data = {"key": test_user.apiKey, "file": (io.BytesIO(b"plain text"), "note.txt")}
+    response = client.post("/api/upload", data=data, content_type="multipart/form-data")
+    assert response.status_code == 200
+
+    _set_ai_opt_in_for_user(app, test_user.id, True)
+
+    claimed = _claim_tasks(app)
+    thumbnail_task = next(
+        (task for task in claimed if isinstance(task, GenerateImageThumbnail)), None
+    )
+    assert thumbnail_task is not None
+
+    with app.app_context():
+        thumbnail_task.run()
+
+    monkeypatch.setattr(image_caption_tags, "_HAS_ML_DEPS", True)
+    monkeypatch.setattr(
+        BatchGenerateImageCaptions,
+        "_generate_caption",
+        lambda self, path: "this should not run",
+    )
+    monkeypatch.setattr(
+        BatchGenerateImageCaptions,
+        "_get_moondream_model",
+        lambda self: (object(), object()),
+    )
+
+    with app.app_context():
+        manage.queue_caption_batch(limit=20)
+
+    claimed = _claim_tasks(app)
+    caption_task = next(
+        (task for task in claimed if isinstance(task, BatchGenerateImageCaptions)), None
+    )
+    assert caption_task is not None
+
+    with app.app_context():
+        caption_task.run()
+        upload_id = caption_task.upload_ids[0]
+        upload = Upload.query.filter(Upload.id == upload_id).one()
+        assert upload.caption is None
+        assert upload.caption_complete is True
+
+        jobs_before = Job.query.filter(Job.tasktype == TaskType.BATCH_CAPTIONS).count()
+        manage.queue_caption_batch(limit=20)
+        jobs_after = Job.query.filter(Job.tasktype == TaskType.BATCH_CAPTIONS).count()
+        assert jobs_after == jobs_before
+
+
+def test_queue_tag_batch_skips_whitespace_only_caption(client, test_user, app):
+    with open("tests/test_files/1.png", "rb") as f:
+        img_data = f.read()
+
+    data = {"key": test_user.apiKey, "file": (io.BytesIO(img_data), "whitespace-caption.png")}
+    response = client.post("/api/upload", data=data, content_type="multipart/form-data")
+    assert response.status_code == 200
+
+    _set_ai_opt_in_for_user(app, test_user.id, True)
+
+    claimed = _claim_tasks(app)
+    thumbnail_task = next(
+        (task for task in claimed if isinstance(task, GenerateImageThumbnail)), None
+    )
+    assert thumbnail_task is not None
+
+    with app.app_context():
+        thumbnail_task.run()
+        upload = Upload.query.filter(Upload.id == thumbnail_task.uploadid).one()
+        upload.caption = "   "
+        upload.caption_complete = True
+        db.session.add(upload)
+        db.session.commit()
+
+        manage.queue_tag_batch(limit=20)
+        batch_job = Job.query.filter(Job.tasktype == TaskType.BATCH_TAGS).first()
+        assert batch_job is None
 
 
 def test_queue_caption_batch_requires_thumbnail(client, test_user, app):

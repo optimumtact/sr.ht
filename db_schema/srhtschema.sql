@@ -186,6 +186,7 @@ CREATE TABLE public.upload (
     hidden boolean,
     thumbnail character varying,
     caption text,
+    caption_complete boolean DEFAULT false NOT NULL,
     upload_fts tsvector GENERATED ALWAYS AS ((setweight(to_tsvector('english'::regconfig, (COALESCE(original_name, ''::character varying))::text), 'A'::"char") || setweight(to_tsvector('english'::regconfig, COALESCE(caption, ''::text)), 'B'::"char"))) STORED
 );
 

@@ -234,7 +234,7 @@ class BatchGenerateImageCaptions(_CaptionTagTaskBase):
                     skipped += 1
                     continue
 
-                if uploaded_file.caption:
+                if uploaded_file.caption_complete:
                     skipped += 1
                     continue
 
@@ -246,10 +246,12 @@ class BatchGenerateImageCaptions(_CaptionTagTaskBase):
                             f"Skipping upload {upload_id} in caption batch: thumbnail not ready"
                         )
                     else:
+                        uploaded_file.caption_complete = True
+                        db.session.add(uploaded_file)
                         self.log_message(
                             (
                                 f"Skipping upload {upload_id} in caption batch: unsupported mimetype "
-                                f"{guessed_mimetype!r}"
+                                f"{guessed_mimetype!r}; marked caption_complete"
                             )
                         )
                     continue
@@ -257,10 +259,16 @@ class BatchGenerateImageCaptions(_CaptionTagTaskBase):
                 caption = self._generate_caption(uploaded_file_path)
                 self.log_message(f"Generated caption for upload {upload_id}: {caption!r}")
                 if not caption:
+                    uploaded_file.caption_complete = True
+                    db.session.add(uploaded_file)
                     skipped += 1
+                    self.log_message(
+                        f"Skipping upload {upload_id} in caption batch: blank caption output; marked caption_complete"
+                    )
                     continue
 
                 uploaded_file.caption = caption
+                uploaded_file.caption_complete = True
                 db.session.add(uploaded_file)
                 succeeded += 1
 
@@ -330,7 +338,7 @@ class BatchGenerateImageTags(_CaptionTagTaskBase):
             attempted += 1
             try:
                 uploaded_file = Upload.query.filter(Upload.id == upload_id).one_or_none()
-                if uploaded_file is None or not uploaded_file.caption:
+                if uploaded_file is None or not uploaded_file.caption or not uploaded_file.caption.strip():
                     skipped += 1
                     continue
 

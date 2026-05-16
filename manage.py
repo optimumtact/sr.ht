@@ -5,7 +5,7 @@ from datetime import datetime
 from typing import Annotated
 
 import typer
-from sqlalchemy import text
+from sqlalchemy import func, text
 
 cli = typer.Typer(help="Command line admin interface")
 admin_cli = typer.Typer(help="Admin user management commands")
@@ -125,6 +125,7 @@ def queue_caption_batch(limit: int, force: bool = False):
 
     uploads = (
         Upload.query.filter(Upload.caption.is_(None))
+        .filter(Upload.caption_complete.is_(False))
         .filter(Upload.thumbnail.isnot(None))
         .filter(Upload.user.has(User.ai_opt_in.is_(True)))
         .order_by(Upload.created, Upload.id)
@@ -155,6 +156,7 @@ def queue_tag_batch(limit: int, force: bool = False):
 
     uploads = (
         Upload.query.filter(Upload.caption.isnot(None))
+        .filter(func.length(func.trim(Upload.caption)) > 0)
         .filter(~Upload.tags.any())
         .filter(Upload.user.has(User.ai_opt_in.is_(True)))
         .order_by(Upload.created, Upload.id)
