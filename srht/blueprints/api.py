@@ -42,10 +42,9 @@ def upload():
         return {"error": "API key not recognized"}, 403
     filename = "".join(c for c in f.filename if c.isalnum() or c == ".")
 
-    sha256_hash, md5_hash = get_hashes(f)
+    content_hash = get_content_hash(f)
 
-    # Check for existing using either the new SHA256 or legacy MD5
-    existing = Upload.query.filter((Upload.hash == sha256_hash) | (Upload.hash == md5_hash)).first()
+    existing = Upload.query.filter(Upload.hash == content_hash).first()
     if existing:
         return {
             "success": True,
@@ -56,7 +55,7 @@ def upload():
 
     upload = Upload()
     upload.user = user
-    upload.hash = sha256_hash
+    upload.hash = content_hash
     upload.path = os.path.join(upload.hash + extension(filename))
     upload.original_name = filename
 
@@ -107,18 +106,19 @@ def delete():
 
 
 def get_hashes(f):
-    f.seek(0)
-    sha256_hash = hashlib.sha256()
-    md5_hash = hashlib.md5()
-    while chunk := f.read(8192):
-        sha256_hash.update(chunk)
-        md5_hash.update(chunk)
-    f.seek(0)
+    # Backward-compatible wrapper kept for any external imports.
+    digest = get_content_hash(f)
+    return digest, ""
 
-    return (
-        base64.urlsafe_b64encode(sha256_hash.digest()).decode("utf-8"),
-        base64.urlsafe_b64encode(md5_hash.digest()).decode("utf-8"),
-    )
+
+def get_content_hash(f):
+    # Single-pass, URL-safe digest for stable URLs and dedupe.
+    f.seek(0)
+    digest = hashlib.blake2b(digest_size=20)
+    while chunk := f.read(1024 * 1024):
+        digest.update(chunk)
+    f.seek(0)
+    return base64.urlsafe_b64encode(digest.digest()).decode("ascii").rstrip("=")
 
 
 def extension(filename: str) -> str:
